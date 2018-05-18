@@ -66,4 +66,13 @@ public class DrawObjects : MonoBehaviour
 		pos[3] = position1;
 		lineRendererObject.SetPositions(pos);
 	}
+
+	// =================================================================================================================================================================
+	/// <summary> Effacer un objet. </summary>
+
+	public void Delete(LineRenderer lineRendererObject)
+	{
+		lineRendererObject.positionCount = 0;
+		//Destroy(lineRendererObject);
+	}
 }

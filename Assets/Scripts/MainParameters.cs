@@ -10,67 +10,15 @@ using System.Collections;
 public class MainParameters
 {
 	#region JointsAnglesParameters
-	/// <summary> Description de la structure contenant les données réelles des angles des articulations. </summary>
+	/// <summary> Description de la structure contenant les données réelles des angles des articulations (DDL). </summary>
 	public struct StrucJointsAngles
 	{
-		public float[] T;
+		public float T;
 		public float[] Q;
 	}
 
-	/// <summary> Structure contenant les données réelles des angles des articulations. </summary>
+	/// <summary> Structure contenant les données réelles des angles des articulations (DDL). </summary>
 	public StrucJointsAngles[] jointsAngles;
-	#endregion
-
-	#region SplinesParameters
-	/// <summary> Description de la structure contenant les données splines. </summary>
-	public struct StrucSplines
-	{
-		public float[] breaks;
-		public float[,] coefs;
-	}
-
-	/// <summary> Structure contenant les données splines (pp). </summary>
-	public StrucSplines[] pp;
-
-	/// <summary> Structure contenant les données splines (ppdot). </summary>
-	public StrucSplines[] ppdot;
-
-	/// <summary> Structure contenant les données splines (ppddot). </summary>
-	public StrucSplines[] ppddot;
-	#endregion
-
-	#region NodesParameters
-	///// <summary> Description de la structure contenant les données relatifs aux noeuds. </summary>
-	public struct StrucNodes
-	{
-		public int ddlNum;
-		public string ddlName;
-		public float[] T;
-		public float[] Q;
-	}
-
-	/// <summary> Structure contenant les données relatifs aux noeuds. </summary>
-	public StrucNodes[] nodes;
-
-	///// <summary> Description de la structure contenant les données relatifs aux paramètres initiaux d'envol (Take off). </summary>
-	//public struct StrucTakeOffParam
-	//{
-	//	public float verticalSpeed;
-	//	public float anteroposteriorSpeed;
-	//	public float somersaultSpeed;
-	//	public float twistSpeed;
-	//	public float tilt;
-	//	public float rotation;
-	//}
-
-	/// <summary> Durée de la simulation en secondes. </summary>
-	//public int duration;
-
-	///// <summary> Structure contenant les données relatifs aux noeuds. </summary>
-	//public StrucTakeOffParam takeOffParam;
-
-	///// <summary> Condition utilisée. </summary>
-	//public int condition;
 	#endregion
 
 	#region LagrangianModelParameters
@@ -91,6 +39,13 @@ public class MainParameters
 	/// <summary> Structure contenant les paramètres relatifs au modèle Lagrangien utilisé. </summary>
 	public StrucLagrangianModel lagrangianModel;
 	#endregion
+
+	/// <summary> Nombre de frames contenu dans la structure jointsAngles. </summary>
+	public int numberOfFrames;
+
+	public enum ListDisplayType {Statique, Dynamique};
+	/// <summary> Type d'affichage de la silhouette (Statique ou Dynamique). </summary>
+	public ListDisplayType displayType;
 
 	#region singleton 
 	// modèle singleton tiré du site : https://msdn.microsoft.com/en-us/library/ff650316.aspx
@@ -120,19 +75,9 @@ public class MainParameters
 
 	private void init()
 	{
-		// Initialisation de la structure contenant les données réelles des angles des articulations.
+		// Initialisation des paramètres reliés aux données réelles des angles des articulations.
 
 		jointsAngles = null;
-
-		// Initialisation des structures Splines.
-
-		pp = null;
-		ppdot = null;
-		ppddot = null;
-
-		// Initialisation de la structure contenant les données relatifs aux noeuds.
-
-		nodes = null;
 
 		// Initialisation des paramètres reliés au modèle Lagrangien utilisé.
 
@@ -146,5 +91,10 @@ public class MainParameters
 		lagrangianModel.ddlName = new string[1] { "" };
 		lagrangianModel.stickFigure = null;
 		lagrangianModel.filledFigure = null;
+
+		// Initialisation d'autres paramètres
+
+		numberOfFrames = 0;
+		displayType = ListDisplayType.Dynamique;
 	}
 }
