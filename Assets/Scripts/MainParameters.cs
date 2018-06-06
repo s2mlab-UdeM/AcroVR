@@ -15,10 +15,48 @@ public class MainParameters
 	{
 		public float T;
 		public float[] Q;
+		public float[] Qdot;
 	}
 
 	/// <summary> Structure contenant les données réelles des angles des articulations (DDL). </summary>
 	public StrucJointsAngles[] jointsAngles;
+	#endregion
+
+	#region SplinesParameters
+	/// <summary> Description de la structure contenant les coefficents splines interpolés des données réelles des angles des articulations (DDL). </summary>
+	// Interpolation de type spline cubique
+	public struct StrucCoefSplines
+	{
+		public float[,] pp;					// [m,n] --> m = nombre de frames, n = nombre de coefficents
+		public float[,] ppdot;              // [m,n] --> m = nombre de frames, n = nombre de coefficents
+		public float[,] ppddot;             // [m,n] --> m = nombre de frames, n = nombre de coefficents
+	}
+
+	/// <summary> Description de la structure contenant les données relatifs aux splines interpolés des données réelles des angles des articulations (DDL). </summary>
+	public struct StrucSplines
+	{
+		public float[] T;                   // [n] --> n = nombre de frames
+		public StrucCoefSplines[] coefs;    // [n] --> n = nombre de DDL
+	}
+
+	/// <summary> Structure contenant les coefficents splines interpolés des données réelles des angles des articulations (DDL). </summary>
+	public StrucSplines splines;
+	#endregion
+
+	#region TakeOffParameters
+	/// <summary> Description de la structure contenant les données relatifs aux paramètres initiaux d'envol. </summary>
+	public struct StrucTakeOffParam
+	{
+		public float verticalSpeed;
+		public float anteroposteriorSpeed;
+		public float somersaultSpeed;
+		public float twistSpeed;
+		public float tilt;
+		public float rotation;
+	}
+
+	/// <summary> Structure contenant les données relatifs aux paramètres initiaux d'envol. </summary>
+	public StrucTakeOffParam takeOffParam;
 	#endregion
 
 	#region LagrangianModelParameters
@@ -78,6 +116,20 @@ public class MainParameters
 		// Initialisation des paramètres reliés aux données réelles des angles des articulations.
 
 		jointsAngles = null;
+
+		// Initialisation des paramètres reliés aux coefficents splines interpolés des données réelles des angles des articulations.
+
+		splines = new StrucSplines();
+		splines.coefs = null;
+
+		// Initialisation des paramètres initiaux d'envol.
+
+		takeOffParam.verticalSpeed = 0;
+		takeOffParam.anteroposteriorSpeed = 0;
+		takeOffParam.somersaultSpeed = 0;
+		takeOffParam.twistSpeed = 0;
+		takeOffParam.tilt = 0;
+		takeOffParam.rotation = 0;
 
 		// Initialisation des paramètres reliés au modèle Lagrangien utilisé.
 
