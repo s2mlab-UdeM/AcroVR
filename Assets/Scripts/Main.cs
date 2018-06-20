@@ -1,28 +1,40 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
+//using System.Collections;
+//using System.Collections.Generic;
+//using System.Runtime.InteropServices;
 
 // =================================================================================================================================================================
 /// <summary> Script principal du logiciel AcroVR. </summary>
 
 public class Main : MonoBehaviour
 {
-	public Toggle toggleDynamique;
+    public Dropdown dropDownCondition;
+    public InputField inputFieldInitialRotation;
+    public InputField inputFieldTilt;
+    public InputField inputFieldHorizontalSpeed;
+    public InputField inputFieldVerticalSpeed;
+    public InputField inputFieldSomersaultSpeed;
+    public InputField inputFieldTwistSpeed;
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
 	void Start ()
 	{
-	}
+        dropDownCondition.interactable = false;
+        inputFieldInitialRotation.interactable = false;
+        inputFieldTilt.interactable = false;
+        inputFieldHorizontalSpeed.interactable = false;
+        inputFieldVerticalSpeed.interactable = false;
+        inputFieldSomersaultSpeed.interactable = false;
+        inputFieldTwistSpeed.interactable = false;
+}
 
-	// =================================================================================================================================================================
-	/// <summary> Exécution du script à chaque frame. </summary>
+// =================================================================================================================================================================
+/// <summary> Exécution du script à chaque frame. </summary>
 
-	void Update ()
+void Update ()
 	{ }
 
 	// =================================================================================================================================================================
@@ -30,39 +42,43 @@ public class Main : MonoBehaviour
 
 	public void ButtonLoad()
 	{
-		System.Windows.Forms.OpenFileDialog openDialog = new System.Windows.Forms.OpenFileDialog();
+		// Sélection d'un fichier de données
 
-		openDialog.InitialDirectory = "c:\\";
+		System.Windows.Forms.OpenFileDialog openDialog = new System.Windows.Forms.OpenFileDialog();
+		openDialog.InitialDirectory = @"c:\Devel\AcroVR\Données";
 		openDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
 		openDialog.FilterIndex = 1;
+		if (openDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+			return;
 
-		openDialog.ShowDialog();
+		// Lecture du fichier de données
 
-		//Stream myStream = null;
-		//OpenFileDialog openFileDialog1 = new OpenFileDialog();
+	    DataFileManager.Instance.ReadDataFiles(openDialog.FileName);
 
-		//openFileDialog1.InitialDirectory = "c:\\";
-		//openFileDialog1.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-		//openFileDialog1.FilterIndex = 2;
-		//openFileDialog1.RestoreDirectory = true;
+        // Mettre à jour les paramètres de décolage à l'écran
 
-		//if (openFileDialog1.ShowDialog() == DialogResult.OK)
-		//{
-		//	try
-		//	{
-		//		if ((myStream = openFileDialog1.OpenFile()) != null)
-		//		{
-		//			using (myStream)
-		//			{
-		//				// Insert code to read the stream here.
-		//			}
-		//		}
-		//	}
-		//	catch (Exception ex)
-		//	{
-		//		MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
-		//	}
-		//}
+        dropDownCondition.interactable = true;
+        dropDownCondition.value = MainParameters.Instance.joints.condition;
+        inputFieldInitialRotation.interactable = true;
+        inputFieldInitialRotation.text = MainParameters.Instance.joints.takeOffParam.rotation.ToString();
+        inputFieldTilt.interactable = true;
+        inputFieldTilt.text = MainParameters.Instance.joints.takeOffParam.tilt.ToString();
+        inputFieldHorizontalSpeed.interactable = true;
+        inputFieldHorizontalSpeed.text = MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed.ToString();
+        inputFieldVerticalSpeed.interactable = true;
+        inputFieldVerticalSpeed.text = MainParameters.Instance.joints.takeOffParam.verticalSpeed.ToString();
+        inputFieldSomersaultSpeed.interactable = true;
+        inputFieldSomersaultSpeed.text = MainParameters.Instance.joints.takeOffParam.somersaultSpeed.ToString();
+        inputFieldTwistSpeed.interactable = true;
+        inputFieldTwistSpeed.text = MainParameters.Instance.joints.takeOffParam.twistSpeed.ToString();
+
+		LagrangianModelSimple lagrangianModelSimple = new LagrangianModelSimple();
+		LagrangianModelManager.StrucLagrangianModel lagrangianModel = lagrangianModelSimple.GetParameters;
+
+		float[] T0;
+		float[] Q0;
+		GenerateQ0 generateQ0 = new GenerateQ0(lagrangianModel, MainParameters.Instance.joints.duration, out T0, out Q0);
+		Debug.Log(T0.Length);
 	}
 
 	// =================================================================================================================================================================
@@ -70,22 +86,15 @@ public class Main : MonoBehaviour
 
 	public void ButtonStart()
 	{
-		if (toggleDynamique.isOn)
-			MainParameters.Instance.displayType = MainParameters.ListDisplayType.Dynamique;
-		else
-			MainParameters.Instance.displayType = MainParameters.ListDisplayType.Statique;
+		//Sasha23ddl.Instance.InitLagrangianModel();
 
-		ReadSomersaultSplinesDataFiles();
+		//float[] aa = MathFunc.Instance.Fnval(new float[1] { 0 }, MainParameters.Instance.splines.T, MainParameters.Instance.splines.coefs[0].pp);
+		//for (int i = 0; i < aa.Length; i++)
+		//	Debug.Log(string.Format("i = {0}, aa = {1}", i, aa[i]));
 
-		Sasha23ddl.Instance.InitLagrangianModel();
-
-		float[] aa = MathFunc.Instance.Fnval(new float[1] { 0 }, MainParameters.Instance.splines.T, MainParameters.Instance.splines.coefs[0].pp);
-		for (int i = 0; i < aa.Length; i++)
-			Debug.Log(string.Format("i = {0}, aa = {1}", i, aa[i]));
-
-		float bb = MathFunc.Instance.Fnval(0, MainParameters.Instance.splines.T, MainParameters.Instance.splines.coefs[0].pp);
-		Debug.Log(string.Format("bb = {0}", bb));
-		AnimationF.Instance.Play();
+		//float bb = MathFunc.Instance.Fnval(0, MainParameters.Instance.splines.T, MainParameters.Instance.splines.coefs[0].pp);
+		//Debug.Log(string.Format("bb = {0}", bb));
+		//AnimationF.Instance.Play();
 	}
 
 	// =================================================================================================================================================================
@@ -94,58 +103,6 @@ public class Main : MonoBehaviour
 	public void ButtonQuit()
 	{
 		Application.Quit();
-	}
-
-	// =================================================================================================================================================================
-	/// <summary> Lecture des angles des articulations (DDL) d'un fichier de données Somersault. Les données seront conservé dans une structure de classe MainParameters. </summary>
-
-	void ReadSomersaultSplinesDataFiles()
-	{
-		// Lecture des données du fichier de données Somersault
-
-		string[] fileLines = System.IO.File.ReadAllLines(@"C:\Devel\AcroVR\Données\SomersaultPP.txt");
-
-		// Initialisation de quelques paramètres
-
-		int numDDL = 23;                            // 17 DDL obtenus du fichier de données + 6 constants (= 0)
-		int numSkipLines = 1;                       // Ignorer la première ligne du fichier de données
-		int numFrames = fileLines.Length - numSkipLines - 1; // Ignorer la dernière ligne du fichier de données (contient juste le temps)
-		string[] values;
-
-		// Initialisation de la structure splines
-
-		MainParameters.Instance.splines.T = new float[numFrames + 1];
-		MainParameters.Instance.splines.coefs = new MainParameters.StrucCoefSplines[numDDL];
-		for (int i = 0; i < numDDL; i++)
-		{
-			MainParameters.Instance.splines.coefs[i].pp = new float[numFrames,4];
-			MainParameters.Instance.splines.coefs[i].ppdot = new float[numFrames, 3];
-			MainParameters.Instance.splines.coefs[i].ppddot = new float[numFrames, 2];
-		}
-
-		// Copier les données dans la structure splines
-
-		for (int i = 0; i < numFrames; i++)
-		{
-			values = Regex.Split(fileLines[i + numSkipLines], ",");
-			MainParameters.Instance.splines.T[i] = float.Parse(values[0]);      // Tous les temps des DDL sont identique
-			for (int j = 0; j < numDDL; j++)
-			{
-				int jj = j * 9;
-				MainParameters.Instance.splines.coefs[j].pp[i, 0] = float.Parse(values[jj + 1]);
-				MainParameters.Instance.splines.coefs[j].pp[i, 1] = float.Parse(values[jj + 2]);
-				MainParameters.Instance.splines.coefs[j].pp[i, 2] = float.Parse(values[jj + 3]);
-				MainParameters.Instance.splines.coefs[j].pp[i, 3] = float.Parse(values[jj + 4]);
-				MainParameters.Instance.splines.coefs[j].ppdot[i, 0] = float.Parse(values[jj + 5]);
-				MainParameters.Instance.splines.coefs[j].ppdot[i, 1] = float.Parse(values[jj + 6]);
-				MainParameters.Instance.splines.coefs[j].ppdot[i, 2] = float.Parse(values[jj + 7]);
-				MainParameters.Instance.splines.coefs[j].ppddot[i, 0] = float.Parse(values[jj + 8]);
-				MainParameters.Instance.splines.coefs[j].ppddot[i, 1] = float.Parse(values[jj + 9]);
-			}
-		}
-		values = Regex.Split(fileLines[numFrames + numSkipLines], ",");
-		MainParameters.Instance.splines.T[numFrames] = float.Parse(values[0]);
-		MainParameters.Instance.numberOfFrames = numFrames;
 	}
 
 	//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));

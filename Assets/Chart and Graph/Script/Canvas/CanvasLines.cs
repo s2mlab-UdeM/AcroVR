@@ -64,10 +64,12 @@ namespace ChartAndGraph
         /// bounding box for the value of mLines, used for event handling
         /// </summary>
         float mMinX, mMinY, mMaxX, mMaxY;
+#if !UNITY_2017_1_OR_NEWER
         /// <summary>
         /// A chart mesh used for populating the 
         /// </summary>
         WorldSpaceChartMesh mMesh = null;
+#endif
 
         /// <summary>
         /// Sets point render mode

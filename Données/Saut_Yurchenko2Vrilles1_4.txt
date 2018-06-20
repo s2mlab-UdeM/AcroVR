@@ -1,0 +1,17 @@
+Duration: 1
+Condition: 9
+VerticalSpeed: 2.300
+AnteroposteriorSpeed: 2.500
+SomersaultSpeed: -1.800
+TwistSpeed: 0.000
+Tilt: 0.000
+Rotation: 160.000
+
+Nodes
+DDL, name, T, Q
+1:Hip_Flexion:0.005534,0.018596,0.981656:-0.002340,-0.002340,-0.002340:
+2:Knee_Flexion:0.007909,0.020971:-0.002340,-0.002340:
+3:Left_Arm_Flexion:0.001971,0.010284:0.004150,0.004150:
+4:Left_Arm_Abduction:0.000784,0.191971,0.495970,0.600470:3.331487,-0.001199,-0.001199,0.003661:
+5:Right_Arm_Flexion:0.076784,0.342783:3.103550,0.001951:
+6:Right_Arm_Abduction:0.342783,0.431845,0.513782,0.707344:-0.000167,-0.000167,-0.000167,-0.000167:
