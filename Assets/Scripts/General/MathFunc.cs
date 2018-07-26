@@ -62,9 +62,25 @@ public class MathFunc
 		float tp5 = qj - qi;
 		float tp6 = tj - t;
 		float tp7 = Mathf.Pow(tp0, 5);
-		float tp8 = 30 * tp5 * tp1;
 		p = qi + tp5 * tp4;
-		v = tp8 * tp8 * tp6 * tp6 / tp7;
+		v = 30 * tp5 * tp1 * tp1 * tp6 * tp6 / tp7;
 		a = 60 * tp5 * tp1 * tp6 * (tj + ti - 2 * t) / tp7;
+
+		/*
+				if t < Ti
+					t = Ti;
+				elseif t> Tj
+					t = Tj;
+				end
+				tp0 = Tj - Ti;
+		tp2=	tp1 = (t - Ti) / tp0;
+		tp4=	tp2 = tp1 ^ 3 * (6 * tp1 ^ 2 - 15 * tp1 + 10);
+		tp5=	tp3 = Qj - Qi;
+		tp1=	tp4 = t - Ti;
+		tp6=	tp5 = Tj - t;
+				p = Qi + tp3 * tp2;
+				v = 30 * tp3 * tp4 ^ 2 * tp5 ^ 2 / tp0 ^ 5;
+				a = 60 * tp3 * tp4 * tp5 * (Tj + Ti - 2 * t) / tp0 ^ 5;
+		*/
 	}
 }

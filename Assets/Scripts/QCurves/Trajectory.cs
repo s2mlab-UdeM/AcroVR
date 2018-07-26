@@ -3,62 +3,45 @@
 
 public class Trajectory
 {
-	public Trajectory(LagrangianModelManager.StrucLagrangianModel lagrangianModel, float t, out float qd)
+	public Trajectory(LagrangianModelManager.StrucLagrangianModel lagrangianModel, float t, int[] qi, out float[] qd)
 	{
-		float qdotd;
-		float qddotd;
-		Trajectory trajectory = new Trajectory(lagrangianModel, t, out qd, out qdotd, out qddotd);
+		float[] qdotd;
+		float[] qddotd;
+		Trajectory trajectory = new Trajectory(lagrangianModel, t, qi, out qd, out qdotd, out qddotd);
+		trajectory.ToString();					// Pour enlever un warning lors de la compilation
 	}
 
-	public Trajectory(LagrangianModelManager.StrucLagrangianModel lagrangianModel, float t, out float qd, out float qdotd, out float qddotd)
+	public Trajectory(LagrangianModelManager.StrucLagrangianModel lagrangianModel, float t, int[] qi, out float[] qd, out float[] qdotd, out float[] qddotd)
 	{
-		int j = lagrangianModel.q2[0];
-		int[] ni = lagrangianModel.q2;
+		// Initialisation des DDL à traiter et du nombre de ces DDL
 
-		//	qd = zeros(ws.NDDL, 1);
-		//	qdotd=qd;
-		//    qddotd=qdotd;
+		int n = qi.Length;
 
-		//% j
-		//% Ni
-		//    for i=Ni
+		// Initialisation des vecteurs contenant les positions, vitesses et accélérations des angles des articulations traités
 
-		//        if isfield(SomersaultData.Nodes(i-j+1),'Real') && ...
-		//                 ...strcmp(SomersaultData.Nodes(i-j+1).interpolation, 'Real') && ...
-		//               ~isempty(SomersaultData.Nodes(i-j+1).Real) && Param.ExecReal
-		//			Nodes = SomersaultData.Nodes(i - j + 1).Real;
-		//        else	% AcroVR
-		//% [i j i-j+1]
-		//	Nodes=SomersaultData.Nodes(i-j+1);
-		//        end
+		qd = new float[n];
+		qdotd = new float[n];
+		qddotd = new float[n];
 
-		//% Nodes.interpolation
-		//        switch Nodes.interpolation
-		//        case 'Quintic'
-		//            [qd(i), qdotd(i), qddotd(i)]=DoMouv(t, Nodes);
-		//        case 'Cubic spline'
-		//%             fprintf('q(%d) en cubic spline\n', i);
-		//	[qd(i), qdotd(i), qddotd(i)] = CubicSpline(t, Nodes, ws.tf);
-		//        case 'Real'	% AcroVR
-		//			[qd(i), qdotd(i), qddotd(i)] = RecalMouv(t, i);
-		//	end
-		//end
-		//end
+		// Initialisation de la classe contenant le calcul des interpolations de type Quintic
 
-		//%===============================================================================================================================
+		MathFunc mathFunc = new MathFunc();
 
-		//function[p, v, a]=DoMouv(t, Data)
+		// Boucle sur les DDLs à traiter
 
-		//	i=2;
-		//    n=size(Data.T,2);
-		//    while (i<n && t> Data.T(i)), i=i+1; end
-		// Data
-		// [i t Data.T(i - 1) Data.T(i) Data.Q(i - 1) Data.Q(i)]
-
-		//	[p, v, a]=Quintic(t, Data.T(i-1),Data.T(i),Data.Q(i-1),Data.Q(i));
-		//end
-		qd = 0;
-		qdotd = 0;
-		qddotd = 0;
+		for (int i = 0; i < n; i++)
+		{
+			MainParameters.StrucNodes nodes = MainParameters.Instance.joints.nodes[qi[i] - lagrangianModel.q2[0]];
+			switch (nodes.interpolation.type)
+			{
+				case MainParameters.InterpolationType.Quintic:
+					int j = 1;
+					while (j < nodes.T.Length - 1 && t > nodes.T[j]) j++;
+					mathFunc.Quintic(t, nodes.T[j - 1], nodes.T[j], nodes.Q[j - 1], nodes.Q[j], out qd[i], out qdotd[i], out qddotd[i]);
+					break;
+				case MainParameters.InterpolationType.CubicSpline:
+					break;
+			}
+		}
 	}
 }

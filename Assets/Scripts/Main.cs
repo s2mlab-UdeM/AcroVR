@@ -72,13 +72,36 @@ void Update ()
         inputFieldTwistSpeed.interactable = true;
         inputFieldTwistSpeed.text = MainParameters.Instance.joints.takeOffParam.twistSpeed.ToString();
 
+		// Initialisation du modèle de Lagrangien utilisé
+
 		LagrangianModelSimple lagrangianModelSimple = new LagrangianModelSimple();
 		LagrangianModelManager.StrucLagrangianModel lagrangianModel = lagrangianModelSimple.GetParameters;
 
-		float[] T0;
-		float[] Q0;
-		GenerateQ0 generateQ0 = new GenerateQ0(lagrangianModel, MainParameters.Instance.joints.duration, out T0, out Q0);
-		Debug.Log(T0.Length);
+		//  Initialisation des vecteurs contenant les temps et les positions des angles des articulations interpolés
+
+		int n = (int)(MainParameters.Instance.joints.duration / lagrangianModel.dt) + 1;
+		float[] t0 = new float[n];
+		float[,] q0 = new float[lagrangianModel.nDDL, n];
+
+		// Interpolation des positions des angles des articulations à traiter
+
+		float[,] q0t = new float[lagrangianModel.q2.Length, n];
+		GenerateQ0 generateQ0 = new GenerateQ0(lagrangianModel, MainParameters.Instance.joints.duration, 0, out t0, out q0t);
+		generateQ0.ToString();                  // Pour enlever un warning lors de la compilation
+		for (int i = 0; i < q0t.GetLength(0); i++)
+			for (int j = 0; j < q0t.GetLength(1); j++)
+				q0[lagrangianModel.q2[i] - 1, j] = q0t[i, j];
+
+		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("GenerateQ0"));
+		//for (int i = 0; i < q0.GetLength(1); i++)
+		//{
+		//	System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}{1}: ", System.Environment.NewLine, t0[i]));
+		//	for (int j = 0; j < q0.GetLength(0); j++)
+		//		System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}, ", q0[j, i]));
+		//}
+		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
+
+		GraphManager.Instance.DisplayCurveAndNodes(0, t0, q0, MainParameters.Instance.joints.nodes);
 	}
 
 	// =================================================================================================================================================================
