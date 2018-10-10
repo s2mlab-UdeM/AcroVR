@@ -32,6 +32,8 @@ public class MainParameters
 		public float[] T;
 		public float[] Q;
 		public StrucInterpolation interpolation;
+		/// <summary> Pointeur, dans la structure Nodes, de l'articulation (ddl) du côté opposé (gauche <-> droit), si aucun côté = -1. </summary>
+		public int ddlOppositeSide;
 	}
 	#endregion
 
@@ -62,8 +64,12 @@ public class MainParameters
 		public string fileName;
 		/// <summary> Structure contenant les données des noeuds. </summary>
 		public StrucNodes[] nodes;
+		/// <summary> Liste des temps utilisés par les données interpolées. [m] = frames. </summary>
+		public float[] t0;
+		/// <summary> Liste des angles interpolés pour chacune des articulations. [m,n]: m = Frames, n = DDL. </summary>
+		public float[,] q0;
 		/// <summary> Durée de la figure. </summary>
-		public int duration;
+		public float duration;
 		/// <summary> Structure contenant les données relatifs aux paramètres initiaux d'envol. </summary>
 		public StrucTakeOffParam takeOffParam;
 		/// <summary> Condition utilisée pour exécuter la figure. </summary>
@@ -78,7 +84,7 @@ public class MainParameters
 	public StrucJoints joints;
 
     /// <summary> Valeur de défaut pour la durée de la figure. </summary>
-    public int durationDefault;
+    public float durationDefault;
 
     /// <summary> Valeur de défaut pour la condition utilisée pour exécuter la figure. </summary>
     public int conditionDefault;

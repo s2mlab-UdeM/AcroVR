@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 //using System.Collections;
-//using System.Collections.Generic;
+using System.Collections.Generic;
 //using System.Runtime.InteropServices;
 
 // =================================================================================================================================================================
@@ -9,6 +9,10 @@ using UnityEngine.UI;
 
 public class Main : MonoBehaviour
 {
+	public Text textFileName;
+
+	public Dropdown dropDownDDLNames;
+
     public Dropdown dropDownCondition;
     public InputField inputFieldInitialRotation;
     public InputField inputFieldTilt;
@@ -55,29 +59,88 @@ void Update ()
 
 	    DataFileManager.Instance.ReadDataFiles(openDialog.FileName);
 
+		// Définir un nom racourci pour avoir accès à la structure Joints
+
+		MainParameters.StrucJoints joints = MainParameters.Instance.joints;
+
+		// Afficher le nom du fichier à l'écran
+
+		textFileName.text = joints.fileName;
+
         // Mettre à jour les paramètres de décolage à l'écran
 
         dropDownCondition.interactable = true;
-        dropDownCondition.value = MainParameters.Instance.joints.condition;
+        dropDownCondition.value = joints.condition;
         inputFieldInitialRotation.interactable = true;
-        inputFieldInitialRotation.text = MainParameters.Instance.joints.takeOffParam.rotation.ToString();
+        inputFieldInitialRotation.text = joints.takeOffParam.rotation.ToString();
         inputFieldTilt.interactable = true;
-        inputFieldTilt.text = MainParameters.Instance.joints.takeOffParam.tilt.ToString();
+        inputFieldTilt.text = joints.takeOffParam.tilt.ToString();
         inputFieldHorizontalSpeed.interactable = true;
-        inputFieldHorizontalSpeed.text = MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed.ToString();
+        inputFieldHorizontalSpeed.text = joints.takeOffParam.anteroposteriorSpeed.ToString();
         inputFieldVerticalSpeed.interactable = true;
-        inputFieldVerticalSpeed.text = MainParameters.Instance.joints.takeOffParam.verticalSpeed.ToString();
+        inputFieldVerticalSpeed.text = joints.takeOffParam.verticalSpeed.ToString();
         inputFieldSomersaultSpeed.interactable = true;
-        inputFieldSomersaultSpeed.text = MainParameters.Instance.joints.takeOffParam.somersaultSpeed.ToString();
+        inputFieldSomersaultSpeed.text = joints.takeOffParam.somersaultSpeed.ToString();
         inputFieldTwistSpeed.interactable = true;
-        inputFieldTwistSpeed.text = MainParameters.Instance.joints.takeOffParam.twistSpeed.ToString();
+        inputFieldTwistSpeed.text = joints.takeOffParam.twistSpeed.ToString();
 
 		// Initialisation du modèle de Lagrangien utilisé
 
 		LagrangianModelSimple lagrangianModelSimple = new LagrangianModelSimple();
 		LagrangianModelManager.StrucLagrangianModel lagrangianModel = lagrangianModelSimple.GetParameters;
 
-		//  Initialisation des vecteurs contenant les temps et les positions des angles des articulations interpolés
+		// Vérifier la définition des noeuds, si incorrect alors la corriger selon le modèle Lagrangien sélectionné
+
+		int nDDL = 0;
+		MainParameters.StrucNodes[] nodes = new MainParameters.StrucNodes[lagrangianModel.q2.Length];
+		int nNodes = MainParameters.Instance.joints.nodes.Length;
+		MainParameters.StrucInterpolation interpolation = MainParameters.Instance.joints.nodes[0].interpolation;
+		foreach (int i in lagrangianModel.q2)
+		{
+			int j = 0;
+			string ddlname = lagrangianModel.ddlName[i - 1].ToLower();
+			while (j < nNodes && !ddlname.Contains(MainParameters.Instance.joints.nodes[j].name.ToLower()))
+				j++;
+			if (j < nNodes)									// Articulations défini dans le fichier de données, le conserver
+			{
+				nodes[nDDL] = MainParameters.Instance.joints.nodes[j];
+				nodes[nDDL].ddl = i;
+			}
+			else											// Articulations non défini dans le fichier de données, alors utilisé la définition de défaut selon le modèle Lagrangien
+			{
+				nodes[nDDL].ddl = i;
+				nodes[nDDL].name = lagrangianModel.ddlName[i - 1];
+				nodes[nDDL].T = new float[3] { MainParameters.Instance.joints.duration * 0.25f, MainParameters.Instance.joints.duration * 0.5f, MainParameters.Instance.joints.duration * 0.75f };
+				nodes[nDDL].Q = new float[3] { 0, 0, 0 };
+				nodes[nDDL].interpolation = interpolation;
+				nodes[nDDL].ddlOppositeSide = -1;
+			}
+			nDDL++;
+		}
+
+		// Trouver le numéro d'articulation (ddl) du côté opposé utilisé pour chacune des articulations, qui à un côté gauche ou droit
+
+		for (int i = 0; i < nodes.Length; i++)
+		{
+			string nameOppSide = "";
+			string name = nodes[i].name.ToLower();
+			if (name.Contains("left") || name.Contains("right"))
+			{
+				if (name.Contains("left"))
+					nameOppSide = "right" + name.Substring(name.IndexOf("left") + 4);
+				else
+					nameOppSide = "left" + name.Substring(name.IndexOf("right") + 5);
+				for (int j = 0; j < nodes.Length; j++)
+				{
+					name = nodes[j].name.ToLower();
+					if (name.Contains(nameOppSide))
+						nodes[i].ddlOppositeSide = j;
+				}
+			}
+		}
+		MainParameters.Instance.joints.nodes = nodes;
+
+		// Initialisation des vecteurs contenant les temps et les positions des angles des articulations interpolés
 
 		int n = (int)(MainParameters.Instance.joints.duration / lagrangianModel.dt) + 1;
 		float[] t0 = new float[n];
@@ -92,16 +155,22 @@ void Update ()
 			for (int j = 0; j < q0t.GetLength(1); j++)
 				q0[lagrangianModel.q2[i] - 1, j] = q0t[i, j];
 
-		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("GenerateQ0"));
-		//for (int i = 0; i < q0.GetLength(1); i++)
-		//{
-		//	System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}{1}: ", System.Environment.NewLine, t0[i]));
-		//	for (int j = 0; j < q0.GetLength(0); j++)
-		//		System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}, ", q0[j, i]));
-		//}
-		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
+		// Conserver les données interpolées dans MainParameters
 
-		GraphManager.Instance.DisplayCurveAndNodes(0, t0, q0, MainParameters.Instance.joints.nodes);
+		MainParameters.Instance.joints.t0 = t0;
+		MainParameters.Instance.joints.q0 = q0;
+
+		// Afficher la courbe des positions des angles pour l'articulation sélectionné par défaut
+
+		GraphManager.Instance.DisplayCurveAndNodes(0, 0, t0, q0, MainParameters.Instance.joints.nodes);
+		if (MainParameters.Instance.joints.nodes[0].ddlOppositeSide >= 0)
+			GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[0].ddlOppositeSide, t0, q0, MainParameters.Instance.joints.nodes);
+		List<string> dropDownOptions = new List<string>();
+		for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
+			dropDownOptions.Add(MainParameters.Instance.joints.nodes[i].name);
+		dropDownDDLNames.ClearOptions();
+		dropDownDDLNames.AddOptions(dropDownOptions);
+		dropDownDDLNames.value = 0;
 	}
 
 	// =================================================================================================================================================================

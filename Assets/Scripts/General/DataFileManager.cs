@@ -51,8 +51,8 @@ public class DataFileManager : MonoBehaviour
             values = Regex.Split(fileLines[i], ":");
             if (values[0].Contains("Duration"))
             {
-                jointsTemp.duration = int.Parse(values[1]);
-                if (jointsTemp.duration == -999)
+                jointsTemp.duration = float.Parse(values[1]);
+				if (jointsTemp.duration == -999)
                     jointsTemp.duration = MainParameters.Instance.durationDefault;
             }
             else if (values[0].Contains("Condition"))
@@ -109,13 +109,14 @@ public class DataFileManager : MonoBehaviour
                 jointsTemp.nodes[ddlNum].T = ExtractDataTQ(values[2]);
                 jointsTemp.nodes[ddlNum].Q = ExtractDataTQ(values[3]);
 				jointsTemp.nodes[ddlNum].interpolation = MainParameters.Instance.interpolationDefault;
+				jointsTemp.nodes[ddlNum].ddlOppositeSide = -1;
 				ddlNum++;
             }
         }
 
-        // Conserver les données dans la structure de la classe MainParameters
+		// Conserver les données dans la structure de la classe MainParameters
 
-        MainParameters.Instance.joints = jointsTemp;
+		MainParameters.Instance.joints = jointsTemp;
     }
 
     float[] ExtractDataTQ(string values)
