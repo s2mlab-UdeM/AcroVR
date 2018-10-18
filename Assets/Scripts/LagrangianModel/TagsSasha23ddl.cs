@@ -1,23 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using System;
 
 // =================================================================================================================================================================
-/// <summary> Fonctions utilisées pour les différents calculs mathématiques. </summary>
+/// <summary> Fonctions utilisées pour le calcul des différents "Tags", pour le modèle lagrangien Sasha23ddl. </summary>
 
-public class MathFunc2 : MonoBehaviour
+public class TagsSasha23ddl
 {
-	public static MathFunc2 Instance;
-
-	// =================================================================================================================================================================
-	/// <summary> Initialisation du script. </summary>
-
-	void Start ()
-	{
-		Instance = this;
-	}
-
 	// =================================================================================================================================================================
 	/// <summary> Calcul des "Tags". </summary>
 

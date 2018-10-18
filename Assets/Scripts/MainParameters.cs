@@ -54,7 +54,7 @@ public class MainParameters
     #endregion
 
 	public enum DataType { Simulation};
-	public enum LagrangianModel { Simple, Sasha23ddl};
+	public enum LagrangianModelNames { Simple, Sasha23ddl};
 
     #region Joints
     /// <summary> Description de la structure contenant les données des angles des articulations (DDL). </summary>
@@ -68,6 +68,8 @@ public class MainParameters
 		public float[] t0;
 		/// <summary> Liste des angles interpolés pour chacune des articulations. [m,n]: m = Frames, n = DDL. </summary>
 		public float[,] q0;
+		/// <summary> Nombre de frames contenu dans les données (q0). </summary>
+		public int numberFrames;
 		/// <summary> Durée de la figure. </summary>
 		public float duration;
 		/// <summary> Structure contenant les données relatifs aux paramètres initiaux d'envol. </summary>
@@ -76,8 +78,10 @@ public class MainParameters
 		public int condition;
 		/// <summary> Type de données utilisée. </summary>
 		public DataType dataType;
-		/// <summary> Modèle Lagrangien utilisée. </summary>
-		public LagrangianModel lagrangianModel;
+		/// <summary> Nom du modèle Lagrangien utilisée. </summary>
+		public LagrangianModelNames lagrangianModelName;
+		/// <summary> Structure du modèle Lagrangien utilisée. </summary>
+		public LagrangianModelManager.StrucLagrangianModel lagrangianModel;
 	}
 
 	/// <summary> Structure contenant les données des angles des articulations (DDL). </summary>
@@ -111,9 +115,6 @@ public class MainParameters
     //public StrucSplines splines;
     #endregion
 
-	/// <summary> Nombre de frames contenu dans la structure jointsAngles. </summary>
-	//public int numberOfFrames;
-
 	#region singleton 
 	// modèle singleton tiré du site : https://msdn.microsoft.com/en-us/library/ff650316.aspx
 	private static MainParameters instance;
@@ -139,20 +140,20 @@ public class MainParameters
 
 		joints.fileName = "";
 		joints.nodes = null;
+		joints.t0 = null;
+		joints.q0 = null;
+		joints.numberFrames = 0;
 		joints.duration = durationDefault;
 		joints.takeOffParam = takeOffParamDefault;
 		joints.condition = conditionDefault;
 		joints.dataType = DataType.Simulation;
-		joints.lagrangianModel = LagrangianModel.Simple;
+		joints.lagrangianModelName = LagrangianModelNames.Simple;
+		joints.lagrangianModel = new LagrangianModelManager.StrucLagrangianModel();
 
 		// Initialisation des paramètres reliés aux coefficents splines interpolés des données réelles des angles des articulations.
 
 		//splines = new StrucSplines();
 		//splines.coefs = null;
-
-		// Initialisation d'autres paramètres
-
-		//numberOfFrames = 0;
 	}
 
 	// =================================================================================================================================================================
