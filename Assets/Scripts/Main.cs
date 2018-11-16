@@ -1,45 +1,41 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-//using System.Collections;
 using System.Collections.Generic;
-//using System.Runtime.InteropServices;
 
 // =================================================================================================================================================================
 /// <summary> Script principal du logiciel AcroVR. </summary>
 
 public class Main : MonoBehaviour
 {
-
-//	public GameObject animatorF;
+	public static Main Instance;
+	public Button animatorButtonPlay;
+	public Image animatorButtonPlayImage;
+	public Text textButtonLanguage;
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
 	void Start ()
 	{
+		Instance = this;
+		EnableDisableUserControls(false);
 	}
 
 	// =================================================================================================================================================================
-	/// <summary> Exécution du script à chaque frame. </summary>
+	/// <summary> Bouton Changement de langue utilisée a été appuyer. </summary>
 
-	void Update ()
+	public void ButtonLanguage()
 	{
-	}
-
-	// =================================================================================================================================================================
-	/// <summary> Bouton Démarrer a été appuyer. </summary>
-
-	public void ButtonStart()
-	{
-		//Sasha23ddl.Instance.InitLagrangianModel();
-
-		//float[] aa = MathFunc.Instance.Fnval(new float[1] { 0 }, MainParameters.Instance.splines.T, MainParameters.Instance.splines.coefs[0].pp);
-		//for (int i = 0; i < aa.Length; i++)
-		//	Debug.Log(string.Format("i = {0}, aa = {1}", i, aa[i]));
-
-		//float bb = MathFunc.Instance.Fnval(0, MainParameters.Instance.splines.T, MainParameters.Instance.splines.coefs[0].pp);
-		//Debug.Log(string.Format("bb = {0}", bb));
-		//AnimationF.Instance.Play();
+		if (textButtonLanguage.text == "Fr")
+		{
+			MainParameters.Instance.languages.Used = MainParameters.Instance.languages.french;
+			textButtonLanguage.text = "En";
+		}
+		else
+		{
+			MainParameters.Instance.languages.Used = MainParameters.Instance.languages.english;
+			textButtonLanguage.text = "Fr";
+		}
 	}
 
 	// =================================================================================================================================================================
@@ -48,6 +44,18 @@ public class Main : MonoBehaviour
 	public void ButtonQuit()
 	{
 		Application.Quit();
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Quitter a été appuyer. </summary>
+
+	public void	EnableDisableUserControls(bool enable)
+	{
+		animatorButtonPlay.interactable = enable;
+		if (enable)
+			animatorButtonPlayImage.color = Color.white;
+		else
+			animatorButtonPlayImage.color = Color.gray;
 	}
 
 	//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));

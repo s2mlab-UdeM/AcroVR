@@ -35,30 +35,23 @@ public class MovementF : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	/// <summary> Exécution du script à chaque frame. </summary>
-
-	void Update ()
-	{
-	}
-
-	// =================================================================================================================================================================
 	/// <summary> Bouton Charger a été appuyer. </summary>
 
 	public void ButtonLoad()
 	{
 		// Sélection d'un fichier de données
 
-		System.Windows.Forms.OpenFileDialog openDialog = new System.Windows.Forms.OpenFileDialog();
-		openDialog.InitialDirectory = @"c:\Devel\AcroVR\Données";
-		openDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-		openDialog.FilterIndex = 1;
-		if (openDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-			return;
+		//System.Windows.Forms.OpenFileDialog openDialog = new System.Windows.Forms.OpenFileDialog();
+		//openDialog.InitialDirectory = @"c:\Devel\AcroVR\Données";
+		//openDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+		//openDialog.FilterIndex = 1;
+		//if (openDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+		//	return;
 
 		// Lecture du fichier de données
 
-		DataFileManager.Instance.ReadDataFiles(openDialog.FileName);
-		//DataFileManager.Instance.ReadDataFiles(@"C:\Devel\AcroVR\Données\1.3.SautDroit.txt");
+		//DataFileManager.Instance.ReadDataFiles(openDialog.FileName);
+		DataFileManager.Instance.ReadDataFiles(@"C:\Devel\AcroVR\Données\2.3.Saut_Rosu.txt");
 
 		// Définir un nom racourci pour avoir accès à la structure Joints
 
@@ -73,17 +66,17 @@ public class MovementF : MonoBehaviour
 		dropDownCondition.interactable = true;
 		dropDownCondition.value = joints.condition;
 		inputFieldInitialRotation.interactable = true;
-		inputFieldInitialRotation.text = joints.takeOffParam.rotation.ToString();
+		inputFieldInitialRotation.text = string.Format("{0:0.0}", joints.takeOffParam.rotation);
 		inputFieldTilt.interactable = true;
-		inputFieldTilt.text = joints.takeOffParam.tilt.ToString();
+		inputFieldTilt.text = string.Format("{0:0.0}", joints.takeOffParam.tilt);
 		inputFieldHorizontalSpeed.interactable = true;
-		inputFieldHorizontalSpeed.text = joints.takeOffParam.anteroposteriorSpeed.ToString();
+		inputFieldHorizontalSpeed.text = string.Format("{0:0.0}", joints.takeOffParam.anteroposteriorSpeed);
 		inputFieldVerticalSpeed.interactable = true;
-		inputFieldVerticalSpeed.text = joints.takeOffParam.verticalSpeed.ToString();
+		inputFieldVerticalSpeed.text = string.Format("{0:0.0}", joints.takeOffParam.verticalSpeed);
 		inputFieldSomersaultSpeed.interactable = true;
-		inputFieldSomersaultSpeed.text = joints.takeOffParam.somersaultSpeed.ToString();
+		inputFieldSomersaultSpeed.text = string.Format("{0:0.000}", joints.takeOffParam.somersaultSpeed);
 		inputFieldTwistSpeed.interactable = true;
-		inputFieldTwistSpeed.text = joints.takeOffParam.twistSpeed.ToString();
+		inputFieldTwistSpeed.text = string.Format("{0:0.000}", joints.takeOffParam.twistSpeed);
 
 		// Initialisation du modèle de Lagrangien utilisé
 
@@ -158,12 +151,8 @@ public class MovementF : MonoBehaviour
 
 		// Interpolation des positions des angles des articulations à traiter
 
-		float[,] q0t = new float[joints.lagrangianModel.q2.Length, n];
-		GenerateQ0 generateQ0 = new GenerateQ0(joints.lagrangianModel, joints.duration, 0, out t0, out q0t);
+		GenerateQ0 generateQ0 = new GenerateQ0(joints.lagrangianModel, joints.duration, 0, out t0, out q0);
 		generateQ0.ToString();                  // Pour enlever un warning lors de la compilation
-		for (int i = 0; i < q0t.GetLength(0); i++)
-			for (int j = 0; j < q0t.GetLength(1); j++)
-				q0[joints.lagrangianModel.q2[i] - 1, j] = q0t[i, j];
 
 		// Conserver les données interpolées dans MainParameters
 
@@ -186,5 +175,11 @@ public class MovementF : MonoBehaviour
 		// Afficher la silhouette au temps t = 0
 
 		AnimationF.Instance.Play();
+
+		// Activer les contrôles disponible à l'utilisateur à l'écran
+
+		Main.Instance.EnableDisableUserControls(true);
+
+		Debug.Log(string.Format("Condition = {0}, Interpolation pour noeud #0 = {1}, LagrangianName = {2}", joints.condition, joints.nodes[0].interpolation.type, joints.lagrangianModelName));
 	}
 }

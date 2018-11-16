@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 // =================================================================================================================================================================
 /// <summary> Fonctions utilisées pour exécuter les animations. </summary>
@@ -10,6 +11,7 @@ public class AnimationF : MonoBehaviour
 {
 	public static AnimationF Instance;
 	public GameObject panelAnimator;
+	public Text textScrollViewMessages;
 
 	LineRenderer[] lineStickFigure;
 	LineRenderer lineCenterOfMass;
@@ -22,7 +24,7 @@ public class AnimationF : MonoBehaviour
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
-	void Start ()
+	void Start()
 	{
 		Instance = this;
 		lineStickFigure = null;
@@ -31,7 +33,7 @@ public class AnimationF : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	/// <summary> Exécution du script à chaque frame. </summary>
+	/// <summary> Exécution de la fonction à chaque frame. </summary>
 
 	void Update()
 	{
@@ -54,11 +56,23 @@ public class AnimationF : MonoBehaviour
 
 	public void ButtonPlay()
 	{
-		MainParameters.Instance.joints.numberFrames = (int)(MainParameters.Instance.joints.duration / MainParameters.Instance.joints.lagrangianModel.dt) + 1;
+		MainParameters.StrucJoints joints = MainParameters.Instance.joints;
+
+		// Affichage d'un message dans la boîte des messages
+
+		DisplayNewMessage(true, false, " Visualisation démarrée (Simulation)");
+		DisplayNewMessage(false, false, string.Format(" Paramètre dt (durée d'un frame) = {0:0.00000} s", joints.lagrangianModel.dt));
+
+		// Exécution des calculs de simulation
+
+		DoSimulation doSimulation = new DoSimulation();
+		doSimulation.ToString();                  // Pour enlever un warning lors de la compilation
+
+		//MainParameters.Instance.joints.numberFrames = (int)(MainParameters.Instance.joints.duration / MainParameters.Instance.joints.lagrangianModel.dt) + 1;
 
 		// Afficher la silhouette pour toute l'animation
 
-		AnimationF.Instance.Play();
+		//AnimationF.Instance.Play();
 	}
 
 	// =================================================================================================================================================================
@@ -129,38 +143,21 @@ public class AnimationF : MonoBehaviour
 		// Initialisation du vecteur Q
 
 		for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
-			Q[i] = joints.q0[i,frameN];
+			Q[i] = joints.q0[i, frameN];
 
 		// Calcul des "tags", selon le modèle lagrangien utilisé
 
-		double[] tag1;
-		if (joints.lagrangianModelName == MainParameters.LagrangianModelNames.Sasha23ddl)
-		{
-			TagsSasha23ddl tagsSasha23ddl = new TagsSasha23ddl();
-			tag1 = tagsSasha23ddl.Tags(Q);
-		}
-		else
-		{
-			TagsSimple tagsSimple = new TagsSimple();
-			tag1 = tagsSimple.Tags(Q);
-		}
+		float[] tagX;
+		float[] tagY;
+		float[] tagZ;
+		EvaluateTags(Q, out tagX, out tagZ, out tagY);
+		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("i, tag = {0:10}, {1:10}, {2:10}, {3:10}{4}", i, tagX[i], tagY[i], tagZ[i], System.Environment.NewLine));
 
-		// Formater la matrice obtenue en trois vecteurs X, Y et Z
 		// Calculer un facteur de correspondance entre la silhouette et la dimension disponible pour l'affichage, pour optimiser l'espace disponible pour l'affichage
 		// Même si on modifie la dimension de la silhouette, on conserve quand même les proportions de la sihouette dans les 3 dimensions, donc le facteur est unique pour les 3 dimensions
 		// Intervertir les axes Y et Z et rotation de quelques degrés pour afficher la silhouette avec une vue sagittale par défaut
 
-		int newTagLength = tag1.Length / 3;
-		float[] tagX = new float[newTagLength];
-		float[] tagY = new float[newTagLength];
-		float[] tagZ = new float[newTagLength];
-		for (int i = 0; i < newTagLength; i++)
-		{
-			tagX[i] = (float)tag1[i];
-			tagZ[i] = (float)tag1[i + newTagLength];
-			tagY[i] = (float)tag1[i + newTagLength * 2];
-			//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("i, tag = {0:10}, {1:10}, {2:10}, {3:10}{4}", i, tagX[i], tagY[i], tagZ[i], System.Environment.NewLine));
-		}
+		int newTagLength = tagX.Length;
 		float tagXMin = Mathf.Min(tagX);
 		float tagXMax = Mathf.Max(tagX);
 		float tagYMin = Mathf.Min(tagY);
@@ -218,8 +215,47 @@ public class AnimationF : MonoBehaviour
 
 		for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
 			DrawObjects.Instance.Line(lineStickFigure[i], tag[joints.lagrangianModel.stickFigure[i, 0] - 1], tag[joints.lagrangianModel.stickFigure[i, 1] - 1]);
-		DrawObjects.Instance.Circle(lineCenterOfMass, 0.005f , tag[newTagLength - 1]);
+		DrawObjects.Instance.Circle(lineCenterOfMass, 0.005f, tag[newTagLength - 1]);
 		for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
 			DrawObjects.Instance.Triangle(lineFilledFigure[i], tag[joints.lagrangianModel.filledFigure[i, 0] - 1], tag[joints.lagrangianModel.filledFigure[i, 1] - 1], tag[joints.lagrangianModel.filledFigure[i, 2] - 1]);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Afficher un nouveau message dans la boîte des messages. </summary>
+
+	public void DisplayNewMessage(bool clear, bool display, string message)
+	{
+		if (clear) MainParameters.Instance.scrollViewMessages.Clear();
+		MainParameters.Instance.scrollViewMessages.Add(message);
+		if (display) textScrollViewMessages.text = string.Join(Environment.NewLine, MainParameters.Instance.scrollViewMessages.ToArray());
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Calcul des "tags", selon le modèle lagrangien utilisé. </summary>
+
+	public void EvaluateTags(double[] q, out float[] tagX, out float[] tagY, out float[] tagZ)
+	{
+		double[] tag1;
+		if (MainParameters.Instance.joints.lagrangianModelName == MainParameters.LagrangianModelNames.Sasha23ddl)
+		{
+			TagsSasha23ddl tagsSasha23ddl = new TagsSasha23ddl();
+			tag1 = tagsSasha23ddl.Tags(q);
+		}
+		else
+		{
+			TagsSimple tagsSimple = new TagsSimple();
+			tag1 = tagsSimple.Tags(q);
+		}
+
+		int newTagLength = tag1.Length / 3;
+		tagX = new float[newTagLength];
+		tagY = new float[newTagLength];
+		tagZ = new float[newTagLength];
+		for (int i = 0; i < newTagLength; i++)
+		{
+			tagX[i] = (float)tag1[i];
+			tagY[i] = (float)tag1[i + newTagLength];
+			tagZ[i] = (float)tag1[i + newTagLength * 2];
+		}
 	}
 }

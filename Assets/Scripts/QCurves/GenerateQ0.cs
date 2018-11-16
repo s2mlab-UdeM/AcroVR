@@ -18,7 +18,7 @@ public class GenerateQ0
 		float[] qd;
 		int n = (int)(tf / lagrangianModel.dt) + 1;
 		t0 = new float[n];
-		q0 = new float[ni.Length, n];
+		q0 = new float[lagrangianModel.nDDL, n];
 
 		// Interpolation des positions des angles des articulations pour chaque intervalle de temps
 

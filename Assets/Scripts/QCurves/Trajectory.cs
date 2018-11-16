@@ -19,9 +19,15 @@ public class Trajectory
 
 		// Initialisation des vecteurs contenant les positions, vitesses et accélérations des angles des articulations traités
 
-		qd = new float[n];
-		qdotd = new float[n];
-		qddotd = new float[n];
+		qd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		qdotd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		qddotd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		for (int i = 0; i < qd.Length; i++)
+		{
+			qd[i] = 0;
+			qdotd[i] = 0;
+			qddotd[i] = 0;
+		}
 
 		// Initialisation de la classe contenant le calcul des interpolations de type Quintic
 
