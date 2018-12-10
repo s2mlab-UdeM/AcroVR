@@ -64,9 +64,9 @@ public class MainParameters
 		public string fileName;
 		/// <summary> Structure contenant les données des noeuds. </summary>
 		public StrucNodes[] nodes;
-		/// <summary> Liste des temps utilisés par les données interpolées. [m] = frames. </summary>
+		/// <summary> Liste des temps utilisés par toutes les données interpolées. [m] = frames. </summary>
 		public float[] t0;
-		/// <summary> Liste des angles interpolés pour chacune des articulations. [m,n]: m = DDL, n = Frames. </summary>
+		/// <summary> Liste de tous les angles interpolés pour chacune des articulations. [m,n]: m = DDL, n = Frames. </summary>
 		public float[,] q0;
 		/// <summary> Nombre de frames contenu dans les données (q0). </summary>
 		public int numberFrames;
@@ -85,6 +85,16 @@ public class MainParameters
 		public LagrangianModelNames lagrangianModelName;
 		/// <summary> Structure du modèle Lagrangien utilisée. </summary>
 		public LagrangianModelManager.StrucLagrangianModel lagrangianModel;
+		/// <summary> Temps avant contact avec le sol (en secondes). </summary>
+		public float tc;
+		/// <summary> Liste des temps utilisés par les données interpolées, jusqu'au contact avec le sol. [m] = frames. </summary>
+		public float[] t;
+		/// <summary> Liste des angles interpolés pour chacune des articulations, jusqu'au contact avec le sol. [m,n]: m = DDL, n = Frames. </summary>
+		public float[,] q;
+		/// <summary> Liste des angles interpolés pour les articulations de rotation (périlleux, inclinaison et torsion), jusqu'au contact avec le sol. [m,n]: m = 3, n = Frames. </summary>
+		public float[,] rot;
+		/// <summary> Liste des vitesses des angles interpolés pour les articulations de rotation (périlleux, inclinaison et torsion), jusqu'au contact avec le sol. [m,n]: m = 3, n = Frames. </summary>
+		public float[,] rotdot;
 	}
 
 	/// <summary> Structure contenant les données des angles des articulations (DDL). </summary>
@@ -127,7 +137,42 @@ public class MainParameters
 	/// <summary> Description de la structure contenant la liste des messages utilisés. </summary>
 	public struct StrucMessageLists
 	{
-		public string verticalSpeedErrorMsg;
+		public string takeOffTitle;
+		public string takeOffTitleSpeed;
+		public string takeOffConditionNoGravity;
+		public string takeOffConditionTrampolining;
+		public string takeOffConditionTumbling;
+		public string takeOffConditionDiving1m;
+		public string takeOffConditionDiving3m;
+		public string takeOffConditionDiving5m;
+		public string takeOffConditionDiving10m;
+		public string takeOffConditionHighBar;
+		public string takeOffConditionUnevenBars;
+		public string takeOffConditionVault;
+		public string takeOffInitialRotation;
+		public string takeOffTilt;
+		public string takeOffHorizontal;
+		public string takeOffVertical;
+		public string takeOffSomersault;
+		public string takeOffTwist;
+
+		public string animatorPlaySpeedFast;
+		public string animatorPlaySpeedNormal;
+		public string animatorPlaySpeedSlow;
+
+		public string errorMsgVerticalSpeed;
+
+		public string displayMsgStartSimulation;
+		public string displayMsgDtValue;
+		public string displayMsgSimulationTime;
+		public string displayMsgContactGround;
+		public string displayMsgNumberSomersaults;
+		public string displayMsgNumberTwists;
+		public string displayMsgFinalTwist;
+		public string displayMsgMaxTilt;
+		public string displayMsgFinalTilt;
+		public string displayMsgSimulationDuration;
+		public string displayMsgEndSimulation;
 	}
 
 	/// <summary> Description de la structure contenant la liste des messages utilisés en français et en anglais. </summary>
@@ -176,6 +221,11 @@ public class MainParameters
 		joints.dataType = DataType.Simulation;
 		joints.lagrangianModelName = LagrangianModelNames.Simple;
 		joints.lagrangianModel = new LagrangianModelManager.StrucLagrangianModel();
+		joints.tc = 0;
+		joints.t = null;
+		joints.q = null;
+		joints.rot = null;
+		joints.rotdot = null;
 
 		// Initialisation des paramètres reliés aux coefficents splines interpolés des données réelles des angles des articulations.
 
@@ -188,8 +238,76 @@ public class MainParameters
 
 		// Initialisation de la liste des messages en français et en anglais.
 
-		languages.french.verticalSpeedErrorMsg = string.Format("Valeur du paramètre Vitesse verticale {0}	  doit être égal ou supérieur à 0", System.Environment.NewLine);
-		languages.english.verticalSpeedErrorMsg = string.Format("Value of the vertical speed parameter {0} must be equal to or greater than 0", System.Environment.NewLine);
+		languages.french.takeOffTitle = "Paramètres de décollage:";
+		languages.english.takeOffTitle = "Take-off parameters:";
+		languages.french.takeOffTitleSpeed = "Vitesses";
+		languages.english.takeOffTitleSpeed = "Speeds";
+		languages.french.takeOffConditionNoGravity = "Sans gravité";
+		languages.english.takeOffConditionNoGravity = "No gravity";
+		languages.french.takeOffConditionTrampolining = "Trampoline";
+		languages.english.takeOffConditionTrampolining = "Trampolining";
+		languages.french.takeOffConditionTumbling = "Chute";
+		languages.english.takeOffConditionTumbling = "Tumbling";
+		languages.french.takeOffConditionDiving1m = "Plongeon 1 m";
+		languages.english.takeOffConditionDiving1m = "Diving 1 m";
+		languages.french.takeOffConditionDiving3m = "Plongeon 3 m";
+		languages.english.takeOffConditionDiving3m = "Diving 3 m";
+		languages.french.takeOffConditionDiving5m = "Plongeon 5 m";
+		languages.english.takeOffConditionDiving5m = "Diving 5 m";
+		languages.french.takeOffConditionDiving10m = "Plongeon 10 m";
+		languages.english.takeOffConditionDiving10m = "Diving 10 m";
+		languages.french.takeOffConditionHighBar = "Barre fixe";
+		languages.english.takeOffConditionHighBar = "High bar";
+		languages.french.takeOffConditionUnevenBars = "Barres asymétriques";
+		languages.english.takeOffConditionUnevenBars = "Uneven Bars";
+		languages.french.takeOffConditionVault = "Saut à la perche";
+		languages.english.takeOffConditionVault = "Vault";
+		languages.french.takeOffInitialRotation = "Rotation initiale (°)";
+		languages.english.takeOffInitialRotation = "Initial rotation (°)";
+		languages.french.takeOffTilt = "Inclinaison (°)";
+		languages.english.takeOffTilt = "Tilt (°)";
+		languages.french.takeOffHorizontal = "Horizontale (m/s)";
+		languages.english.takeOffHorizontal = "Horizontal (m/s)";
+		languages.french.takeOffVertical = "Verticale (m/s)";
+		languages.english.takeOffVertical = "Vertical (m/s)";
+		languages.french.takeOffSomersault = "Saut périlleux (rév./s)";
+		languages.english.takeOffSomersault = "Somersault (rev./s)";
+		languages.french.takeOffTwist = "Rotation (rév./s)";
+		languages.english.takeOffTwist = "Twist (rev./s)";
+
+		languages.french.animatorPlaySpeedFast = "Vit. rapide";
+		languages.english.animatorPlaySpeedFast = "Fast speed";
+		languages.french.animatorPlaySpeedNormal = "Vit. normale";
+		languages.english.animatorPlaySpeedNormal = "Normal speed";
+		languages.french.animatorPlaySpeedSlow = "Vit. lente";
+		languages.english.animatorPlaySpeedSlow = "Slow speed";
+
+		languages.french.errorMsgVerticalSpeed = string.Format("Valeur du paramètre Vitesse verticale {0}	  doit être égal ou supérieur à 0", System.Environment.NewLine);
+		languages.english.errorMsgVerticalSpeed = string.Format("Value of the vertical speed parameter {0} must be equal to or greater than 0", System.Environment.NewLine);
+
+		languages.french.displayMsgStartSimulation = "Visualisation démarrée (Simulation)";
+		languages.english.displayMsgStartSimulation = "Visualisation started (Simulation)";
+		languages.french.displayMsgDtValue = "Paramètre dt (durée d'un frame)";
+		languages.english.displayMsgDtValue = "Parameter dt (frame duration)";
+		languages.french.displayMsgSimulationTime = "Temps de la simulation";
+		languages.english.displayMsgSimulationTime = "Simulation time";
+		languages.french.displayMsgContactGround = "!! ATTENTION: Contact avec le sol à";
+		languages.english.displayMsgContactGround = "!! WARNING: Contact with the ground at";
+		languages.french.displayMsgNumberSomersaults = "Nombre de périlleux";
+		languages.english.displayMsgNumberSomersaults = "Number of Somersaults";
+		languages.french.displayMsgNumberTwists = "Nombre de torsions";
+		languages.english.displayMsgNumberTwists = "Number of Twists";
+		languages.french.displayMsgFinalTwist = "Torsion final (valeur de fin)";
+		languages.english.displayMsgFinalTwist = "Final twist (end value)";
+		languages.french.displayMsgMaxTilt = "Inclinaison maximum";
+		languages.english.displayMsgMaxTilt = "Tilt max";
+		languages.french.displayMsgFinalTilt = "Inclinaison final (valeur de fin)";
+		languages.english.displayMsgFinalTilt = "Final tilt (end value)";
+		languages.french.displayMsgSimulationDuration = "Durée réelle de la simulation";
+		languages.english.displayMsgSimulationDuration = "Simulation real duration";
+		languages.french.displayMsgEndSimulation = "Simulation terminée";
+		languages.english.displayMsgEndSimulation = "Simulation completed";
+
 		languages.Used = languages.french;
 	}
 

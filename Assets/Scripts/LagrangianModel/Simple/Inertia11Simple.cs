@@ -1,0 +1,187 @@
+﻿using System;
+
+// =================================================================================================================================================================
+/// <summary> Classe Initia11Simple pour le modèle lagrangien Simple. </summary>
+
+public class Inertia11Simple
+{
+	// =================================================================================================================================================================
+	/// <summary> Fonction Inertia11 pour le modèle lagrangien Simple. </summary>
+
+	public double[,] Inertia11(double[] q)
+	{
+		double[] M11 = new double[36];
+		double t1 = Math.Cos(q[10]);
+		double t2 = Math.Sin(q[0]);
+		double t3 = Math.Cos(q[1]);
+		double t4 = Math.Sqrt(3);
+		double t5 = t3 * t4;
+		double t7 = Math.Sin(q[1]);
+		double t9 = 0.3770863500e-1 * t5 - 0.1358694235e1 * t7;
+		double t10 = t2 * t9;
+		double t11 = Math.Cos(q[0]);
+		double t12 = t7 * t4;
+		double t15 = -0.418970917e1 - 0.3770863500e-1 * t12 - 0.1358694235e1 * t3;
+		double t16 = t11 * t15;
+		double t19 = 0.3587298000e-1 * t5 - 0.1315599980e1 * t7;
+		double t20 = t2 * t19;
+		double t23 = -0.414769126e1 - 0.3587298000e-1 * t12 - 0.1315599980e1 * t3;
+		double t24 = t11 * t23;
+		double t25 = Math.Cos(q[2]);
+		double t26 = Math.Cos(q[3]);
+		double t27 = t25 * t26;
+		double t29 = Math.Cos(q[4]);
+		double t30 = Math.Cos(q[5]);
+		double t31 = t29 * t30;
+		double t33 = 0.1690096659e2 + t10 + t16 + t20 + t24 - 0.121304235e1 * t27 - 0.125848136e1 * t31;
+		double t34 = t1 * t33;
+		double t35 = Math.Sin(q[10]);
+		double t36 = Math.Cos(q[11]);
+		double t37 = Math.Sin(q[3]);
+		double t39 = Math.Sin(q[5]);
+		double t41 = 0.44250e-1 - 0.121304235e1 * t37 + 0.125848136e1 * t39;
+		double t42 = t36 * t41;
+		double t43 = Math.Sin(q[11]);
+		double t44 = t11 * t9;
+		double t45 = t2 * t15;
+		double t46 = t11 * t19;
+		double t47 = t2 * t23;
+		double t48 = Math.Sin(q[2]);
+		double t49 = t48 * t26;
+		double t51 = Math.Sin(q[4]);
+		double t52 = t51 * t30;
+		double t54 = t44 - t45 + t46 - t47 + 0.121304235e1 * t49 + 0.125848136e1 * t52;
+		double t56 = -t42 + t43 * t54;
+		double t58 = t34 + t35 * t56;
+		double t60 = t43 * t41;
+		double t61 = -t36 * t54 - t60;
+		double t62 = t1 * t61;
+		double t63 = Math.Cos(q[9]);
+		double t65 = t34 + t35 * t56;
+		double t67 = Math.Sin(q[9]);
+		double t69 = -t36 * t54 - t60;
+		double t71 = t63 * t65 + t67 * t69;
+		double t74 = -t35 * t33 + t1 * t56;
+		double t75 = t67 * t74;
+		double t77 = -t43 * t54 + t42;
+		double t81 = t63 * t77 - t67 * t35 * t61;
+		double t84 = -t67 * t65 + t63 * t69;
+		double t85 = t63 * t74;
+		double t89 = -t67 * t77 - t63 * t35 * t61;
+		double t92 = t26 * t26;
+		double t94 = t37 * t37;
+		double t96 = 0.1162094571e1 * t27;
+		double t97 = t30 * t30;
+		double t99 = t39 * t39;
+		double t101 = 0.1205625143e1 * t31;
+		double t102 = 0.1188570208e2 + 0.6298586244e-1 * t12 + 0.2289195848e1 * t3 + 0.4994459548e0 * t92 + 0.523e-2 * t94 - t96 + 0.4937392784e0 * t97 + 0.548e-2 * t99 - t101;
+		double t108 = t26 * t37;
+		double t112 = t30 * t39;
+		double t116 = 0.160e0 * t44 - 0.160e0 * t45 - 0.160e0 * t46 + 0.160e0 * t47 + 0.4942159548e0 * t108 * t48 + 0.2244128348e0 * t49 - 0.4882592784e0 * t112 * t51 - 0.2328190516e0 * t52;
+		double t117 = t116 * t43;
+		double t120 = t116 * t36;
+		double t122 = 0.1860923093e-1 * t12;
+		double t123 = 0.4697089465e0 * t3 + t122;
+		double t125 = 0.1860923093e-1 * t5;
+		double t127 = t125 + 0.1433229459e-1 * t7;
+		double t131 = 0.1514887214e1 + t3 * t123 + t7 * t127 + 0.3227859156e-1 * t12 + 0.1163042265e1 * t3;
+		double t134 = -0.4697089465e0 * t7 + t125;
+		double t137 = -t122 + 0.1433229459e-1 * t3;
+		double t139 = 0.1613929578e-1 * t5;
+		double t140 = 0.5815211326e0 * t7;
+		double t141 = t3 * t134 + t7 * t137 + t139 - t140;
+		double t143 = t131 * t11 - t141 * t2;
+		double t147 = -t7 * t123 + t3 * t127 + t139 - t140;
+		double t151 = 0.3247e-1 - t7 * t134 + t3 * t137;
+		double t153 = t147 * t11 - t151 * t2;
+		double t156 = 0.1762931462e-1 * t12;
+		double t157 = 0.4532684154e0 * t3 + t156;
+		double t159 = 0.1762931462e-1 * t5;
+		double t161 = t159 + 0.1334561027e-1 * t7;
+		double t165 = 0.1484133655e1 + t3 * t157 + t7 * t161 + 0.3070727088e-1 * t12 + 0.1126153583e1 * t3;
+		double t168 = -0.4532684154e0 * t7 + t159;
+		double t171 = -t156 + 0.1334561027e-1 * t3;
+		double t173 = 0.1535363544e-1 * t5;
+		double t174 = 0.5630767914e0 * t7;
+		double t175 = t3 * t168 + t7 * t171 + t173 - t174;
+		double t177 = t165 * t11 - t175 * t2;
+		double t181 = -t7 * t157 + t3 * t161 + t173 - t174;
+		double t185 = 0.3447e-1 - t7 * t168 + t3 * t171;
+		double t187 = t181 * t11 - t185 * t2;
+		double t189 = t25 * t25;
+		double t191 = t48 * t48;
+		double t194 = 0.4994459548e0 * t94 + 0.523e-2 * t92;
+		double t196 = 0.4488256696e0 * t37;
+		double t197 = t29 * t29;
+		double t199 = t51 * t51;
+		double t202 = 0.4937392784e0 * t99 + 0.548e-2 * t97;
+		double t204 = 0.4656381032e0 * t39;
+		double t205 = 0.9173411145e1 + t11 * t143 - t2 * t153 + t11 * t177 - t2 * t187 + 0.4993659548e0 * t189 + t191 * t194 - t96 + t196 + 0.4935792784e0 * t197 + t199 * t202 - t101 + t204;
+		double t223 = 0.160e0 * t10 + 0.160e0 * t16 - 0.160e0 * t20 - 0.160e0 * t24 - 0.4942159548e0 * t108 * t25 - 0.17900230e-1 + 0.5810472857e0 * t37 - 0.2244128348e0 * t27 + 0.4882592784e0 * t112 * t29 - 0.6028125714e0 * t39 + 0.2328190516e0 * t31;
+		double t224 = t223 * t36;
+		double t227 = t131 * t2 + t141 * t11;
+		double t231 = t147 * t2 + t151 * t11;
+		double t235 = t165 * t2 + t175 * t11;
+		double t239 = t181 * t2 + t185 * t11;
+		double t242 = 0.4993659548e0 * t25 * t48;
+		double t244 = t48 * t194 * t25;
+		double t245 = 0.5810472857e0 * t49;
+		double t247 = 0.4935792784e0 * t29 * t51;
+		double t249 = t51 * t202 * t29;
+		double t250 = 0.6028125714e0 * t52;
+		double t251 = t11 * t227 - t2 * t231 + t11 * t235 - t2 * t239 + t242 - t244 - t245 + t247 - t249 - t250;
+		double t253 = t224 - t43 * t251;
+		double t261 = t2 * t143 + t11 * t153 + t2 * t177 + t11 * t187 + t242 - t244 - t245 + t247 - t249 - t250;
+		double t273 = 0.1424965200e1 + t2 * t227 + t11 * t231 + t2 * t235 + t11 * t239 + 0.4993659548e0 * t191 + t194 * t189 + t196 + 0.4935792784e0 * t199 + t202 * t197 + t204;
+		double t274 = t35 * t273;
+		double t279 = t102 * t43 + t120;
+		double t282 = t117 + t205 * t36;
+		double t286 = t223 * t43;
+		double t290 = -t1 * (t36 * t279 - t43 * t282) - t35 * (t286 + t261 * t36);
+		double t292 = -t253 * t1 - t274;
+		double t297 = t286 + t36 * t251;
+		M11[0] = 0.75316e2;
+		M11[1] = 0.0e0;
+		M11[2] = 0.0e0;
+		M11[3] = 0.0e0;
+		M11[4] = t58;
+		M11[5] = t62;
+		M11[6] = 0.0e0;
+		M11[7] = 0.75316e2;
+		M11[8] = 0.0e0;
+		M11[9] = t71;
+		M11[10] = t75;
+		M11[11] = t81;
+		M11[12] = 0.0e0;
+		M11[13] = 0.0e0;
+		M11[14] = 0.75316e2;
+		M11[15] = t84;
+		M11[16] = t85;
+		M11[17] = t89;
+		M11[18] = 0.0e0;
+		M11[19] = t71;
+		M11[20] = t84;
+		M11[21] = t1 * ((t36 * (t102 * t36 - t117) - t43 * (t120 - t205 * t43)) * t1 + t253 * t35) + t35 * ((t224 - t261 * t43) * t1 + t274);
+		M11[22] = t290;
+		M11[23] = t292;
+		M11[24] = t58;
+		M11[25] = t75;
+		M11[26] = t85;
+		M11[27] = t290;
+		M11[28] = t43 * t279 + t36 * t282;
+		M11[29] = t297;
+		M11[30] = t62;
+		M11[31] = t81;
+		M11[32] = t89;
+		M11[33] = t292;
+		M11[34] = t297;
+		M11[35] = t273;
+
+		double[,] result = new double[6, 6];
+		for (int i = 0; i < 6; i++)         // Colonne
+			for (int j = 0; j < 6; j++)     // Rangée
+				result[j, i] = M11[i * 6 + j];
+
+		return result;
+	}
+}

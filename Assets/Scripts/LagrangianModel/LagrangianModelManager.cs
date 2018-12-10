@@ -42,10 +42,10 @@ public abstract class LagrangianModelManager
 	}
 }
 
-	// =================================================================================================================================================================
-	/// <summary> Paramètres et fonctions utilisés pour le modèle de Langrangien Simple. </summary>
+// =================================================================================================================================================================
+/// <summary> Paramètres et fonctions utilisés pour le modèle de Langrangien Simple. </summary>
 
-	public class LagrangianModelSimple : LagrangianModelManager
+public class LagrangianModelSimple : LagrangianModelManager
 {
 	// =================================================================================================================================================================
 	/// <summary> Initialisation de la structure des paramètres pour le modèle de Langrangien Simple. </summary>
@@ -88,10 +88,10 @@ public abstract class LagrangianModelManager
 	}
 }
 
-// =================================================================================================================================================================
-/// <summary> Paramètres et fonctions utilisés pour le modèle de Langrangien Sasha23ddl. </summary>
+	// =================================================================================================================================================================
+	/// <summary> Paramètres et fonctions utilisés pour le modèle de Langrangien Sasha23ddl. </summary>
 
-public class LagrangianModelSasha23ddl : LagrangianModelManager
+	public class LagrangianModelSasha23ddl : LagrangianModelManager
 {
 	// =================================================================================================================================================================
 	/// <summary> Initialisation de la structure des paramètres pour le modèle de Langrangien Sasha23ddl. </summary>

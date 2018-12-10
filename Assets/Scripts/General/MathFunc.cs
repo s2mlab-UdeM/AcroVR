@@ -8,13 +8,13 @@ public class MathFunc
 	// =================================================================================================================================================================
 	/// <summary> Déterminer la valeur de la fonction spline cubique spécifiée, aux temps spécifiés (similaire à la fonction fnval de MatLab). </summary>
 
-	public float Fnval(float t, float[] breaks, float[,] coefs)
+	public static float Fnval(float t, float[] breaks, float[,] coefs)
 	{
 		float[] value = Fnval(new float[1] { t }, breaks, coefs);
 		return value[0];
 	}
 
-	public float[] Fnval(float[] t, float[] breaks, float[,] coefs)
+	public static float[] Fnval(float[] t, float[] breaks, float[,] coefs)
 	{
 		float[] value = new float[t.Length];
 
@@ -48,7 +48,7 @@ public class MathFunc
 	// =================================================================================================================================================================
 	/// <summary> Déterminer la valeur, à un temps T, en utilisant une interpolation de forme Quintic. </summary>
 
-	public void Quintic(float t, float ti, float tj, float qi, float qj, out float p, out float v, out float a)
+	public static void Quintic(float t, float ti, float tj, float qi, float qj, out float p, out float v, out float a)
 	{
 		if (t < ti)
 			t = ti;
@@ -73,7 +73,7 @@ public class MathFunc
 	/// Retourne: -1 si vect inférieur à 0, 0 si vect égal 0, 1 si vect supérieur à 0
 	/// </summary>
 
-	public int[] Sign(int[] vect)
+	public static int[] Sign(int[] vect)
 	{
 		int[] vectS = new int[vect.Length];
 		for (int i = 0; i < vect.Length; i++)
@@ -85,10 +85,48 @@ public class MathFunc
 		return vectS;
 	}
 
+
+	// =================================================================================================================================================================
+	/// <summary> Copié le contenu d'une matrice dans une nouvelle matrice. </summary>
+
+	public static float[] MatrixCopy(float[] matrix)
+	{
+		float[] newMatrix = new float[matrix.GetUpperBound(0) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			newMatrix[i] = matrix[i];
+		return newMatrix;
+	}
+
+	public static float[] MatrixCopy(double[] matrix)
+	{
+		float[] newMatrix = new float[matrix.GetUpperBound(0) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			newMatrix[i] = (float)matrix[i];
+		return newMatrix;
+	}
+
+	public static float[,] MatrixCopy(float[,] matrix)
+	{
+		float[,] newMatrix = new float[matrix.GetUpperBound(0) + 1, matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			for (int j = 0; j <= matrix.GetUpperBound(1); j++)
+				newMatrix[i, j] = matrix[i, j];
+		return newMatrix;
+	}
+
+	public static float[,] MatrixCopy(double[,] matrix)
+	{
+		float[,] newMatrix = new float[matrix.GetUpperBound(0) + 1, matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			for (int j = 0; j <= matrix.GetUpperBound(1); j++)
+				newMatrix[i, j] = (float)matrix[i, j];
+		return newMatrix;
+	}
+
 	// =================================================================================================================================================================
 	/// <summary> Multiplication d'une matrice par une autre matrice. </summary>
 
-	public float[,] MultiplyMatrix(float[,] Matrix1, float[,] Matrix2)
+	public static float[,] MatrixMultiply(float[,] Matrix1, float[,] Matrix2)
 	{
 		int r1 = Matrix1.GetLength(0);
 		int c1 = Matrix1.GetLength(1);
@@ -108,5 +146,115 @@ public class MathFunc
 				result[r, c] = s;
 			}
 		return result;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Extraire une rangée complète d'une matrice. </summary>
+
+	public static float[] MatrixGetRow(float[,] matrix, int row)
+	{
+		float[] vector = new float[matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(1); i++)
+			vector[i] = matrix[row, i];
+		return vector;
+	}
+
+	public static float[] MatrixGetRow(double[,] matrix, int row)
+	{
+		float[] vector = new float[matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(1); i++)
+			vector[i] = (float)matrix[row, i];
+		return vector;
+	}
+
+	public static double[] MatrixGetRowD(float[,] matrix, int row)
+	{
+		double[] vector = new double[matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(1); i++)
+			vector[i] = matrix[row, i];
+		return vector;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Extraire une colonne complète d'une matrice. </summary>
+
+	public static float[] MatrixGetColumn(float[,] matrix, int column)
+	{
+		float[] vector = new float[matrix.GetUpperBound(0) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			vector[i] = matrix[i, column];
+		return vector;
+	}
+
+	public static float[] MatrixGetColumn(double[,] matrix, int column)
+	{
+		float[] vector = new float[matrix.GetUpperBound(0) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			vector[i] = (float)matrix[i, column];
+		return vector;
+	}
+
+	public static double[] MatrixGetColumnD(float[,] matrix, int column)
+	{
+		double[] vector = new double[matrix.GetUpperBound(0) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			vector[i] = matrix[i, column];
+		return vector;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> This is C source code for an implementation of one-dimensional phase unwrapping. It should produce results identical to the function in Matlab. </summary>
+	// Ref: http://homepages.cae.wisc.edu/~brodskye/mr/phaseunwrap/
+
+	public static float[] unwrap(float[] p)         // ported from matlab (Dec 2002)
+	{
+		int n = p.Length;
+		float[] dp = new float[n];
+		float[] dps = new float[n];
+		float[] dp_corr = new float[n];
+		float[] cumsum = new float[n];
+		float[] pp = new float[n];
+		float cutoff = Mathf.PI;               /* default value in matlab */
+		int j;
+
+		// incremental phase variation 
+		// MATLAB: dp = diff(p, 1, 1);
+		for (j = 0; j < n - 1; j++)
+			dp[j] = p[j + 1] - p[j];
+
+		// equivalent phase variation in [-pi, pi]
+		// MATLAB: dps = mod(dp+dp,2*pi) - pi;
+		for (j = 0; j < n - 1; j++)
+			dps[j] = (dp[j] + Mathf.PI) - Mathf.Floor((dp[j] + Mathf.PI) / (2 * Mathf.PI)) * (2 * Mathf.PI) - Mathf.PI;
+
+		// preserve variation sign for +pi vs. -pi
+		// MATLAB: dps(dps==pi & dp>0,:) = pi;
+		for (j = 0; j < n - 1; j++)
+			if ((dps[j] == -Mathf.PI) && (dp[j] > 0))
+				dps[j] = Mathf.PI;
+
+		// incremental phase correction
+		// MATLAB: dp_corr = dps - dp;
+		for (j = 0; j < n - 1; j++)
+			dp_corr[j] = dps[j] - dp[j];
+
+		// Ignore correction when incremental variation is smaller than cutoff
+		// MATLAB: dp_corr(abs(dp)<cutoff,:) = 0;
+		for (j = 0; j < n - 1; j++)
+			if (Mathf.Abs(dp[j]) < cutoff)
+				dp_corr[j] = 0;
+
+		// Find cumulative sum of deltas
+		// MATLAB: cumsum = cumsum(dp_corr, 1);
+		cumsum[0] = dp_corr[0];
+		for (j = 1; j < n - 1; j++)
+			cumsum[j] = cumsum[j - 1] + dp_corr[j];
+
+		// Integrate corrections and add to P to produce smoothed phase values
+		// MATLAB: p(2:m,:) = p(2:m,:) + cumsum(dp_corr,1);
+		for (j = 1; j < n; j++)
+			pp[j] = p[j] + cumsum[j - 1];
+
+		return pp;
 	}
 }

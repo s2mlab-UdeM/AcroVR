@@ -11,6 +11,10 @@ public class MovementF : MonoBehaviour
 	public Text textFileName;
 
 	public Dropdown dropDownDDLNames;
+	public Dropdown dropDownInterpolation;
+	public Dropdown dropDownNumIntervals;
+	public Button buttonSave;
+	public Image buttonSaveImage;
 
 	public Dropdown dropDownCondition;
 	public InputField inputFieldInitialRotation;
@@ -25,6 +29,12 @@ public class MovementF : MonoBehaviour
 
 	void Start ()
 	{
+		dropDownDDLNames.interactable = false;
+		dropDownInterpolation.interactable = false;
+		dropDownNumIntervals.interactable = false;
+		buttonSave.interactable = false;
+		buttonSaveImage.color = Color.gray;
+
 		dropDownCondition.interactable = false;
 		inputFieldInitialRotation.interactable = false;
 		inputFieldTilt.interactable = false;
@@ -41,17 +51,17 @@ public class MovementF : MonoBehaviour
 	{
 		// Sélection d'un fichier de données
 
-		//System.Windows.Forms.OpenFileDialog openDialog = new System.Windows.Forms.OpenFileDialog();
-		//openDialog.InitialDirectory = @"c:\Devel\AcroVR\Données";
-		//openDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-		//openDialog.FilterIndex = 1;
-		//if (openDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-		//	return;
+		System.Windows.Forms.OpenFileDialog openDialog = new System.Windows.Forms.OpenFileDialog();
+		openDialog.InitialDirectory = @"c:\Devel\AcroVR\Données";
+		openDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+		openDialog.FilterIndex = 1;
+		if (openDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+			return;
 
 		// Lecture du fichier de données
 
-		//DataFileManager.Instance.ReadDataFiles(openDialog.FileName);
-		DataFileManager.Instance.ReadDataFiles(@"C:\Devel\AcroVR\Données\2.3.Saut_Rosu.txt");
+		DataFileManager.Instance.ReadDataFiles(openDialog.FileName);
+		//DataFileManager.Instance.ReadDataFiles(@"C:\Devel\AcroVR\Données\2.3.Saut_Rosu.txt");			// Utiliser en mode dévéloppement du logiciel seulement
 
 		// Définir un nom racourci pour avoir accès à la structure Joints
 
@@ -174,11 +184,24 @@ public class MovementF : MonoBehaviour
 
 		// Afficher la silhouette au temps t = 0
 
-		AnimationF.Instance.Play();
+		AnimationF.Instance.PlayReset();
+		AnimationF.Instance.Play(q0);
 
 		// Activer les contrôles disponible à l'utilisateur à l'écran
 
-		Main.Instance.EnableDisableUserControls(true);
+		dropDownDDLNames.interactable = true;
+		//dropDownInterpolation.interactable = true;
+		//dropDownNumIntervals.interactable = true;
+		//buttonSave.interactable = true;
+		//buttonSaveImage.color = Color.white;
+
+		//AnimationF.Instance.dropDownPlayMode.interactable = true;
+		//AnimationF.Instance.dropDownPlayView.interactable = true;
+		AnimationF.Instance.buttonPlay.interactable = true;
+		AnimationF.Instance.buttonPlayImage.color = Color.white;
+		//AnimationF.Instance.dropDownPlaySpeed.interactable = true;
+		//AnimationF.Instance.buttonGraph.interactable = true;
+		//AnimationF.Instance.buttonGraphImage.color = Color.white;
 
 		Debug.Log(string.Format("Condition = {0}, Interpolation pour noeud #0 = {1}, LagrangianName = {2}", joints.condition, joints.nodes[0].interpolation.type, joints.lagrangianModelName));
 	}

@@ -14,6 +14,7 @@ public class GraphManager : MonoBehaviour
 	float q0MaxCurve0;
 	string[] dataCategories;
 	string[] nodesCategories;
+	string cursorCategorie;
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
@@ -24,6 +25,7 @@ public class GraphManager : MonoBehaviour
 		graph = GetComponent<GraphChart>();
 		dataCategories = new string[2] { "Data1", "Data2" };
 		nodesCategories = new string[2] { "Nodes1", "Nodes2" };
+		cursorCategorie = "Cursor";
 	}
 
 	// =================================================================================================================================================================
@@ -67,7 +69,7 @@ public class GraphManager : MonoBehaviour
 
 		float timeBorder = (t0[t0.Length - 1] - t0[0]) * 0.01f;
 		graph.DataSource.HorizontalViewOrigin = t0[0] - timeBorder;
-		graph.DataSource.HorizontalViewSize = t0[t0.Length -1] + timeBorder - graph.DataSource.HorizontalViewOrigin;
+		graph.DataSource.HorizontalViewSize = t0[t0.Length - 1] + timeBorder - graph.DataSource.HorizontalViewOrigin;
 		if (curve <= 0)
 		{
 			q0MinCurve0 = q0Min;
@@ -80,6 +82,24 @@ public class GraphManager : MonoBehaviour
 		}
 		graph.DataSource.VerticalViewOrigin = Mathf.Round(q0Min - 30);
 		graph.DataSource.VerticalViewSize = Mathf.Round(q0Max + 30) - graph.DataSource.VerticalViewOrigin;
+		graph.DataSource.EndBatch();
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Afficher le curseur qui indique le temps. </summary>
+
+	public void DisplayCursor(float t)
+	{
+		if (graph == null) return;
+		graph.DataSource.StartBatch();
+
+		// Effacer le curseur précédent
+
+		graph.DataSource.ClearCategory(cursorCategorie);
+
+		graph.DataSource.AddPointToCategory(cursorCategorie, t, -360);
+		graph.DataSource.AddPointToCategory(cursorCategorie, t, 360);
+
 		graph.DataSource.EndBatch();
 	}
 }

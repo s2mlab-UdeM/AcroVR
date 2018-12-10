@@ -29,10 +29,6 @@ public class Trajectory
 			qddotd[i] = 0;
 		}
 
-		// Initialisation de la classe contenant le calcul des interpolations de type Quintic
-
-		MathFunc mathFunc = new MathFunc();
-
 		// Boucle sur les DDLs à traiter
 
 		for (int i = 0; i < n; i++)
@@ -43,7 +39,7 @@ public class Trajectory
 				case MainParameters.InterpolationType.Quintic:
 					int j = 1;
 					while (j < nodes.T.Length - 1 && t > nodes.T[j]) j++;
-					mathFunc.Quintic(t, nodes.T[j - 1], nodes.T[j], nodes.Q[j - 1], nodes.Q[j], out qd[i], out qdotd[i], out qddotd[i]);
+					MathFunc.Quintic(t, nodes.T[j - 1], nodes.T[j], nodes.Q[j - 1], nodes.Q[j], out qd[i], out qdotd[i], out qddotd[i]);
 					break;
 				case MainParameters.InterpolationType.CubicSpline:
 					break;

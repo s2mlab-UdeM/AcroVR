@@ -46,7 +46,7 @@ public class TakeOffParamF : MonoBehaviour
 			if (value < 0)
 			{
 				panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", joints.takeOffParam.verticalSpeed);
-				panelMessage.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.verticalSpeedErrorMsg;
+				panelMessage.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgVerticalSpeed;
 				panelMessage.SetActive(true);
 			}
 			else
