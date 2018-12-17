@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 public class MovementF : MonoBehaviour
 {
+	public static MovementF Instance;
 	public Text textFileName;
 
 	public Dropdown dropDownDDLNames;
@@ -29,6 +30,8 @@ public class MovementF : MonoBehaviour
 
 	void Start ()
 	{
+		Instance = this;
+
 		dropDownDDLNames.interactable = false;
 		dropDownInterpolation.interactable = false;
 		dropDownNumIntervals.interactable = false;
@@ -199,7 +202,7 @@ public class MovementF : MonoBehaviour
 		//AnimationF.Instance.dropDownPlayView.interactable = true;
 		AnimationF.Instance.buttonPlay.interactable = true;
 		AnimationF.Instance.buttonPlayImage.color = Color.white;
-		//AnimationF.Instance.dropDownPlaySpeed.interactable = true;
+		AnimationF.Instance.dropDownPlaySpeed.interactable = true;
 		//AnimationF.Instance.buttonGraph.interactable = true;
 		//AnimationF.Instance.buttonGraphImage.color = Color.white;
 

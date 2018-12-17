@@ -7,7 +7,7 @@ using Microsoft.Research.Oslo;
 
 public class DoSimulation
 {
-	public DoSimulation()
+	public DoSimulation(out float[,] qOut)
 	{
 		// Affichage d'un message dans la boîte des messages
 
@@ -97,8 +97,12 @@ public class DoSimulation
 		Options options = new Options();
 		options.InitialStep = joints.lagrangianModel.dt;
 
-		var sol = Ode.RK547M(0, joints.duration, new Vector(x0), ShortDynamics, options);
-		var points = sol.SolveFromToStep(0, joints.duration, joints.lagrangianModel.dt).ToArray();
+		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("x0.dimension = {0}{1}", x0.Length, System.Environment.NewLine));			// Problème calcul ODE
+		//for (int i = 0; i < x0.GetUpperBound(0) + 1; i++)
+		//	System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("i: {0:00}, x0 = {1:0.0000}{2}", i, x0[i], System.Environment.NewLine));
+
+		var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(x0), ShortDynamics, options);
+		var points = sol.SolveFromToStep(0, joints.duration + joints.lagrangianModel.dt, joints.lagrangianModel.dt).ToArray();
 
 		double[] t = new double[points.GetUpperBound(0) + 1];
 		double[,] q = new double[joints.lagrangianModel.nDDL, points.GetUpperBound(0) + 1];
@@ -116,10 +120,22 @@ public class DoSimulation
 		}
 		#endregion
 
-		int tIndex = q.GetUpperBound(1) + 1;
+		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("dimension: points = {0}, X = {1}{2}", points.Length, points[0].X.Length, System.Environment.NewLine));	// Problème calcul ODE
+		//for (int i = 0; i < points.Length; i++)
+		//	System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("T: {0:00} = {1:0.0000}{2}", i, points[i].T, System.Environment.NewLine));
+		//for (int i = 0; i < points.Length; i++)
+		//{
+		//	System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}X: {1:00} = ", System.Environment.NewLine, i));
+		//	for (int j = 0; j < points[0].X.Length; j++)
+		//		System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0:0.0000}, ", points[i].X[j], System.Environment.NewLine));
+		//}
+		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
+
+		int tIndex = 0;
 		MainParameters.Instance.joints.tc = 0;
 		for (int i = 0; i <= q.GetUpperBound(1); i++)
 		{
+			tIndex++;
 			double[] qq = new double[joints.lagrangianModel.nDDL];
 			for (int j = 0; j < joints.lagrangianModel.nDDL; j++)
 				qq[j] = q[j, i];
@@ -128,20 +144,20 @@ public class DoSimulation
 			{
 				MainParameters.Instance.joints.tc = (float)t[i];
 				AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgContactGround, MainParameters.Instance.joints.tc));
-				tIndex = i + 1;
 				break;
 			}
 		}
+		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("tIndex = {0}, condition = {1}{2}", tIndex, joints.condition, System.Environment.NewLine));		// Problème calcul ODE
 
 		MainParameters.Instance.joints.t = new float[tIndex];
-		MainParameters.Instance.joints.q = new float[joints.lagrangianModel.nDDL, tIndex];
+		qOut = new float[joints.lagrangianModel.nDDL, tIndex];
 		float[,] qdot1 = new float[joints.lagrangianModel.nDDL, tIndex];
 		for (int i = 0; i < tIndex; i++)
 		{
 			MainParameters.Instance.joints.t[i] = (float)t[i];
 			for (int j = 0; j < joints.lagrangianModel.nDDL; j++)
 			{
-				MainParameters.Instance.joints.q[j, i] = (float)q[j, i];
+				qOut[j, i] = (float)q[j, i];
 				qdot1[j, i] = (float)qdot[j, i];
 			}
 		}
@@ -153,7 +169,7 @@ public class DoSimulation
 		{
 			float[] rotCol = new float[tIndex];
 			float[] rotdotCol = new float[tIndex];
-			rotCol = MathFunc.unwrap(MathFunc.MatrixGetRow(MainParameters.Instance.joints.q, rotation[i] - 1));
+			rotCol = MathFunc.unwrap(MathFunc.MatrixGetRow(qOut, rotation[i] - 1));
 			rotdotCol = MathFunc.unwrap(MathFunc.MatrixGetRow(qdot1, rotation[i] - 1));
 			for (int j = 0; j < tIndex; j++)
 			{

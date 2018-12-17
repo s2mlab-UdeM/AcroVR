@@ -34,7 +34,12 @@ public class AnimationF : MonoBehaviour
 	float tagYMax = 0;
 	float tagZMin = 0;
 	float factorTags2Screen = 1;
-	float elapsedTime = 0;
+
+	float timeElapsed = 0;
+	float timeFrame = 0;
+	float timeStarted = 0;
+	float factorPlaySpeed = 1;
+
 	float[,] q;
 	double[] qf;
 
@@ -67,17 +72,20 @@ public class AnimationF : MonoBehaviour
 		// Affichage de la silhouette à chaque frame (vu qu'on utilise des données déjà enregistrées, la simulation sera plus lente qu'en réalité, car l'exécution d'un
 		// frame d'Unity (via routine Update) est plus lente que un frame des données enregistrées.
 
-		if (frameN < MainParameters.Instance.joints.numberFrames)
+		if (frameN <= 0) timeStarted = Time.time;
+		if (Time.time - timeStarted >= (timeFrame * frameN) * factorPlaySpeed)
 		{
-			if (frameN <= 0) elapsedTime = Time.time;
-			PlayOneFrame();
-			frameN++;
-		}
-		else
-		{
-			elapsedTime = Time.time - elapsedTime;
-			animateON = false;
-			PlayEnd();
+			if (frameN < MainParameters.Instance.joints.numberFrames)
+			{
+				PlayOneFrame();
+				frameN++;
+			}
+			else
+			{
+				timeElapsed = Time.time - timeStarted;
+				animateON = false;
+				PlayEnd();
+			}
 		}
 	}
 
@@ -86,6 +94,26 @@ public class AnimationF : MonoBehaviour
 
 	public void ButtonPlay()
 	{
+		// Lecture des paramètres de décolage
+
+		MainParameters.Instance.joints.condition = MovementF.Instance.dropDownCondition.value;
+		MainParameters.Instance.joints.takeOffParam.rotation = float.Parse(MovementF.Instance.inputFieldInitialRotation.text);
+		MainParameters.Instance.joints.takeOffParam.tilt = float.Parse(MovementF.Instance.inputFieldTilt.text);
+		MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed = float.Parse(MovementF.Instance.inputFieldHorizontalSpeed.text);
+		MainParameters.Instance.joints.takeOffParam.verticalSpeed = float.Parse(MovementF.Instance.inputFieldVerticalSpeed.text);
+		MainParameters.Instance.joints.takeOffParam.somersaultSpeed = float.Parse(MovementF.Instance.inputFieldSomersaultSpeed.text);
+		MainParameters.Instance.joints.takeOffParam.twistSpeed = float.Parse(MovementF.Instance.inputFieldTwistSpeed.text);
+
+		// Lecture de la vitesse d'exécution de l'animation
+
+		string playSpeed = dropDownPlaySpeed.captionText.text;
+		if (playSpeed == MainParameters.Instance.languages.Used.animatorPlaySpeedSlow)
+			factorPlaySpeed = 1.5f;
+		else if (playSpeed == MainParameters.Instance.languages.Used.animatorPlaySpeedNormal)
+			factorPlaySpeed = 1;
+		else if (playSpeed == MainParameters.Instance.languages.Used.animatorPlaySpeedFast)
+			factorPlaySpeed = 0.8f;
+
 		// Affichage d'un message dans la boîte des messages
 
 		DisplayNewMessage(true, false, string.Format(" {0}", MainParameters.Instance.languages.Used.displayMsgStartSimulation));
@@ -93,24 +121,29 @@ public class AnimationF : MonoBehaviour
 
 		// Exécution des calculs de simulation
 
-		DoSimulation doSimulation = new DoSimulation();
+		float[,] q;
+		DoSimulation doSimulation = new DoSimulation(out q);
 		doSimulation.ToString();                  // Pour enlever un warning lors de la compilation
 
 		// Initialisation du nombre de frames à afficher
 
-		//MainParameters.Instance.joints.numberFrames = (int)(MainParameters.Instance.joints.duration / MainParameters.Instance.joints.lagrangianModel.dt) + 1;
-		MainParameters.Instance.joints.numberFrames = MainParameters.Instance.joints.q.GetUpperBound(1) + 1;
+		MainParameters.Instance.joints.numberFrames = q.GetUpperBound(1) + 1;
 
-		// Pour les simulations, il nous faut calculer la dimension du volume utilisé pour exécuter les mouvements (code temporaire, à modifier éventuellement)
-		// On tient compte de seulement les composantes X et Y car l'affichage n'est pas limité selon la composante Z (profondeur).
+		// Il nous faut calculer la dimension du volume utilisé pour exécuter les mouvements
+		// Pour cela, on ignore le mouvement des membres et du tronc ( racine = 0), ça va nous donner une bonne idée de la dimension du volume nécessaire
+		// On ajoute une marge de 10% sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé
+		// On tient compte de seulement les composantes X et Y car l'affichage n'est pas limité selon la composante Z (profondeur)
 
 		float[] tagX, tagY, tagZ;
 		tagXMin = tagYMin = tagZMin = 9999;
 		tagXMax = tagYMax = -9999;
-		qf = new double[MainParameters.Instance.joints.q.GetUpperBound(0) + 1];
-		for (int i = 0; i <= MainParameters.Instance.joints.q.GetUpperBound(1); i++)
+		qf = new double[q.GetUpperBound(0) + 1];
+		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q2.Length; i++)
+			qf[MainParameters.Instance.joints.lagrangianModel.q2[i] - 1] = 0;
+		for (int i = 0; i <= q.GetUpperBound(1); i++)
 		{
-			qf = MathFunc.MatrixGetColumnD(MainParameters.Instance.joints.q, i);
+			for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.q1.Length; j++)
+				qf[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1] = q[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1,i];
 			EvaluateTags(qf, out tagX, out tagZ, out tagY);                 // Intervertir les axes Y et Z pour afficher la silhouette avec une vue sagittale par défaut (à modifier plus tard j'imagine)
 			tagXMin = Math.Min(tagXMin, Mathf.Min(tagX));
 			tagXMax = Math.Max(tagXMax, Mathf.Max(tagX));
@@ -118,11 +151,19 @@ public class AnimationF : MonoBehaviour
 			tagYMax = Math.Max(tagYMax, Mathf.Max(tagY));
 			tagZMin = Math.Min(tagZMin, Mathf.Min(tagZ));
 		}
+		if (tagXMin >= 0) tagXMin *= 0.9f;
+		else tagXMin *= 1.1f;
+		if (tagXMax >= 0) tagXMax *= 1.1f;
+		else tagXMax *= 0.9f;
+		if (tagYMin >= 0) tagYMin *= 0.9f;
+		else tagYMin *= 1.1f;
+		if (tagYMax >= 0) tagYMax *= 1.1f;
+		else tagYMax *= 0.9f;
 		EvaluateFactorTags2Screen(tagXMin, tagXMax, tagYMin, tagYMax);
 
 		// Afficher la silhouette pour toute l'animation
 
-		Play(MainParameters.Instance.joints.q);
+		Play(q);
 	}
 
 	// =================================================================================================================================================================
@@ -136,6 +177,7 @@ public class AnimationF : MonoBehaviour
 
 		q = MathFunc.MatrixCopy(qq);
 		frameN = 0;
+		timeFrame = joints.duration / joints.numberFrames;
 		animateON = true;
 
 		// Création et initialisation des "GameObject Line Renderer"
@@ -171,10 +213,6 @@ public class AnimationF : MonoBehaviour
 				lineFilledFigure[i].name = string.Format("LineFilledFigure{0}", i + 1);
 				lineFilledFigure[i].transform.parent = panelAnimator.transform;
 			}
-
-			lineDebug = Instantiate(lineRenderer);
-			lineDebug.name = "LineDebug";
-			lineDebug.transform.parent = panelAnimator.transform;
 
 			Destroy(lineObject);
 		}
@@ -269,7 +307,7 @@ public class AnimationF : MonoBehaviour
 	{
 		if (MainParameters.Instance.joints.numberFrames > 1)
 		{
-			DisplayNewMessage(false, false, string.Format(" {0} = {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgSimulationDuration, elapsedTime));
+			DisplayNewMessage(false, false, string.Format(" {0} = {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgSimulationDuration, timeElapsed));
 			DisplayNewMessage(false, true, string.Format(" {0}", MainParameters.Instance.languages.Used.displayMsgEndSimulation));
 		}
 	}
