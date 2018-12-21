@@ -38,10 +38,10 @@ public class DoSimulation
 		float rotRadians = joints.takeOffParam.rotation * (float)Math.PI / 180;
 
 		q0[Math.Abs(joints.lagrangianModel.root_tilt) - 1] = joints.takeOffParam.tilt * (float)Math.PI / 180;                       // en radians
-		q0[Math.Abs(joints.lagrangianModel.root_somersault) - 1] = rotRadians;														// en radians
-		q0dot[Math.Abs(joints.lagrangianModel.root_foreward) - 1] = joints.takeOffParam.anteroposteriorSpeed;						// en m/s
-		q0dot[Math.Abs(joints.lagrangianModel.root_upward) - 1] = joints.takeOffParam.verticalSpeed;								// en m/s
-		q0dot[Math.Abs(joints.lagrangianModel.root_somersault) - 1] = joints.takeOffParam.somersaultSpeed * 2 * (float)Math.PI;		// en radians/s
+		q0[Math.Abs(joints.lagrangianModel.root_somersault) - 1] = rotRadians;                                                      // en radians
+		q0dot[Math.Abs(joints.lagrangianModel.root_foreward) - 1] = joints.takeOffParam.anteroposteriorSpeed;                       // en m/s
+		q0dot[Math.Abs(joints.lagrangianModel.root_upward) - 1] = joints.takeOffParam.verticalSpeed;                                // en m/s
+		q0dot[Math.Abs(joints.lagrangianModel.root_somersault) - 1] = joints.takeOffParam.somersaultSpeed * 2 * (float)Math.PI;     // en radians/s
 		q0dot[Math.Abs(joints.lagrangianModel.root_twist) - 1] = joints.takeOffParam.twistSpeed * 2 * (float)Math.PI;               // en radians/s
 
 		// correction of linear velocity to have CGdot = qdot
@@ -97,10 +97,6 @@ public class DoSimulation
 		Options options = new Options();
 		options.InitialStep = joints.lagrangianModel.dt;
 
-		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("x0.dimension = {0}{1}", x0.Length, System.Environment.NewLine));			// Problème calcul ODE
-		//for (int i = 0; i < x0.GetUpperBound(0) + 1; i++)
-		//	System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("i: {0:00}, x0 = {1:0.0000}{2}", i, x0[i], System.Environment.NewLine));
-
 		var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(x0), ShortDynamics, options);
 		var points = sol.SolveFromToStep(0, joints.duration + joints.lagrangianModel.dt, joints.lagrangianModel.dt).ToArray();
 
@@ -120,17 +116,6 @@ public class DoSimulation
 		}
 		#endregion
 
-		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("dimension: points = {0}, X = {1}{2}", points.Length, points[0].X.Length, System.Environment.NewLine));	// Problème calcul ODE
-		//for (int i = 0; i < points.Length; i++)
-		//	System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("T: {0:00} = {1:0.0000}{2}", i, points[i].T, System.Environment.NewLine));
-		//for (int i = 0; i < points.Length; i++)
-		//{
-		//	System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}X: {1:00} = ", System.Environment.NewLine, i));
-		//	for (int j = 0; j < points[0].X.Length; j++)
-		//		System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0:0.0000}, ", points[i].X[j], System.Environment.NewLine));
-		//}
-		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
-
 		int tIndex = 0;
 		MainParameters.Instance.joints.tc = 0;
 		for (int i = 0; i <= q.GetUpperBound(1); i++)
@@ -147,7 +132,6 @@ public class DoSimulation
 				break;
 			}
 		}
-		//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("tIndex = {0}, condition = {1}{2}", tIndex, joints.condition, System.Environment.NewLine));		// Problème calcul ODE
 
 		MainParameters.Instance.joints.t = new float[tIndex];
 		qOut = new float[joints.lagrangianModel.nDDL, tIndex];
@@ -218,6 +202,13 @@ public class DoSimulation
 			m12 = inertia12Simple.Inertia12(q);
 			NLEffects1Simple nlEffects1Simple = new NLEffects1Simple();
 			n1 = nlEffects1Simple.NLEffects1(q, qdot);
+			if (MainParameters.Instance.joints.condition <= 0)
+			{
+				double[] n1zero;
+				n1zero = nlEffects1Simple.NLEffects1(q, new double[12] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+				for (int i = 0; i < 6; i++)
+					n1[i] = n1[i] - n1zero[i];
+			}
 		}
 
 		float kp = 10;

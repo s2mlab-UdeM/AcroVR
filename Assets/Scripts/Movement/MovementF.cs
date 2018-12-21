@@ -14,6 +14,8 @@ public class MovementF : MonoBehaviour
 	public Dropdown dropDownDDLNames;
 	public Dropdown dropDownInterpolation;
 	public Dropdown dropDownNumIntervals;
+	public Button buttonLoad;
+	public Image buttonLoadImage;
 	public Button buttonSave;
 	public Image buttonSaveImage;
 
@@ -32,19 +34,7 @@ public class MovementF : MonoBehaviour
 	{
 		Instance = this;
 
-		dropDownDDLNames.interactable = false;
-		dropDownInterpolation.interactable = false;
-		dropDownNumIntervals.interactable = false;
-		buttonSave.interactable = false;
-		buttonSaveImage.color = Color.gray;
-
-		dropDownCondition.interactable = false;
-		inputFieldInitialRotation.interactable = false;
-		inputFieldTilt.interactable = false;
-		inputFieldHorizontalSpeed.interactable = false;
-		inputFieldVerticalSpeed.interactable = false;
-		inputFieldSomersaultSpeed.interactable = false;
-		inputFieldTwistSpeed.interactable = false;
+		Main.Instance.EnableDisableControls(false, false);
 	}
 
 	// =================================================================================================================================================================
@@ -52,6 +42,10 @@ public class MovementF : MonoBehaviour
 
 	public void ButtonLoad()
 	{
+		// Exécuter seulement si l'animation n'a pas été démarré
+
+		//if (AnimationF.Instance.animateON) return;
+
 		// Sélection d'un fichier de données
 
 		System.Windows.Forms.OpenFileDialog openDialog = new System.Windows.Forms.OpenFileDialog();
@@ -192,19 +186,7 @@ public class MovementF : MonoBehaviour
 
 		// Activer les contrôles disponible à l'utilisateur à l'écran
 
-		dropDownDDLNames.interactable = true;
-		//dropDownInterpolation.interactable = true;
-		//dropDownNumIntervals.interactable = true;
-		//buttonSave.interactable = true;
-		//buttonSaveImage.color = Color.white;
-
-		//AnimationF.Instance.dropDownPlayMode.interactable = true;
-		//AnimationF.Instance.dropDownPlayView.interactable = true;
-		AnimationF.Instance.buttonPlay.interactable = true;
-		AnimationF.Instance.buttonPlayImage.color = Color.white;
-		AnimationF.Instance.dropDownPlaySpeed.interactable = true;
-		//AnimationF.Instance.buttonGraph.interactable = true;
-		//AnimationF.Instance.buttonGraphImage.color = Color.white;
+		Main.Instance.EnableDisableControls(true, false);
 
 		Debug.Log(string.Format("Condition = {0}, Interpolation pour noeud #0 = {1}, LagrangianName = {2}", joints.condition, joints.nodes[0].interpolation.type, joints.lagrangianModelName));
 	}

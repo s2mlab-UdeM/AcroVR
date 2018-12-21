@@ -154,6 +154,8 @@ public class MainParameters
 		public string takeOffSomersault;
 		public string takeOffTwist;
 
+		public string animatorPlayModeGesticulation;
+		public string animatorPlayModeSimulation;
 		public string animatorPlaySpeedFast;
 		public string animatorPlaySpeedNormal;
 		public string animatorPlaySpeedSlow;
@@ -272,6 +274,8 @@ public class MainParameters
 		languages.french.takeOffTwist = "Rotation (rév./s)";
 		languages.english.takeOffTwist = "Twist (rev./s)";
 
+		languages.french.animatorPlayModeGesticulation = languages.english.animatorPlayModeGesticulation = "Gesticulation";
+		languages.french.animatorPlayModeSimulation = languages.english.animatorPlayModeSimulation = "Simulation";
 		languages.french.animatorPlaySpeedFast = "Vit. rapide";
 		languages.english.animatorPlaySpeedFast = "Fast speed";
 		languages.french.animatorPlaySpeedNormal = "Vit. normale";

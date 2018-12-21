@@ -85,5 +85,45 @@ public class Main : MonoBehaviour
 		Application.Quit();
 	}
 
+	// =================================================================================================================================================================
+	/// <summary> Activer ou désactiver plusieurs contrôles (boutons, listes déroulantes, ...) du panneau principale. </summary>
+
+	public void EnableDisableControls(bool status, bool mode)
+	{
+		Color color;
+		if (status)
+			color = Color.white;
+		else
+			color = Color.gray;
+
+		if (mode)
+		{
+			MovementF.Instance.buttonLoad.interactable = status;
+			MovementF.Instance.buttonLoadImage.color = color;
+		}
+		MovementF.Instance.dropDownDDLNames.interactable = status;
+		MovementF.Instance.dropDownInterpolation.interactable = false;				// Non fonctionnelle encore
+		MovementF.Instance.dropDownNumIntervals.interactable = false;               // Non fonctionnelle encore
+		MovementF.Instance.buttonSave.interactable = false;                         // Non fonctionnelle encore
+		MovementF.Instance.buttonSaveImage.color = Color.gray;                      // Non fonctionnelle encore
+
+		MovementF.Instance.dropDownCondition.interactable = status;
+		MovementF.Instance.inputFieldInitialRotation.interactable = status;
+		MovementF.Instance.inputFieldTilt.interactable = status;
+		MovementF.Instance.inputFieldHorizontalSpeed.interactable = status;
+		MovementF.Instance.inputFieldVerticalSpeed.interactable = status;
+		MovementF.Instance.inputFieldSomersaultSpeed.interactable = status;
+		MovementF.Instance.inputFieldTwistSpeed.interactable = status;
+
+		AnimationF.Instance.textChrono.text = "";
+		AnimationF.Instance.dropDownPlayMode.interactable = status;
+		AnimationF.Instance.dropDownPlayView.interactable = false;                  // Non fonctionnelle encore
+		AnimationF.Instance.buttonPlay.interactable = status;
+		AnimationF.Instance.buttonPlayImage.color = color;
+		AnimationF.Instance.dropDownPlaySpeed.interactable = status;
+		AnimationF.Instance.buttonGraph.interactable = false;                       // Non fonctionnelle encore
+		AnimationF.Instance.buttonGraphImage.color = Color.gray;					// Non fonctionnelle encore
+	}
+
 	//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
 }
