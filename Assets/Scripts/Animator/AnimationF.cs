@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +8,7 @@ using UnityEngine.UI;
 public class AnimationF : MonoBehaviour
 {
 	public static AnimationF Instance;
+	public Camera cameraAnimation;
 	public GameObject panelAnimator;
 	public Text textChrono;
 	public Dropdown dropDownPlayMode;
@@ -25,7 +24,6 @@ public class AnimationF : MonoBehaviour
 	LineRenderer[] lineStickFigure;
 	LineRenderer lineCenterOfMass;
 	LineRenderer[] lineFilledFigure;
-	LineRenderer lineDebug;
 
 	public bool animateON = false;
 	int frameN = 0;
@@ -34,7 +32,9 @@ public class AnimationF : MonoBehaviour
 	float tagYMin = 0;
 	float tagYMax = 0;
 	float tagZMin = 0;
+	float tagZMax = 0;
 	float factorTags2Screen = 1;
+	float animationMaxDimOnScreen = 20;         // Dimension maximum de la silhouette à l'écran en unité de "Line renderer" (même dimension dans les 3 directions x, y, z)
 
 	float timeElapsed = 0;
 	float timeFrame = 0;
@@ -62,6 +62,11 @@ public class AnimationF : MonoBehaviour
 		dropDownPlaySpeed.interactable = false;
 		buttonGraph.interactable = false;
 		buttonGraphImage.color = Color.gray;
+
+		if (Screen.width / Screen.height >= 1.7)
+			animationMaxDimOnScreen = 20;
+		else
+			animationMaxDimOnScreen = 18;
 	}
 
 	// =================================================================================================================================================================
@@ -92,6 +97,23 @@ public class AnimationF : MonoBehaviour
 				PlayOneFrame();
 			else
 				PlayEnd();
+		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> La liste déroulante PlayView a été modifier. </summary>
+
+	public void DropDownPlayView()
+	{
+		if (dropDownPlayView.captionText.text == MainParameters.Instance.languages.Used.animatorPlayViewFrontal)
+		{
+			cameraAnimation.transform.position = new Vector3(0, 18, 0);
+			cameraAnimation.transform.rotation = Quaternion.Euler(90, 0, 0);
+		}
+		else
+		{
+			cameraAnimation.transform.position = new Vector3(-18, 0, 0);
+			cameraAnimation.transform.rotation = Quaternion.Euler(0, 90, 90);
 		}
 	}
 
@@ -139,16 +161,17 @@ public class AnimationF : MonoBehaviour
 
 		MainParameters.Instance.joints.numberFrames = q1.GetUpperBound(1) + 1;
 
-		// Il nous faut calculer la dimension du volume utilisé pour exécuter les mouvements
-		// Pour cela, on ignore le mouvement des membres et du tronc ( DDL racine = 0), ça va nous donner une bonne idée de la dimension du volume nécessaire
+		// Calculer un facteur de correspondance entre le volume utilisé par la silhouette et la dimension du volume disponible pour l'affichage
+		// Pour cela, il nous faut calculer les valeurs minimum et maximum des DDLs de la silhouette, dans les 3 dimensions
+		// Même si on modifie la dimension de la silhouette, on conserve quand même les proportions de la sihouette dans les 3 dimensions, donc le facteur est unique pour les 3 dimensions
+		// Ici, vu qu'on ne sait pas encore les mouvements exécutés, alors on ignore le mouvement des membres et du tronc ( DDLs racines = 0), ça va nous donner une bonne idée de la dimension du volume nécessaire
 		// On ajoute une marge de 10% sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé
-		// On tient compte de seulement les composantes X et Y car l'affichage n'est pas limité selon la composante Z (profondeur)
 
 		if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
 		{
 			float[] tagX, tagY, tagZ;
 			tagXMin = tagYMin = tagZMin = 9999;
-			tagXMax = tagYMax = -9999;
+			tagXMax = tagYMax = tagZMax = -9999;
 			qf = new double[q1.GetUpperBound(0) + 1];
 			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q2.Length; i++)
 				qf[MainParameters.Instance.joints.lagrangianModel.q2[i] - 1] = 0;
@@ -156,22 +179,16 @@ public class AnimationF : MonoBehaviour
 			{
 				for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.q1.Length; j++)
 					qf[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1] = q1[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1, i];
-				EvaluateTags(qf, out tagX, out tagZ, out tagY);     // Intervertir les axes Y et Z pour afficher la silhouette avec une vue sagittale par défaut (à modifier plus tard j'imagine)
+				EvaluateTags(qf, out tagX, out tagY, out tagZ);
 				tagXMin = Math.Min(tagXMin, Mathf.Min(tagX));
 				tagXMax = Math.Max(tagXMax, Mathf.Max(tagX));
 				tagYMin = Math.Min(tagYMin, Mathf.Min(tagY));
 				tagYMax = Math.Max(tagYMax, Mathf.Max(tagY));
 				tagZMin = Math.Min(tagZMin, Mathf.Min(tagZ));
+				tagZMax = Math.Max(tagZMax, Mathf.Max(tagZ));
 			}
-			if (tagXMin >= 0) tagXMin *= 0.9f;
-			else tagXMin *= 1.1f;
-			if (tagXMax >= 0) tagXMax *= 1.1f;
-			else tagXMax *= 0.9f;
-			if (tagYMin >= 0) tagYMin *= 0.9f;
-			else tagYMin *= 1.1f;
-			if (tagYMax >= 0) tagYMax *= 1.1f;
-			else tagYMax *= 0.9f;
-			EvaluateFactorTags2Screen(tagXMin, tagXMax, tagYMin, tagYMax);
+			AddMarginOnMinMax(0.1f);
+			EvaluateFactorTags2Screen();
 		}
 		else
 			PlayReset();
@@ -203,8 +220,9 @@ public class AnimationF : MonoBehaviour
 			GameObject lineObject = new GameObject();
 			LineRenderer lineRenderer = lineObject.AddComponent<LineRenderer>();
 			lineRenderer.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
-			lineRenderer.startWidth = 0.005f;
-			lineRenderer.endWidth = 0.005f;
+			lineRenderer.startWidth = 0.04f;
+			lineRenderer.endWidth = 0.04f;
+			lineRenderer.gameObject.layer = 8;
 
 			lineStickFigure = new LineRenderer[joints.lagrangianModel.stickFigure.Length / 2];
 			for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
@@ -261,31 +279,38 @@ public class AnimationF : MonoBehaviour
 		float[] tagX;
 		float[] tagY;
 		float[] tagZ;
-		EvaluateTags(qf, out tagX, out tagZ, out tagY);		// Intervertir les axes Y et Z pour afficher la silhouette avec une vue sagittale par défaut (à modifier plus tard j'imagine)
+		EvaluateTags(qf, out tagX, out tagY, out tagZ);
 
-		// Les calculs suivants sont incomplet et non pleinement fonctionnel, il va falloir améliorer cela dans le futur
-		// Calculer un facteur de correspondance entre la silhouette et la dimension disponible pour l'affichage, pour optimiser l'espace disponible pour l'affichage
+		// Si le facteur de correspondance n'a pas été calculer précédemment, alors il nous faut le calculer
+		// Calculer un facteur de correspondance entre le volume utilisé par la silhouette et la dimension du volume disponible pour l'affichage
+		// Pour cela, il nous faut calculer les valeurs minimum et maximum des DDLs de la silhouette, dans les 3 dimensions
 		// Même si on modifie la dimension de la silhouette, on conserve quand même les proportions de la sihouette dans les 3 dimensions, donc le facteur est unique pour les 3 dimensions
-		// L'espace disponible à l'écran (pour les LineRenderer dans PanelAnimator): X = 0 à 1 et Y = 0.5 à 1.5
+		// Pour le mode simulation, on ajoute une marge de 10% sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé
+		// Pour le mode gesticulation, on ajouter une marge de 25% sur les dimensions mimimum et maximum, au cas où les bras ne sont pas levé et qui le seront pas la suite.
 
 		int newTagLength = tagX.Length;
-		if (tagXMin == 0 && tagXMax == 0 && tagYMin == 0 && tagYMax == 0 && tagZMin == 0)
+		if (tagXMin == 0 && tagXMax == 0 && tagYMin == 0 && tagYMax == 0 && tagZMin == 0 && tagZMax == 0)
 		{
 			tagXMin = Mathf.Min(tagX);
 			tagXMax = Mathf.Max(tagX);
 			tagYMin = Mathf.Min(tagY);
 			tagYMax = Mathf.Max(tagY);
 			tagZMin = Mathf.Min(tagZ);
-			EvaluateFactorTags2Screen(tagXMin, tagXMax, tagYMin, tagYMax);
+			tagZMax = Mathf.Max(tagZ);
+			if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
+				AddMarginOnMinMax(0.1f);
+			else
+				AddMarginOnMinMax(0.25f);
+			EvaluateFactorTags2Screen();
 		}
 
 		// On applique le facteur de correspondance pour optimiser l'affichage de la silhouette
 
 		for (int i = 0; i < newTagLength; i++)
 		{
-			tagX[i] = (tagX[i] - tagXMin) * factorTags2Screen;
-			tagY[i] = (tagY[i] - tagYMin) * factorTags2Screen;
-			tagZ[i] = (tagZ[i] - tagZMin) * factorTags2Screen;
+			tagX[i] = (tagX[i] - tagXMin) * factorTags2Screen - (tagXMax - tagXMin) * factorTags2Screen / 2;
+			tagY[i] = (tagY[i] - tagYMin) * factorTags2Screen - (tagYMax - tagYMin) * factorTags2Screen / 2;
+			tagZ[i] = (tagZ[i] - tagZMin) * factorTags2Screen - (tagZMax - tagZMin) * factorTags2Screen / 2;
 		}
 
 		// On centre la silhouette au milieu de l'espace disponible à l'écran (PanelAnimator)
@@ -293,13 +318,13 @@ public class AnimationF : MonoBehaviour
 
 		Vector3[] tag = new Vector3[newTagLength];
 		for (int i = 0; i < newTagLength; i++)
-			tag[i] = new Vector3(tagX[i] + 0.5f, tagY[i] + 0.5f, tagZ[i]);
+			tag[i] = new Vector3(tagX[i], tagY[i], tagZ[i]);
 
 		// Afficher la silhouette
 
 		for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
 			DrawObjects.Instance.Line(lineStickFigure[i], tag[joints.lagrangianModel.stickFigure[i, 0] - 1], tag[joints.lagrangianModel.stickFigure[i, 1] - 1]);
-		DrawObjects.Instance.Circle(lineCenterOfMass, 0.005f, tag[newTagLength - 1]);
+		DrawObjects.Instance.Circle(lineCenterOfMass, 0.08f, tag[newTagLength - 1]);
 		for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
 			DrawObjects.Instance.Triangle(lineFilledFigure[i], tag[joints.lagrangianModel.filledFigure[i, 0] - 1], tag[joints.lagrangianModel.filledFigure[i, 1] - 1], tag[joints.lagrangianModel.filledFigure[i, 2] - 1]);
 
@@ -323,6 +348,7 @@ public class AnimationF : MonoBehaviour
 		tagYMin = 0;
 		tagYMax = 0;
 		tagZMin = 0;
+		tagZMax = 0;
 	}
 
 	// =================================================================================================================================================================
@@ -379,47 +405,37 @@ public class AnimationF : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	/// <summary> Calcul du facteur de correspondance entre la dimension du volume des Tags et la dimension du volume disponible à l'écran. </summary>
+	/// <summary> Ajouter une marge de sécurité sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé. </summary>
 
-	void EvaluateFactorTags2Screen(float tagXMin, float tagXMax, float tagYMin, float tagYMax)
+	void AddMarginOnMinMax(float factor)
 	{
-		// Pour le mode gesticulation, on laisse de l'espace en haut de la silhouette, au cas où les bras ne sont pas levé et qui le seront pas la suite.
+		float margin;
 
-		float factorY;
-		if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
-			factorY = 1.2f;
-		else
-			factorY = 1.5f;
+		margin = (tagXMax - tagXMin) * factor;
+		tagXMin -= margin;
+		tagXMax += margin;
 
-		// Calcul du facteur de correspondance.
+		margin = (tagYMax - tagYMin) * factor;
+		tagYMin -= margin;
+		tagYMax += margin;
 
-		if (tagXMax - tagXMin > tagYMax * factorY - tagYMin)
-			factorTags2Screen = 1 / (tagXMax - tagXMin);
-		else
-			factorTags2Screen = 1 / (tagYMax * factorY - tagYMin);
+		margin = (tagZMax - tagZMin) * factor;
+		tagZMin -= margin;
+		tagZMax += margin;
 	}
 
-	// Rotation de la silhouette (pas utilisé pour le moment)
+	// =================================================================================================================================================================
+	/// <summary> Calcul du facteur de correspondance entre la dimension du volume des Tags et la dimension du volume disponible à l'écran. </summary>
 
-	//float vectX;
-	//float vectY;
-	//float vectZ;
-	//float angleXZ = 0;                                          // Angle de rotation dans le plan X-Z (positif = horaire, négatif = anti-horaire)
-	//float angleXZCos = Mathf.Cos(angleXZ * Mathf.PI / 180);
-	//float angleXZSin = Mathf.Sin(angleXZ * Mathf.PI / 180);
-	//float angleXY = 0;                                            // Angle de rotation dans le plan X-Y (positif = horaire, négatif = anti-horaire)
-	//float angleXYCos = Mathf.Cos(angleXY * Mathf.PI / 180);
-	//float angleXYSin = Mathf.Sin(angleXY * Mathf.PI / 180);
-	//for (int i = 0; i < newTagLength; i++)
-	//{
-	//	vectX = tagX[i] - tagX[newTagLength - 1];
-	//	vectY = tagY[i] - tagY[newTagLength - 1];
-	//	vectZ = tagZ[i] - tagZ[newTagLength - 1];
-	//	tagX[i] = vectX * angleXZCos + vectZ * angleXZSin + tagX[newTagLength - 1];
-	//	tagZ[i] = -vectX * angleXZSin + vectZ * angleXZCos + tagZ[newTagLength - 1];
+	void EvaluateFactorTags2Screen()
+	{
+		// Calcul du facteur de correspondance.
 
-	//	tagX[i] = vectX * angleXYCos + vectY * angleXYSin + tagX[newTagLength - 1];
-	//	tagY[i] = -vectX * angleXYSin + vectY * angleXYCos + tagY[newTagLength - 1];
-	//}
-
+		if (tagXMax - tagXMin > tagYMax - tagYMin && tagXMax - tagXMin > tagZMax - tagZMin)
+			factorTags2Screen = animationMaxDimOnScreen / (tagXMax - tagXMin);
+		else if (tagYMax - tagYMin > tagZMax - tagZMin)
+			factorTags2Screen = animationMaxDimOnScreen / (tagYMax - tagYMin);
+		else
+			factorTags2Screen = animationMaxDimOnScreen / (tagZMax - tagZMin);
+	}
 }

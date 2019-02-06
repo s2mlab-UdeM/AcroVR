@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections.Generic;
 
 // =================================================================================================================================================================
@@ -20,12 +21,51 @@ public class Main : MonoBehaviour
 	public Text textTakeOffSomersaultSpeed;
 	public Text textTakeOffTwistSpeed;
 
+	public GameObject panelMovement;
+	public GameObject panelTakeoffParameters;
+	public GameObject panelMessages;
+	public GameObject panelAnimator;
+	public GameObject panelTopButtons;
+	public GameObject panelOutOfDate;
+
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
 	void Start ()
 	{
 		Instance = this;
+
+		// Logiciel sera désactivé automatiquement après la date spécifié ci-dessous
+		// Un fichier "bidon" est créé pour gérer les cas où l'utilisateur aurait modifié la date par la suite, alors le logiciel resterait désactivé quand même
+		// Une façon simple de réactiver le logiciel est d'effacer le fichier "bidon"
+
+		//string checkFileName = Application.persistentDataPath + @"/AcroVR.dll";
+		//DateTime endDate = new DateTime(2019, 5, 1);
+		//if (DateTime.Today >= endDate)                                                  // Date spécifié passé
+		//{
+		//	System.IO.File.WriteAllText(checkFileName, "$$&*&@@@!!");                   // On modifie le fichier pour indiquer que le logiciel est désactivé
+		//	panelMovement.SetActive(false);                                             // Désactivé tous les panneaux
+		//	panelTakeoffParameters.SetActive(false);
+		//	panelMessages.SetActive(false);
+		//	panelAnimator.SetActive(false);
+		//	panelTopButtons.SetActive(false);
+		//	panelOutOfDate.SetActive(true);                                             // Activé le panneau pour indiquer que le logiciel est désactivé
+		//}
+		//else if (!System.IO.File.Exists(checkFileName))
+		//	System.IO.File.WriteAllText(checkFileName, "$%&*&@@@!!");                   // Création du fichier à la première exécution
+		//else
+		//{
+		//	string fileContents = System.IO.File.ReadAllText(checkFileName);
+		//	if (fileContents.IndexOf("$$") >= 0)                                        // Date modifié et fichier modifié, alors logiciel est désactivé
+		//	{
+		//		panelMovement.SetActive(false);                                         // Désactivé tous les panneaux
+		//		panelTakeoffParameters.SetActive(false);
+		//		panelMessages.SetActive(false);
+		//		panelAnimator.SetActive(false);
+		//		panelTopButtons.SetActive(false);
+		//		panelOutOfDate.SetActive(true);                                         // Activé le panneau pour indiquer que le logiciel est désactivé
+		//	}
+		//}
 	}
 
 	// =================================================================================================================================================================
@@ -117,7 +157,7 @@ public class Main : MonoBehaviour
 
 		AnimationF.Instance.textChrono.text = "";
 		AnimationF.Instance.dropDownPlayMode.interactable = status;
-		AnimationF.Instance.dropDownPlayView.interactable = false;                  // Non fonctionnelle encore
+		AnimationF.Instance.dropDownPlayView.interactable = status;
 		AnimationF.Instance.buttonPlay.interactable = status;
 		AnimationF.Instance.buttonPlayImage.color = color;
 		AnimationF.Instance.dropDownPlaySpeed.interactable = status;

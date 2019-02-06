@@ -135,6 +135,10 @@ public class MainParameters
 	/// <summary> Description de la structure contenant la liste des messages utilisés. </summary>
 	public struct StrucMessageLists
 	{
+		public string movementLoadDataFileTitle;
+		public string movementLoadDataFileTxtFile;
+		public string movementLoadDataFileAllFiles;
+
 		public string takeOffTitle;
 		public string takeOffTitleSpeed;
 		public string takeOffConditionNoGravity;
@@ -156,6 +160,8 @@ public class MainParameters
 
 		public string animatorPlayModeGesticulation;
 		public string animatorPlayModeSimulation;
+		public string animatorPlayViewFrontal;
+		public string animatorPlayViewSagittal;
 		public string animatorPlaySpeedFast;
 		public string animatorPlaySpeedNormal;
 		public string animatorPlaySpeedSlow;
@@ -237,6 +243,13 @@ public class MainParameters
 
 		// Initialisation de la liste des messages en français et en anglais.
 
+		languages.french.movementLoadDataFileTitle = "Ouvrir un Fichier de Simulation";
+		languages.english.movementLoadDataFileTitle = "Open a Simulation File";
+		languages.french.movementLoadDataFileTxtFile = "Fichiers txt";
+		languages.english.movementLoadDataFileTxtFile = "Txt files";
+		languages.french.movementLoadDataFileAllFiles = "Tous les fichiers";
+		languages.english.movementLoadDataFileAllFiles = "All files";
+
 		languages.french.takeOffTitle = "Paramètres de décollage:";
 		languages.english.takeOffTitle = "Take-off parameters:";
 		languages.french.takeOffTitleSpeed = "Vitesses";
@@ -276,6 +289,8 @@ public class MainParameters
 
 		languages.french.animatorPlayModeGesticulation = languages.english.animatorPlayModeGesticulation = "Gesticulation";
 		languages.french.animatorPlayModeSimulation = languages.english.animatorPlayModeSimulation = "Simulation";
+		languages.french.animatorPlayViewFrontal = languages.english.animatorPlayViewFrontal = "Frontal";
+		languages.french.animatorPlayViewSagittal = languages.english.animatorPlayViewSagittal = "Sagittal";
 		languages.french.animatorPlaySpeedFast = "Vit. rapide";
 		languages.english.animatorPlaySpeedFast = "Fast speed";
 		languages.french.animatorPlaySpeedNormal = "Vit. normale";

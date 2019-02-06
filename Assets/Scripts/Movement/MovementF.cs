@@ -1,7 +1,8 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Crosstales.FB;
 
 // =================================================================================================================================================================
 /// <summary> Fonctions utilisées par les contrôles de la section Movement. </summary>
@@ -9,6 +10,7 @@ using UnityEngine.UI;
 public class MovementF : MonoBehaviour
 {
 	public static MovementF Instance;
+
 	public Text textFileName;
 
 	public Dropdown dropDownDDLNames;
@@ -27,6 +29,8 @@ public class MovementF : MonoBehaviour
 	public InputField inputFieldSomersaultSpeed;
 	public InputField inputFieldTwistSpeed;
 
+	System.IntPtr hMainUnityWnd;
+
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
@@ -42,23 +46,21 @@ public class MovementF : MonoBehaviour
 
 	public void ButtonLoad()
 	{
-		// Exécuter seulement si l'animation n'a pas été démarré
+		// Sélection d'un fichier de données dans le répertoire des fichiers de simulation, par défaut
 
-		//if (AnimationF.Instance.animateON) return;
-
-		// Sélection d'un fichier de données
-
-		System.Windows.Forms.OpenFileDialog openDialog = new System.Windows.Forms.OpenFileDialog();
-		openDialog.InitialDirectory = @"c:\Devel\AcroVR\Données";
-		openDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-		openDialog.FilterIndex = 1;
-		if (openDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+		ExtensionFilter[] extensions = new[]
+		{
+			new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileTxtFile, "txt"),
+			new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileAllFiles, "*" ),
+		};
+		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Tekphy\AcroVR\SimulationFiles");
+		string fileName = FileBrowser.OpenSingleFile(MainParameters.Instance.languages.Used.movementLoadDataFileTitle, dirSimulationFiles, extensions);
+		if (fileName.Length <= 0)
 			return;
 
 		// Lecture du fichier de données
 
-		DataFileManager.Instance.ReadDataFiles(openDialog.FileName);
-		//DataFileManager.Instance.ReadDataFiles(@"C:\Devel\AcroVR\Données\2.3.Saut_Rosu.txt");			// Utiliser en mode dévéloppement du logiciel seulement
+		DataFileManager.Instance.ReadDataFiles(fileName);
 
 		// Définir un nom racourci pour avoir accès à la structure Joints
 
@@ -187,7 +189,5 @@ public class MovementF : MonoBehaviour
 		// Activer les contrôles disponible à l'utilisateur à l'écran
 
 		Main.Instance.EnableDisableControls(true, false);
-
-		Debug.Log(string.Format("Condition = {0}, Interpolation pour noeud #0 = {1}, LagrangianName = {2}", joints.condition, joints.nodes[0].interpolation.type, joints.lagrangianModelName));
 	}
 }
