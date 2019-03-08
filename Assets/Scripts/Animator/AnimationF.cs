@@ -27,6 +27,8 @@ public class AnimationF : MonoBehaviour
 
 	public bool animateON = false;
 	int frameN = 0;
+	int firstFrame = 0;
+	int numberFrames = 0;
 	float tagXMin = 0;
 	float tagXMax = 0;
 	float tagYMin = 0;
@@ -88,12 +90,12 @@ public class AnimationF : MonoBehaviour
 
 			// Affichage du chronomètre
 
-			if (MainParameters.Instance.joints.numberFrames > 1)
+			if (numberFrames > 1)
 				textChrono.text = string.Format("{0:0.0}", timeElapsed);
 
 			// Affichage de la silhouette à chaque frame, pour le nombre de frames spécifié.
 
-			if (frameN < MainParameters.Instance.joints.numberFrames)
+			if (frameN < numberFrames)
 				PlayOneFrame();
 			else
 				PlayEnd();
@@ -157,10 +159,6 @@ public class AnimationF : MonoBehaviour
 		DoSimulation doSimulation = new DoSimulation(out q1);
 		doSimulation.ToString();                  // Pour enlever un warning lors de la compilation
 
-		// Initialisation du nombre de frames à afficher
-
-		MainParameters.Instance.joints.numberFrames = q1.GetUpperBound(1) + 1;
-
 		// Calculer un facteur de correspondance entre le volume utilisé par la silhouette et la dimension du volume disponible pour l'affichage
 		// Pour cela, il nous faut calculer les valeurs minimum et maximum des DDLs de la silhouette, dans les 3 dimensions
 		// Même si on modifie la dimension de la silhouette, on conserve quand même les proportions de la sihouette dans les 3 dimensions, donc le facteur est unique pour les 3 dimensions
@@ -196,13 +194,13 @@ public class AnimationF : MonoBehaviour
 		// Afficher la silhouette pour toute l'animation
 
 		Main.Instance.EnableDisableControls(false, true);
-		Play(q1);
+		Play(q1, 0, q1.GetUpperBound(1) + 1);
 	}
 
 	// =================================================================================================================================================================
 	/// <summary> Démarrer l'exécution de l'animation. </summary>
 
-	public void Play(float[,] qq)
+	public void Play(float[,] qq, int frFrame, int nFrames)
 	{
 		MainParameters.StrucJoints joints = MainParameters.Instance.joints;
 
@@ -210,8 +208,11 @@ public class AnimationF : MonoBehaviour
 
 		q = MathFunc.MatrixCopy(qq);
 		frameN = 0;
-		timeFrame = joints.duration / joints.numberFrames;
+		firstFrame = frFrame;
+		numberFrames = nFrames;
+		timeFrame = joints.duration / numberFrames;
 		animateON = true;
+		GraphManager.Instance.mouseTrackingStatus(false);
 
 		// Création et initialisation des "GameObject Line Renderer"
 
@@ -269,7 +270,7 @@ public class AnimationF : MonoBehaviour
 
 		// Initialisation du vecteur Q
 
-		qf = MathFunc.MatrixGetColumnD(q, frameN);
+		qf = MathFunc.MatrixGetColumnD(q, firstFrame + frameN);
 		if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)		// Mode Gesticulation: Les DDL racine doivent être à zéro
 			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
 				qf[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = 0;
@@ -330,8 +331,8 @@ public class AnimationF : MonoBehaviour
 
 		// Afficher le déplacement d'un curseur selon l'échelle des temps, dans le graphique qui affiche les positions des angles pour l'articulation sélectionné
 
-		//if (joints.numberFrames > 1)														// Ça ralenti trop l'animation, on désactive pour le moment
-		//	GraphManager.Instance.DisplayCursor(frameN * joints.lagrangianModel.dt);
+		//if (numberFrames > 1)														// Ça ralenti trop l'animation, on désactive pour le moment
+		//	GraphManager.Instance.DisplayCursor((firstFrame + frameN) * joints.lagrangianModel.dt);
 
 		// Inclémenter le compteur de frames
 
@@ -357,7 +358,8 @@ public class AnimationF : MonoBehaviour
 	void PlayEnd()
 	{
 		animateON = false;
-		if (MainParameters.Instance.joints.numberFrames > 1)
+		GraphManager.Instance.mouseTrackingStatus(true);
+		if (numberFrames > 1)
 		{
 			DisplayNewMessage(false, false, string.Format(" {0} = {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgSimulationDuration, timeElapsed));
 			DisplayNewMessage(false, true, string.Format(" {0}", MainParameters.Instance.languages.Used.displayMsgEndSimulation));

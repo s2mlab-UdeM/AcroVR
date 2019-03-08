@@ -33,13 +33,14 @@ public class Trajectory
 
 		for (int i = 0; i < n; i++)
 		{
-			MainParameters.StrucNodes nodes = MainParameters.Instance.joints.nodes[qi[i] - lagrangianModel.q2[0]];
+			int ii = qi[i] - lagrangianModel.q2[0];
+			MainParameters.StrucNodes nodes = MainParameters.Instance.joints.nodes[ii];
 			switch (nodes.interpolation.type)
 			{
 				case MainParameters.InterpolationType.Quintic:
 					int j = 1;
 					while (j < nodes.T.Length - 1 && t > nodes.T[j]) j++;
-					MathFunc.Quintic(t, nodes.T[j - 1], nodes.T[j], nodes.Q[j - 1], nodes.Q[j], out qd[i], out qdotd[i], out qddotd[i]);
+					MathFunc.Quintic(t, nodes.T[j - 1], nodes.T[j], nodes.Q[j - 1], nodes.Q[j], out qd[ii], out qdotd[ii], out qddotd[ii]);
 					break;
 				case MainParameters.InterpolationType.CubicSpline:
 					break;

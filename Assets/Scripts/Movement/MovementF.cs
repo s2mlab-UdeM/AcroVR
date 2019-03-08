@@ -34,11 +34,23 @@ public class MovementF : MonoBehaviour
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
-	void Start ()
+	void Start()
 	{
 		Instance = this;
 
 		Main.Instance.EnableDisableControls(false, false);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Liste déroulante Nom de l'articulation a été modifié. </summary>
+
+	public void DropDownDDLNamesOnValueChanged(int value)
+	{
+		// Afficher la courbe des positions des angles pour l'articulation sélectionné par défaut
+
+		GraphManager.Instance.DisplayCurveAndNodes(0, value);
+		if (MainParameters.Instance.joints.nodes[value].ddlOppositeSide >= 0)
+			GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[value].ddlOppositeSide);
 	}
 
 	// =================================================================================================================================================================
@@ -152,42 +164,201 @@ public class MovementF : MonoBehaviour
 		}
 		MainParameters.Instance.joints.nodes = nodes;
 
-		// Initialisation des vecteurs contenant les temps et les positions des angles des articulations interpolés
-
-		int n = (int)(joints.duration / joints.lagrangianModel.dt) + 1;
-		float[] t0 = new float[n];
-		float[,] q0 = new float[joints.lagrangianModel.nDDL, n];
-
 		// Interpolation des positions des angles des articulations à traiter
 
-		GenerateQ0 generateQ0 = new GenerateQ0(joints.lagrangianModel, joints.duration, 0, out t0, out q0);
-		generateQ0.ToString();                  // Pour enlever un warning lors de la compilation
-
-		// Conserver les données interpolées dans MainParameters
-
-		MainParameters.Instance.joints.t0 = t0;
-		MainParameters.Instance.joints.q0 = q0;
-		MainParameters.Instance.joints.numberFrames = 1;
+		InterpolationDDL(-1);
 
 		// Afficher la courbe des positions des angles pour l'articulation sélectionné par défaut
 
-		GraphManager.Instance.DisplayCurveAndNodes(0, 0, t0, q0, nodes);
-		if (nodes[0].ddlOppositeSide >= 0)
-			GraphManager.Instance.DisplayCurveAndNodes(1, nodes[0].ddlOppositeSide, t0, q0, nodes);
-		List<string> dropDownOptions = new List<string>();
-		for (int i = 0; i < nodes.Length; i++)
-			dropDownOptions.Add(nodes[i].name);
-		dropDownDDLNames.ClearOptions();
-		dropDownDDLNames.AddOptions(dropDownOptions);
-		dropDownDDLNames.value = 0;
+		DisplayDDL(true, 0);
 
 		// Afficher la silhouette au temps t = 0
 
 		AnimationF.Instance.PlayReset();
-		AnimationF.Instance.Play(q0);
+		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, 0, 1);
 
 		// Activer les contrôles disponible à l'utilisateur à l'écran
 
 		Main.Instance.EnableDisableControls(true, false);
+		GraphManager.Instance.mouseTrackingStatus(true);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Conserver a été appuyer. </summary>
+
+	public void ButtonSave()
+	{
+		// Utilisation d'un répertoire de données par défaut, alors si ce répertoire n'existe pas, il faut le créer
+
+		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%UserProfile%\AcroVR");
+		if (!System.IO.Directory.Exists(dirSimulationFiles))
+		{
+			try
+			{
+				System.IO.Directory.CreateDirectory(dirSimulationFiles);
+			}
+			catch
+			{
+				dirSimulationFiles = "";
+			}
+		}
+
+		// Sélection d'un ancien fichier de données qui sera modifié ou d'un nouveau fichier de données qui sera créé
+
+		string fileName = FileBrowser.SaveFile(MainParameters.Instance.languages.Used.movementSaveDataFileTitle, dirSimulationFiles, "DefaultFile", "txt");
+		if (fileName.Length <= 0)
+			return;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Ajouter un noeud, après le noeud précédent la position de la souris. </summary>
+
+	public void AddNode()
+	{
+		// Trouver le numéro du noeud précédent celui qui sera ajouter
+
+		int node = GraphManager.Instance.FindPreviousNode();
+
+		// Ajouter le noeud à la liste des noeuds
+
+		int ddl = GraphManager.Instance.ddlUsed;
+		float[] T = new float[MainParameters.Instance.joints.nodes[ddl].T.Length + 1];
+		float[] Q = new float[MainParameters.Instance.joints.nodes[ddl].Q.Length + 1];
+		for (int i = 0; i <= node; i++)
+		{
+			T[i] = MainParameters.Instance.joints.nodes[ddl].T[i];
+			Q[i] = MainParameters.Instance.joints.nodes[ddl].Q[i];
+		}
+		T[node + 1] = GraphManager.Instance.mousePosSaveX;
+		Q[node + 1] = GraphManager.Instance.mousePosSaveY * Mathf.PI / 180;
+		for (int i = node + 1; i < MainParameters.Instance.joints.nodes[ddl].T.Length; i++)
+		{
+			T[i + 1] = MainParameters.Instance.joints.nodes[ddl].T[i];
+			Q[i + 1] = MainParameters.Instance.joints.nodes[ddl].Q[i];
+		}
+		MainParameters.Instance.joints.nodes[ddl].T = MathFunc.MatrixCopy(T);
+		MainParameters.Instance.joints.nodes[ddl].Q = MathFunc.MatrixCopy(Q);
+
+		// Interpolation des positions des angles pour l'articulation sélectionnée
+
+		MovementF.Instance.InterpolationDDL(ddl);
+
+		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
+
+		MovementF.Instance.DisplayDDL(false, ddl);
+
+		// Afficher la silhouette au temps du noeud modifié
+
+		AnimationF.Instance.PlayReset();
+		int frame = (int)Mathf.Round(GraphManager.Instance.mousePosSaveX / MainParameters.Instance.joints.lagrangianModel.dt);
+		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
+		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
+
+		// Désactiver l'action du clic du bouton droit de la souris
+
+		GraphManager.Instance.mouseRightButtonON = false;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Effacer un noeud, celui qui est le plus près de la position de la souris. </summary>
+
+	public void RemoveNode()
+	{
+		// Vérifier qu'il reste au moins 2 noeuds après la suppression, sinon ne pas autoriser la suppression
+
+		int ddl = GraphManager.Instance.ddlUsed;
+		if (MainParameters.Instance.joints.nodes[ddl].T.Length < 3 || MainParameters.Instance.joints.nodes[ddl].Q.Length < 3)
+		{
+			GraphManager.Instance.panelMessage.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgNotEnoughNodes;
+			GraphManager.Instance.panelMessage.SetActive(true);
+			return;
+		}
+
+		// Trouver le noeud le plus près de la position de la souris (en tenant compte du ratio X vs Y du graphique), ça sera ce noeud qui sera effacé
+
+		int node = GraphManager.Instance.FindNearestNode();
+
+		// Effacer le noeud de la liste des noeuds
+
+		float[] T = new float[MainParameters.Instance.joints.nodes[ddl].T.Length - 1];
+		float[] Q = new float[MainParameters.Instance.joints.nodes[ddl].Q.Length - 1];
+		for (int i = 0; i < node; i++)
+		{
+			T[i] = MainParameters.Instance.joints.nodes[ddl].T[i];
+			Q[i] = MainParameters.Instance.joints.nodes[ddl].Q[i];
+		}
+		for (int i = node + 1; i < MainParameters.Instance.joints.nodes[ddl].T.Length; i++)
+		{
+			T[i - 1] = MainParameters.Instance.joints.nodes[ddl].T[i];
+			Q[i - 1] = MainParameters.Instance.joints.nodes[ddl].Q[i];
+		}
+		MainParameters.Instance.joints.nodes[ddl].T = MathFunc.MatrixCopy(T);
+		MainParameters.Instance.joints.nodes[ddl].Q = MathFunc.MatrixCopy(Q);
+
+		// Interpolation des positions des angles pour l'articulation sélectionnée
+
+		MovementF.Instance.InterpolationDDL(ddl);
+
+		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
+
+		MovementF.Instance.DisplayDDL(false, ddl);
+
+		// Afficher la silhouette au temps du noeud modifié
+
+		AnimationF.Instance.PlayReset();
+		int frame = (int)Mathf.Round(GraphManager.Instance.mousePosSaveX / MainParameters.Instance.joints.lagrangianModel.dt);
+		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
+		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
+
+		// Désactiver l'action du clic du bouton droit de la souris
+
+		GraphManager.Instance.mouseRightButtonON = false;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Interpolation des positions des angles des articulations à traiter. </summary>
+
+	public void InterpolationDDL(int ddl)
+	{
+		// Initialisation des vecteurs contenant les temps et les positions des angles des articulations interpolés
+
+		int n = (int)(MainParameters.Instance.joints.duration / MainParameters.Instance.joints.lagrangianModel.dt) + 1;
+		float[] t0 = new float[n];
+		float[,] q0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, n];
+
+		// Interpolation des positions des angles des articulations à traiter
+
+		GenerateQ0 generateQ0 = new GenerateQ0(MainParameters.Instance.joints.lagrangianModel, MainParameters.Instance.joints.duration, ddl + 1, out t0, out q0);
+		generateQ0.ToString();                  // Pour enlever un warning lors de la compilation
+
+		// Conserver les données interpolées dans MainParameters
+
+		if (ddl < 0)
+		{
+			MainParameters.Instance.joints.t0 = t0;
+			MainParameters.Instance.joints.q0 = q0;
+		}
+		else
+			for (int i = 0; i <= q0.GetUpperBound(1); i++)
+				MainParameters.Instance.joints.q0[ddl, i] = q0[ddl, i];
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Afficher la courbe des positions des angles pour l'articulation sélectionné, ainsi que les noeuds. </summary>
+
+	public void DisplayDDL(bool options,int ddl)
+	{
+		GraphManager.Instance.DisplayCurveAndNodes(0, ddl);
+		if (MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide >= 0)
+			GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide);
+		if (options)
+		{
+			List<string> dropDownOptions = new List<string>();
+			for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
+				dropDownOptions.Add(MainParameters.Instance.joints.nodes[i].name);
+			dropDownDDLNames.ClearOptions();
+			dropDownDDLNames.AddOptions(dropDownOptions);
+			dropDownDDLNames.value = 0;
+		}
 	}
 }

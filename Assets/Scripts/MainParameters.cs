@@ -68,8 +68,6 @@ public class MainParameters
 		public float[] t0;
 		/// <summary> Liste de tous les angles interpolés pour chacune des articulations. [m,n]: m = DDL, n = Frames. </summary>
 		public float[,] q0;
-		/// <summary> Nombre de frames contenu dans les données (q0). </summary>
-		public int numberFrames;
 		/// <summary> Durée de la figure (en secondes). </summary>
 		public float duration;
 		/// <summary> Structure contenant les données relatifs aux paramètres initiaux d'envol. </summary>
@@ -135,9 +133,12 @@ public class MainParameters
 	/// <summary> Description de la structure contenant la liste des messages utilisés. </summary>
 	public struct StrucMessageLists
 	{
+		public string movementButtonAddNode;
+		public string movementButtonRemoveNode;
 		public string movementLoadDataFileTitle;
 		public string movementLoadDataFileTxtFile;
 		public string movementLoadDataFileAllFiles;
+		public string movementSaveDataFileTitle;
 
 		public string takeOffTitle;
 		public string takeOffTitleSpeed;
@@ -167,6 +168,8 @@ public class MainParameters
 		public string animatorPlaySpeedSlow;
 
 		public string errorMsgVerticalSpeed;
+		public string errorMsgInvalidNodePosition;
+		public string errorMsgNotEnoughNodes;
 
 		public string displayMsgStartSimulation;
 		public string displayMsgDtValue;
@@ -220,7 +223,6 @@ public class MainParameters
 		joints.nodes = null;
 		joints.t0 = null;
 		joints.q0 = null;
-		joints.numberFrames = 0;
 		joints.duration = durationDefault;
 		joints.takeOffParam = takeOffParamDefault;
 		joints.condition = conditionDefault;
@@ -243,12 +245,18 @@ public class MainParameters
 
 		// Initialisation de la liste des messages en français et en anglais.
 
+		languages.french.movementButtonAddNode = "Ajouter un noeud";
+		languages.english.movementButtonAddNode = "Add node";
+		languages.french.movementButtonRemoveNode = "Effacer un noeud";
+		languages.english.movementButtonRemoveNode = "Remove node";
 		languages.french.movementLoadDataFileTitle = "Ouvrir un Fichier de Simulation";
 		languages.english.movementLoadDataFileTitle = "Open a Simulation File";
 		languages.french.movementLoadDataFileTxtFile = "Fichiers txt";
 		languages.english.movementLoadDataFileTxtFile = "Txt files";
 		languages.french.movementLoadDataFileAllFiles = "Tous les fichiers";
 		languages.english.movementLoadDataFileAllFiles = "All files";
+		languages.french.movementSaveDataFileTitle = "Créer/modifier un Fichier de Simulation";
+		languages.english.movementSaveDataFileTitle = "Create/modify a Simulation File";
 
 		languages.french.takeOffTitle = "Paramètres de décollage:";
 		languages.english.takeOffTitle = "Take-off parameters:";
@@ -300,6 +308,10 @@ public class MainParameters
 
 		languages.french.errorMsgVerticalSpeed = string.Format("Valeur du paramètre Vitesse verticale {0}	  doit être égal ou supérieur à 0", System.Environment.NewLine);
 		languages.english.errorMsgVerticalSpeed = string.Format("Value of the vertical speed parameter {0} must be equal to or greater than 0", System.Environment.NewLine);
+		languages.french.errorMsgInvalidNodePosition = string.Format("Le noeud ne peut pas être déplacer avant/après {0} le noeud précédent/suivant (selon l'échelle des temps)", System.Environment.NewLine);
+		languages.english.errorMsgInvalidNodePosition = string.Format("Node cannot be place before/after {0} the previous/next node (following the time scale)", System.Environment.NewLine);
+		languages.french.errorMsgNotEnoughNodes = string.Format("Au moins 2 noeuds doit être défini,{0}donc la suppression ignoré", System.Environment.NewLine);
+		languages.english.errorMsgNotEnoughNodes = string.Format("At least 2 nodes must exist,{0}so node can't be removed", System.Environment.NewLine);
 
 		languages.french.displayMsgStartSimulation = "Visualisation démarrée (Simulation)";
 		languages.english.displayMsgStartSimulation = "Visualisation started (Simulation)";

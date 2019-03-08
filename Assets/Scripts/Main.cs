@@ -40,7 +40,7 @@ public class Main : MonoBehaviour
 		// Une façon simple de réactiver le logiciel est d'effacer le fichier "bidon"
 
 		//string checkFileName = Application.persistentDataPath + @"/AcroVR.dll";
-		//DateTime endDate = new DateTime(2019, 5, 1);
+		//DateTime endDate = new DateTime(2019, 5, 1);									// Date = 1 mai 2019
 		//if (DateTime.Today >= endDate)                                                  // Date spécifié passé
 		//{
 		//	System.IO.File.WriteAllText(checkFileName, "$$&*&@@@!!");                   // On modifie le fichier pour indiquer que le logiciel est désactivé
@@ -146,6 +146,8 @@ public class Main : MonoBehaviour
 		MovementF.Instance.dropDownNumIntervals.interactable = false;               // Non fonctionnelle encore
 		MovementF.Instance.buttonSave.interactable = false;                         // Non fonctionnelle encore
 		MovementF.Instance.buttonSaveImage.color = Color.gray;                      // Non fonctionnelle encore
+		//MovementF.Instance.buttonSave.interactable = status;
+		//MovementF.Instance.buttonSaveImage.color = color;
 
 		MovementF.Instance.dropDownCondition.interactable = status;
 		MovementF.Instance.inputFieldInitialRotation.interactable = status;
