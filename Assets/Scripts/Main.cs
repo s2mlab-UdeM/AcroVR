@@ -144,10 +144,8 @@ public class Main : MonoBehaviour
 		MovementF.Instance.dropDownDDLNames.interactable = status;
 		MovementF.Instance.dropDownInterpolation.interactable = false;				// Non fonctionnelle encore
 		MovementF.Instance.dropDownNumIntervals.interactable = false;               // Non fonctionnelle encore
-		MovementF.Instance.buttonSave.interactable = false;                         // Non fonctionnelle encore
-		MovementF.Instance.buttonSaveImage.color = Color.gray;                      // Non fonctionnelle encore
-		//MovementF.Instance.buttonSave.interactable = status;
-		//MovementF.Instance.buttonSaveImage.color = color;
+		MovementF.Instance.buttonSave.interactable = status;
+		MovementF.Instance.buttonSaveImage.color = color;
 
 		MovementF.Instance.dropDownCondition.interactable = status;
 		MovementF.Instance.inputFieldInitialRotation.interactable = status;

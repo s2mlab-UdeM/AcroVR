@@ -171,6 +171,7 @@ public class MainParameters
 		public string errorMsgInvalidNodePosition;
 		public string errorMsgNotEnoughNodes;
 
+		public string displayMsgTitle;
 		public string displayMsgStartSimulation;
 		public string displayMsgDtValue;
 		public string displayMsgSimulationTime;
@@ -313,6 +314,8 @@ public class MainParameters
 		languages.french.errorMsgNotEnoughNodes = string.Format("Au moins 2 noeuds doit être défini,{0}donc la suppression ignoré", System.Environment.NewLine);
 		languages.english.errorMsgNotEnoughNodes = string.Format("At least 2 nodes must exist,{0}so node can't be removed", System.Environment.NewLine);
 
+		languages.french.displayMsgTitle = "Résultats:";
+		languages.english.displayMsgTitle = "Results:";
 		languages.french.displayMsgStartSimulation = "Visualisation démarrée (Simulation)";
 		languages.english.displayMsgStartSimulation = "Visualisation started (Simulation)";
 		languages.french.displayMsgDtValue = "Paramètre dt (durée d'un frame)";

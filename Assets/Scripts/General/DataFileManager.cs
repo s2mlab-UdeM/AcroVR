@@ -119,7 +119,50 @@ public class DataFileManager : MonoBehaviour
 		MainParameters.Instance.joints = jointsTemp;
     }
 
-    float[] ExtractDataTQ(string values)
+	// =================================================================================================================================================================
+	/// <summary> Conserver les angles des articulations (DDL) dans un fichier de données, ainsi que les autres paramètres nécessaires (paramètres de décollage, ...). </summary>
+
+	public void WriteDataFiles(string fileName)
+	{
+		string fileLines = string.Format(
+			"Duration: {0}{1}Condition: {2}{3}VerticalSpeed: {4:0.000}{5}AnteroposteriorSpeed: {6:0.000}{7}SomersaultSpeed: {8:0.000}{9}TwistSpeed: {10:0.000}{11}Tilt: {12:0.000}{13}Rotation: {14:0.000}{15}{16}",
+			MainParameters.Instance.joints.duration, System.Environment.NewLine,
+			MainParameters.Instance.joints.condition, System.Environment.NewLine,
+			MainParameters.Instance.joints.takeOffParam.verticalSpeed, System.Environment.NewLine,
+			MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed, System.Environment.NewLine,
+			MainParameters.Instance.joints.takeOffParam.somersaultSpeed, System.Environment.NewLine,
+			MainParameters.Instance.joints.takeOffParam.twistSpeed, System.Environment.NewLine,
+			MainParameters.Instance.joints.takeOffParam.tilt, System.Environment.NewLine,
+			MainParameters.Instance.joints.takeOffParam.rotation, System.Environment.NewLine, System.Environment.NewLine);
+
+		fileLines = string.Format("{0}Nodes{1}DDL, name, T, Q{2}", fileLines, System.Environment.NewLine, System.Environment.NewLine);
+
+		for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
+		{
+			fileLines = string.Format("{0}{1}:{2}:", fileLines, i + 1, MainParameters.Instance.joints.nodes[i].name);
+			for (int j = 0; j < MainParameters.Instance.joints.nodes[i].T.Length; j++)
+			{
+				if (j < MainParameters.Instance.joints.nodes[i].T.Length - 1)
+					fileLines = string.Format("{0}{1:0.000000},", fileLines, MainParameters.Instance.joints.nodes[i].T[j]);
+				else
+					fileLines = string.Format("{0}{1:0.000000}:", fileLines, MainParameters.Instance.joints.nodes[i].T[j]);
+			}
+			for (int j = 0; j < MainParameters.Instance.joints.nodes[i].Q.Length; j++)
+			{
+				if (j < MainParameters.Instance.joints.nodes[i].Q.Length - 1)
+					fileLines = string.Format("{0}{1:0.000000},", fileLines, MainParameters.Instance.joints.nodes[i].Q[j]);
+				else
+					fileLines = string.Format("{0}{1:0.000000}:{2}", fileLines, MainParameters.Instance.joints.nodes[i].Q[j], System.Environment.NewLine);
+			}
+		}
+
+		System.IO.File.WriteAllText(fileName, fileLines);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Extraire les données T ou Q (nombres sépérés par des virgules) de la ligne de texte spécifié. </summary>
+
+	float[] ExtractDataTQ(string values)
     {
         string[] subValues = Regex.Split(values, ",");
         float[] data = new float[subValues.Length];

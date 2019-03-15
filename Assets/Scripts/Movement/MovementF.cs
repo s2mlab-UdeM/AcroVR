@@ -190,7 +190,7 @@ public class MovementF : MonoBehaviour
 	{
 		// Utilisation d'un répertoire de données par défaut, alors si ce répertoire n'existe pas, il faut le créer
 
-		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%UserProfile%\AcroVR");
+		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%UserProfile%\Documents\AcroVR");
 		if (!System.IO.Directory.Exists(dirSimulationFiles))
 		{
 			try
@@ -208,6 +208,16 @@ public class MovementF : MonoBehaviour
 		string fileName = FileBrowser.SaveFile(MainParameters.Instance.languages.Used.movementSaveDataFileTitle, dirSimulationFiles, "DefaultFile", "txt");
 		if (fileName.Length <= 0)
 			return;
+
+		// Conserver un fichier de données
+
+		DataFileManager.Instance.WriteDataFiles(fileName);
+
+		// Afficher le nom du fichier à l'écran
+
+		MainParameters.Instance.joints.fileName = fileName;
+		textFileName.text = fileName;
+
 	}
 
 	// =================================================================================================================================================================

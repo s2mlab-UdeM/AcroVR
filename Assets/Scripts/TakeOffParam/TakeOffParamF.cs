@@ -23,47 +23,45 @@ public class TakeOffParamF : MonoBehaviour
 
 	public void CheckTakeOffParam(GameObject panel)
 	{
-		MainParameters.StrucJoints joints = MainParameters.Instance.joints;
-
 		float value = float.Parse(panel.GetComponentInChildren<InputField>().text);
 		if (panel.name == "PanelInitialRotation")
 		{
 			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", value);
-			joints.takeOffParam.rotation = value;
+			MainParameters.Instance.joints.takeOffParam.rotation = value;
 		}
 		else if (panel.name == "PanelTilt")
 		{
 			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", value);
-			joints.takeOffParam.tilt = value;
+			MainParameters.Instance.joints.takeOffParam.tilt = value;
 		}
 		else if (panel.name == "PanelHorizontalSpeed")
 		{
 			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", value);
-			joints.takeOffParam.anteroposteriorSpeed = value;
+			MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed = value;
 		}
 		else if (panel.name == "PanelVerticalSpeed")
 		{
 			if (value < 0)
 			{
-				panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", joints.takeOffParam.verticalSpeed);
+				panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", MainParameters.Instance.joints.takeOffParam.verticalSpeed);
 				panelMessage.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgVerticalSpeed;
 				panelMessage.SetActive(true);
 			}
 			else
 			{
 				panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", value);
-				joints.takeOffParam.verticalSpeed = value;
+				MainParameters.Instance.joints.takeOffParam.verticalSpeed = value;
 			}
 		}
 		else if (panel.name == "PanelSomersaultSpeed")
 		{
 			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.000}", value);
-			joints.takeOffParam.somersaultSpeed = value;
+			MainParameters.Instance.joints.takeOffParam.somersaultSpeed = value;
 		}
 		else if (panel.name == "PanelTwistSpeed")
 		{
 			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.000}", value);
-			joints.takeOffParam.twistSpeed = value;
+			MainParameters.Instance.joints.takeOffParam.twistSpeed = value;
 		}
 	}
 }
