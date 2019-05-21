@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class TakeOffParamF : MonoBehaviour
 {
-	public GameObject panelMessage;
+	public GameObject panelTakeOffErrorMsg;
 
 	// =================================================================================================================================================================
 	/// <summary> Vérification d'un des paramètres de décollage suivants: Rotation initiale, Tilt, Vitesse horizontale, Saut périlleux et Rotation. </summary>
@@ -24,7 +24,7 @@ public class TakeOffParamF : MonoBehaviour
 	public void CheckTakeOffParam(GameObject panel)
 	{
 		float value = float.Parse(panel.GetComponentInChildren<InputField>().text);
-		if (panel.name == "PanelInitialRotation")
+		if (panel.name == "PanelSomersaultPosition")
 		{
 			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", value);
 			MainParameters.Instance.joints.takeOffParam.rotation = value;
@@ -44,8 +44,8 @@ public class TakeOffParamF : MonoBehaviour
 			if (value < 0)
 			{
 				panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", MainParameters.Instance.joints.takeOffParam.verticalSpeed);
-				panelMessage.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgVerticalSpeed;
-				panelMessage.SetActive(true);
+				panelTakeOffErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgVerticalSpeed;
+				panelTakeOffErrorMsg.SetActive(true);
 			}
 			else
 			{

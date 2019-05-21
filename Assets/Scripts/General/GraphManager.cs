@@ -14,21 +14,28 @@ public class GraphManager : MonoBehaviour
 	public GameObject panelAddRemoveNode;
 	public GameObject buttonAddNode;
 	public GameObject buttonRemoveNode;
-	public GameObject panelMessage;
+	public GameObject panelMoveErrMsg;
 
 	public int ddlUsed = 0;
 	public float mousePosSaveX;
 	public float mousePosSaveY;
+	public bool mouseTracking = false;
 	public bool mouseRightButtonON = false;
+	public bool mouseDisableLastButton = false;
 
-	GraphChart graph;
+	public float axisXmin = 0;
+	public float axisXmax = 0;
+	public float axisYmin = 0;
+	public float axisYmax = 0;
+
+	public GraphChart graph;
 	float q0MinCurve0;
 	float q0MaxCurve0;
 	string[] dataCategories;
 	string[] nodesCategories;
 	string nodesTemp1Category;
 	string nodesTemp2Category;
-	string cursorCategorie;
+	//string cursorCategorie;
 
 	int nodeUsed = 0;
 	int numNodes = 0;
@@ -36,7 +43,6 @@ public class GraphManager : MonoBehaviour
 	float factorGraphRatioX = 0;            // Facteurs relatifs qui tient compte du ratio X vs Y du graphique, dont les unités sont similaire dans les 2 coordonnées
 	float factorGraphRatioY = 0;
 
-	bool mouseTracking = false;
 	double mousePosX;
 	double mousePosY;
 	bool mouseLeftButtonON = false;
@@ -53,7 +59,7 @@ public class GraphManager : MonoBehaviour
 		nodesCategories = new string[2] { "Nodes1", "Nodes2" };
 		nodesTemp1Category = "NodesTemp1";
 		nodesTemp2Category = "NodesTemp2";
-		cursorCategorie = "Cursor";
+		//cursorCategorie = "Cursor";
 	}
 
 	// =================================================================================================================================================================
@@ -61,7 +67,20 @@ public class GraphManager : MonoBehaviour
 
 	void Update()
 	{
+		// Vérifier si la lecture des contrôles de la souris est active
+		// Vérifier aussi si l'option de désactiver l'action du dernier bouton de la souris est active
+
 		if (!mouseTracking) return;
+		if (mouseDisableLastButton)
+		{
+			if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+			{
+				mouseDisableLastButton = false;
+				mouseLeftButtonON = false;
+				mouseRightButtonON = false;
+			}
+			return;
+		}
 
 		// Lecture de la position de la souris, en unité du graphique
 		// Si la souris n'est pas sur le graphique, alors on fait rien
@@ -75,14 +94,26 @@ public class GraphManager : MonoBehaviour
 			return;
 		}
 
-		// Bouton gauche de la souris appuyé => déplacement d'un noeud
-		// Il faut ignorer le clic pour désactiver le message d'erreur, s'il y lieu
+		// Bouton gauche de la souris appuyé => déplacement d'un noeud (Bouton gauche appuyé, effacé le noeud temporaire précédent s'il y a lieu)
 
-		if (Input.GetMouseButtonDown(0) && !panelMessage.activeSelf && !mouseRightButtonON)
+		if (Input.GetMouseButtonDown(0) && !mouseRightButtonON)
 		{
 			DisplayNodesTemp2();
 			mouseLeftButtonON = true;
 		}
+
+		// Bouton gauche de la souris appuyé => déplacement d'un noeud (Bouton gauche toujours appuyé, affiché le noeud temporaire)
+
+		if (mouseLeftButtonON)
+		{
+			graph.DataSource.StartBatch();
+			graph.DataSource.ClearCategory(nodesTemp1Category);
+			graph.DataSource.AddPointToCategory(nodesTemp1Category, mousePosX, mousePosY);
+			graph.DataSource.EndBatch();
+		}
+
+		// Bouton gauche de la souris appuyé => déplacement d'un noeud (Bouton gauche relâché, effacé le noeud temporaire et modifier le noeud sélectionné, si la position est correct)
+
 		if (Input.GetMouseButtonUp(0) && mouseLeftButtonON)
 		{
 			// Enlever les noeuds temporaires
@@ -94,8 +125,9 @@ public class GraphManager : MonoBehaviour
 			if ((nodeUsed <= 0 && mousePosX >= MainParameters.Instance.joints.nodes[ddlUsed].T[1]) || (nodeUsed >= numNodes - 1 && mousePosX <= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed - 1]) ||
 				(nodeUsed > 0 && nodeUsed < numNodes - 1 && (mousePosX <= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed - 1] || mousePosX >= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed + 1])))
 			{
-				panelMessage.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgInvalidNodePosition;
-				panelMessage.SetActive(true);
+				panelMoveErrMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgInvalidNodePosition;
+				GraphManager.Instance.mouseTracking = false;
+				panelMoveErrMsg.SetActive(true);
 				return;
 			}
 
@@ -110,7 +142,7 @@ public class GraphManager : MonoBehaviour
 
 			// Afficher la courbe des positions des angles pour l'articulation sélectionnée
 
-			MovementF.Instance.DisplayDDL(false, ddlUsed);
+			MovementF.Instance.DisplayDDL(false, ddlUsed, false);
 
 			// Afficher la silhouette au temps du noeud modifié
 
@@ -122,7 +154,7 @@ public class GraphManager : MonoBehaviour
 
 		// Bouton droit de la souris appuyé => ajouter/effacer un noeud
 
-		if (Input.GetMouseButtonDown(1) && !panelMessage.activeSelf)
+		if (Input.GetMouseButtonDown(1))
 		{
 			mouseRightButtonON = true;
 			mousePosSaveX = (float)mousePosX;
@@ -136,30 +168,24 @@ public class GraphManager : MonoBehaviour
 			panelAddRemoveNode.SetActive(true);
 		}
 
-		if (Input.GetMouseButtonDown(2))
-			Debug.Log("Pressed middle click.");
-
-		if (mouseLeftButtonON)
-		{
-			graph.DataSource.StartBatch();
-			graph.DataSource.ClearCategory(nodesTemp1Category);
-			graph.DataSource.AddPointToCategory(nodesTemp1Category, mousePosX, mousePosY);
-			graph.DataSource.EndBatch();
-		}
+		//if (Input.GetMouseButtonDown(2))
+		//	Debug.Log("Pressed middle click.");
 	}
 
 	// =================================================================================================================================================================
-	/// <summary> Activer la lecture de la position de la souris. </summary>
+	/// <summary> Bouton OK a été appuyer. </summary>
 
-	public void mouseTrackingStatus(bool enable)
+	public void ButtonOK()
 	{
-		mouseTracking = enable;
+		panelMoveErrMsg.SetActive(false);
+		mouseTracking = true;
+		mouseDisableLastButton = true;
 	}
 
 	// =================================================================================================================================================================
 	/// <summary> Afficher les angles interpolés et les noeuds de l'articulation spécifié. </summary>
 
-	public void DisplayCurveAndNodes(int curve, int ddl)
+	public void DisplayCurveAndNodes(int curve, int ddl, bool axisRange)
 	{
 		if (graph == null) return;
 		graph.DataSource.StartBatch();
@@ -181,40 +207,64 @@ public class GraphManager : MonoBehaviour
 
 		float q0Min = 360;
 		float q0Max = -360;
-		float q0Value;
+		float value;
 		int t0Length = MainParameters.Instance.joints.t0.Length;
 		for (int i = 0; i < t0Length; i++)
 		{
-			q0Value = MainParameters.Instance.joints.q0[ddl, i] * 180 / Mathf.PI;
-			graph.DataSource.AddPointToCategory(dataCategories[curve], MainParameters.Instance.joints.t0[i], q0Value);
-			if (q0Value < q0Min) q0Min = q0Value;
-			if (q0Value > q0Max) q0Max = q0Value;
+			value = MainParameters.Instance.joints.q0[ddl, i] * radToDeg;
+			if (!axisRange && value < axisYmin)
+				value = axisYmin;
+			if (!axisRange && value > axisYmax)
+				value = axisYmax;
+			if (axisRange || MainParameters.Instance.joints.t0[i] <= axisXmax)
+				graph.DataSource.AddPointToCategory(dataCategories[curve], MainParameters.Instance.joints.t0[i], value);
+			if (value < q0Min) q0Min = value;
+			if (value > q0Max) q0Max = value;
 		}
 
 		// Ajouter les noeuds dans la nouvelle courbe Nodes
 
 		for (int i = 0; i < MainParameters.Instance.joints.nodes[ddl].T.Length; i++)
-			graph.DataSource.AddPointToCategory(nodesCategories[curve], MainParameters.Instance.joints.nodes[ddl].T[i], MainParameters.Instance.joints.nodes[ddl].Q[i] * radToDeg);
+		{
+			value = MainParameters.Instance.joints.nodes[ddl].Q[i] * radToDeg;
+			if (axisRange || (MainParameters.Instance.joints.nodes[ddl].T[i] <= axisXmax && value >= axisYmin && value <= axisYmax))
+				graph.DataSource.AddPointToCategory(nodesCategories[curve], MainParameters.Instance.joints.nodes[ddl].T[i], value);
+		}
 
 		// Définir les échelles des temps et des angles
 
-		float timeBorder = (MainParameters.Instance.joints.t0[t0Length - 1] - MainParameters.Instance.joints.t0[0]) * 0.01f;
-		graph.DataSource.HorizontalViewOrigin = MainParameters.Instance.joints.t0[0] - timeBorder;
-		graph.DataSource.HorizontalViewSize = MainParameters.Instance.joints.t0[t0Length - 1] + timeBorder - graph.DataSource.HorizontalViewOrigin;
-		factorGraphRatioX = graph.WidthRatio / (float)graph.DataSource.HorizontalViewSize;
-		if (curve <= 0)
+		if (axisRange)
 		{
-			q0MinCurve0 = q0Min;
-			q0MaxCurve0 = q0Max;
+			axisXmin = Mathf.Round(MainParameters.Instance.joints.t0[0] - 0.5f);
+			axisXmax = Mathf.Round(MainParameters.Instance.joints.t0[t0Length - 1] + 0.5f);
+			graph.DataSource.HorizontalViewOrigin = axisXmin;
+			graph.DataSource.HorizontalViewSize = axisXmax - axisXmin;
+			factorGraphRatioX = graph.WidthRatio / (float)graph.DataSource.HorizontalViewSize;
+			if (curve <= 0)
+			{
+				q0MinCurve0 = q0Min;
+				q0MaxCurve0 = q0Max;
+			}
+			else
+			{
+				q0Min = Mathf.Min(q0Min, q0MinCurve0);
+				q0Max = Mathf.Max(q0Max, q0MaxCurve0);
+			}
+			axisYmin = Mathf.Round((q0Min - 30) / 10) * 10;
+			axisYmax = Mathf.Round((q0Max + 30) / 10) * 10;
+			graph.DataSource.VerticalViewOrigin = axisYmin;
+			graph.DataSource.VerticalViewSize = axisYmax - axisYmin;
+			factorGraphRatioY = graph.HeightRatio / (float)graph.DataSource.VerticalViewSize;
 		}
 		else
 		{
-			q0Min = Mathf.Min(q0Min, q0MinCurve0);
-			q0Max = Mathf.Max(q0Max, q0MaxCurve0);
+			graph.DataSource.HorizontalViewOrigin = axisXmin;
+			graph.DataSource.HorizontalViewSize = axisXmax - axisXmin;
+			factorGraphRatioX = graph.WidthRatio / (float)graph.DataSource.HorizontalViewSize;
+			graph.DataSource.VerticalViewOrigin = axisYmin;
+			graph.DataSource.VerticalViewSize = axisYmax - axisYmin;
+			factorGraphRatioY = graph.HeightRatio / (float)graph.DataSource.VerticalViewSize;
 		}
-		graph.DataSource.VerticalViewOrigin = Mathf.Round(q0Min - 30);
-		graph.DataSource.VerticalViewSize = Mathf.Round(q0Max + 30) - graph.DataSource.VerticalViewOrigin;
-		factorGraphRatioY = graph.HeightRatio / (float)graph.DataSource.VerticalViewSize;
 		graph.DataSource.EndBatch();
 	}
 
@@ -239,10 +289,14 @@ public class GraphManager : MonoBehaviour
 
 		for (int i = 0; i < numNodes; i++)
 		{
-			if (i != nodeUsed)
-				graph.DataSource.AddPointToCategory(nodesCategories[0], MainParameters.Instance.joints.nodes[ddlUsed].T[i], MainParameters.Instance.joints.nodes[ddlUsed].Q[i] * radToDeg);
-			else
-				graph.DataSource.AddPointToCategory(nodesTemp2Category, MainParameters.Instance.joints.nodes[ddlUsed].T[i], MainParameters.Instance.joints.nodes[ddlUsed].Q[i] * radToDeg);
+			float value = MainParameters.Instance.joints.nodes[ddlUsed].Q[i] * radToDeg;
+			if (MainParameters.Instance.joints.nodes[ddlUsed].T[i] <= axisXmax && value >= axisYmin && value <= axisYmax)
+			{
+				if (i != nodeUsed)
+					graph.DataSource.AddPointToCategory(nodesCategories[0], MainParameters.Instance.joints.nodes[ddlUsed].T[i], value);
+				else
+					graph.DataSource.AddPointToCategory(nodesTemp2Category, MainParameters.Instance.joints.nodes[ddlUsed].T[i], value);
+			}
 		}
 
 		graph.DataSource.EndBatch();
@@ -258,7 +312,11 @@ public class GraphManager : MonoBehaviour
 		graph.DataSource.ClearCategory(nodesTemp2Category);
 		graph.DataSource.ClearCategory(nodesCategories[0]);
 		for (int i = 0; i < MainParameters.Instance.joints.nodes[ddlUsed].T.Length; i++)
-			graph.DataSource.AddPointToCategory(nodesCategories[0], MainParameters.Instance.joints.nodes[ddlUsed].T[i], MainParameters.Instance.joints.nodes[ddlUsed].Q[i] * radToDeg);
+		{
+			float value = MainParameters.Instance.joints.nodes[ddlUsed].Q[i] * radToDeg;
+			if (MainParameters.Instance.joints.nodes[ddlUsed].T[i] <= axisXmax && value >= axisYmin && value <= axisYmax)
+				graph.DataSource.AddPointToCategory(nodesCategories[0], MainParameters.Instance.joints.nodes[ddlUsed].T[i], value);
+		}
 		graph.DataSource.EndBatch();
 		mouseLeftButtonON = false;
 	}
@@ -266,20 +324,20 @@ public class GraphManager : MonoBehaviour
 	// =================================================================================================================================================================
 	/// <summary> Afficher le curseur qui indique le temps. </summary>
 
-	public void DisplayCursor(float t)
-	{
-		if (graph == null) return;
-		graph.DataSource.StartBatch();
+	//public void DisplayCursor(float t)			// Fonction a modifié (corrigé), si jamais elle vient a être utilisé dans le futur
+	//{
+	//	if (graph == null) return;
+	//	graph.DataSource.StartBatch();
 
-		// Effacer le curseur précédent
+	//	// Effacer le curseur précédent
 
-		graph.DataSource.ClearCategory(cursorCategorie);
+	//	graph.DataSource.ClearCategory(cursorCategorie);
 
-		graph.DataSource.AddPointToCategory(cursorCategorie, t, -360);
-		graph.DataSource.AddPointToCategory(cursorCategorie, t, 360);
+	//	graph.DataSource.AddPointToCategory(cursorCategorie, t, -360);
+	//	graph.DataSource.AddPointToCategory(cursorCategorie, t, 360);
 
-		graph.DataSource.EndBatch();
-	}
+	//	graph.DataSource.EndBatch();
+	//}
 
 	// =================================================================================================================================================================
 	/// <summary> Trouver le noeud le plus près de la position de la souris (en tenant compte du ratio X vs Y du graphique). </summary>

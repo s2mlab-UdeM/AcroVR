@@ -133,12 +133,22 @@ public class MainParameters
 	/// <summary> Description de la structure contenant la liste des messages utilisés. </summary>
 	public struct StrucMessageLists
 	{
+		public string movementDDLHipFlexion;
+		public string movementDDLKneeFlexion;
+		public string movementDDLLeftArmFlexion;
+		public string movementDDLLeftArmAbduction;
+		public string movementDDLRightArmFlexion;
+		public string movementDDLRightArmAbduction;
 		public string movementButtonAddNode;
 		public string movementButtonRemoveNode;
 		public string movementLoadDataFileTitle;
 		public string movementLoadDataFileTxtFile;
 		public string movementLoadDataFileAllFiles;
 		public string movementSaveDataFileTitle;
+		public string movementGraphSettingsVerticalTitle;
+		public string movementGraphSettingsHorizontalTitle;
+		public string movementGraphSettingsLowerBound;
+		public string movementGraphSettingsUpperBound;
 
 		public string takeOffTitle;
 		public string takeOffTitleSpeed;
@@ -152,11 +162,11 @@ public class MainParameters
 		public string takeOffConditionHighBar;
 		public string takeOffConditionUnevenBars;
 		public string takeOffConditionVault;
-		public string takeOffInitialRotation;
+		public string takeOffSomersaultPosition;
 		public string takeOffTilt;
 		public string takeOffHorizontal;
 		public string takeOffVertical;
-		public string takeOffSomersault;
+		public string takeOffSomersaultSpeed;
 		public string takeOffTwist;
 
 		public string animatorPlayModeGesticulation;
@@ -170,6 +180,10 @@ public class MainParameters
 		public string errorMsgVerticalSpeed;
 		public string errorMsgInvalidNodePosition;
 		public string errorMsgNotEnoughNodes;
+		public string errorMsgLowerBoundOverflow;
+		public string errorMsgLowerBoundInvalid;
+		public string errorMsgUpperBoundOverflow;
+		public string errorMsgUpperBoundInvalid;
 
 		public string displayMsgTitle;
 		public string displayMsgStartSimulation;
@@ -246,6 +260,19 @@ public class MainParameters
 
 		// Initialisation de la liste des messages en français et en anglais.
 
+		languages.french.movementDDLHipFlexion = "Hanche_Flexion";
+		languages.english.movementDDLHipFlexion = "Hip_Flexion";
+		languages.french.movementDDLKneeFlexion = "Genou_Flexion";
+		languages.english.movementDDLKneeFlexion = "Knee_Flexion";
+		languages.french.movementDDLLeftArmFlexion = "Bras_Gauche_Flexion";
+		languages.english.movementDDLLeftArmFlexion = "Left_Arm_Flexion";
+		languages.french.movementDDLLeftArmAbduction = "Bras_Gauche_Abduction";
+		languages.english.movementDDLLeftArmAbduction = "Left_Arm_Abduction";
+		languages.french.movementDDLRightArmFlexion = "Bras_Droit_Flexion";
+		languages.english.movementDDLRightArmFlexion = "Right_Arm_Flexion";
+		languages.french.movementDDLRightArmAbduction = "Bras_Droit_Abduction";
+		languages.english.movementDDLRightArmAbduction = "Right_Arm_Abduction";
+
 		languages.french.movementButtonAddNode = "Ajouter un noeud";
 		languages.english.movementButtonAddNode = "Add node";
 		languages.french.movementButtonRemoveNode = "Effacer un noeud";
@@ -258,6 +285,15 @@ public class MainParameters
 		languages.english.movementLoadDataFileAllFiles = "All files";
 		languages.french.movementSaveDataFileTitle = "Créer/modifier un Fichier de Simulation";
 		languages.english.movementSaveDataFileTitle = "Create/modify a Simulation File";
+
+		languages.french.movementGraphSettingsVerticalTitle = "Axe vertical";
+		languages.english.movementGraphSettingsVerticalTitle = "Vertical axis";
+		languages.french.movementGraphSettingsHorizontalTitle = "Axe horizontal";
+		languages.english.movementGraphSettingsHorizontalTitle = "Horizontal axis";
+		languages.french.movementGraphSettingsLowerBound = string.Format("Borne{0}inférieur", System.Environment.NewLine);
+		languages.english.movementGraphSettingsLowerBound = string.Format("Lower{0}bound", System.Environment.NewLine);
+		languages.french.movementGraphSettingsUpperBound = string.Format("Borne{0}supérieur", System.Environment.NewLine);
+		languages.english.movementGraphSettingsUpperBound = string.Format("Upper{0}bound", System.Environment.NewLine);
 
 		languages.french.takeOffTitle = "Paramètres de décollage:";
 		languages.english.takeOffTitle = "Take-off parameters:";
@@ -283,17 +319,17 @@ public class MainParameters
 		languages.english.takeOffConditionUnevenBars = "Uneven Bars";
 		languages.french.takeOffConditionVault = "Saut à la perche";
 		languages.english.takeOffConditionVault = "Vault";
-		languages.french.takeOffInitialRotation = "Rotation initiale (°)";
-		languages.english.takeOffInitialRotation = "Initial rotation (°)";
+		languages.french.takeOffSomersaultPosition = "Salto (°)";
+		languages.english.takeOffSomersaultPosition = "Somersault (°)";
 		languages.french.takeOffTilt = "Inclinaison (°)";
 		languages.english.takeOffTilt = "Tilt (°)";
 		languages.french.takeOffHorizontal = "Horizontale (m/s)";
 		languages.english.takeOffHorizontal = "Horizontal (m/s)";
 		languages.french.takeOffVertical = "Verticale (m/s)";
 		languages.english.takeOffVertical = "Vertical (m/s)";
-		languages.french.takeOffSomersault = "Saut périlleux (rév./s)";
-		languages.english.takeOffSomersault = "Somersault (rev./s)";
-		languages.french.takeOffTwist = "Rotation (rév./s)";
+		languages.french.takeOffSomersaultSpeed = "Salto (rév./s)";
+		languages.english.takeOffSomersaultSpeed = "Somersault (rev./s)";
+		languages.french.takeOffTwist = "Vrille (rév./s)";
 		languages.english.takeOffTwist = "Twist (rev./s)";
 
 		languages.french.animatorPlayModeGesticulation = languages.english.animatorPlayModeGesticulation = "Gesticulation";
@@ -313,6 +349,14 @@ public class MainParameters
 		languages.english.errorMsgInvalidNodePosition = string.Format("Node cannot be place before/after {0} the previous/next node (following the time scale)", System.Environment.NewLine);
 		languages.french.errorMsgNotEnoughNodes = string.Format("Au moins 2 noeuds doit être défini,{0}donc la suppression ignoré", System.Environment.NewLine);
 		languages.english.errorMsgNotEnoughNodes = string.Format("At least 2 nodes must exist,{0}so node can't be removed", System.Environment.NewLine);
+		languages.french.errorMsgLowerBoundOverflow = string.Format("La borne inférieur ne peut pas être plus grande ou égale à la borne supérieur");
+		languages.english.errorMsgLowerBoundOverflow = string.Format("Lower bound cannot be greater or equal to the upper bound");
+		languages.french.errorMsgLowerBoundInvalid = string.Format("La valeur de la borne inférieur spécifié est invalide");
+		languages.english.errorMsgLowerBoundInvalid = string.Format("Specified value for the lower bound is invalid");
+		languages.french.errorMsgUpperBoundOverflow = string.Format("La borne supérieur ne peut pas être plus petite ou égale à la borne inférieur");
+		languages.english.errorMsgUpperBoundOverflow = string.Format("Upper bound cannot be smaller or equal to the lower bound");
+		languages.french.errorMsgUpperBoundInvalid = string.Format("La valeur de la borne supérieur spécifié est invalide");
+		languages.english.errorMsgUpperBoundInvalid = string.Format("Specified value for the upper bound is invalid");
 
 		languages.french.displayMsgTitle = "Résultats:";
 		languages.english.displayMsgTitle = "Results:";
@@ -324,15 +368,15 @@ public class MainParameters
 		languages.english.displayMsgSimulationTime = "Simulation time";
 		languages.french.displayMsgContactGround = "!! ATTENTION: Contact avec le sol à";
 		languages.english.displayMsgContactGround = "!! WARNING: Contact with the ground at";
-		languages.french.displayMsgNumberSomersaults = "Nombre de périlleux";
-		languages.english.displayMsgNumberSomersaults = "Number of Somersaults";
-		languages.french.displayMsgNumberTwists = "Nombre de torsions";
-		languages.english.displayMsgNumberTwists = "Number of Twists";
-		languages.french.displayMsgFinalTwist = "Torsion final (valeur de fin)";
+		languages.french.displayMsgNumberSomersaults = "Nombre de salto(s)";
+		languages.english.displayMsgNumberSomersaults = "Number of Somersault(s)";
+		languages.french.displayMsgNumberTwists = "Nombre de vrille(s)";
+		languages.english.displayMsgNumberTwists = "Number of Twist(s)";
+		languages.french.displayMsgFinalTwist = "Vrille final (valeur de fin)";
 		languages.english.displayMsgFinalTwist = "Final twist (end value)";
-		languages.french.displayMsgMaxTilt = "Inclinaison maximum";
+		languages.french.displayMsgMaxTilt = "Inclinaison maximale";
 		languages.english.displayMsgMaxTilt = "Tilt max";
-		languages.french.displayMsgFinalTilt = "Inclinaison final (valeur de fin)";
+		languages.french.displayMsgFinalTilt = "Inclinaison finale (valeur de fin)";
 		languages.english.displayMsgFinalTilt = "Final tilt (end value)";
 		languages.french.displayMsgSimulationDuration = "Durée réelle de la simulation";
 		languages.english.displayMsgSimulationDuration = "Simulation real duration";

@@ -15,14 +15,22 @@ public class MovementF : MonoBehaviour
 
 	public Dropdown dropDownDDLNames;
 	public Dropdown dropDownInterpolation;
-	public Dropdown dropDownNumIntervals;
 	public Button buttonLoad;
 	public Image buttonLoadImage;
 	public Button buttonSave;
 	public Image buttonSaveImage;
+	public Button buttonSymetricLeftRight;
+	public Image buttonSymetricLeftRightImage;
+	public Button buttonASymetricLeftRight;
+	public Image buttonASymetricLeftRightImage;
+	public Button buttonGraphSettings;
+	public Image buttonGraphSettingsImage;
+	public GameObject buttonSymetricLeftRightGameObject;
+	public GameObject buttonAsymetricLeftRightGameObject;
+	public GameObject panelGraphSettings;
 
 	public Dropdown dropDownCondition;
-	public InputField inputFieldInitialRotation;
+	public InputField inputFieldSomersaultPosition;
 	public InputField inputFieldTilt;
 	public InputField inputFieldHorizontalSpeed;
 	public InputField inputFieldVerticalSpeed;
@@ -48,9 +56,9 @@ public class MovementF : MonoBehaviour
 	{
 		// Afficher la courbe des positions des angles pour l'articulation sélectionné par défaut
 
-		GraphManager.Instance.DisplayCurveAndNodes(0, value);
+		GraphManager.Instance.DisplayCurveAndNodes(0, value, true);
 		if (MainParameters.Instance.joints.nodes[value].ddlOppositeSide >= 0)
-			GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[value].ddlOppositeSide);
+			GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[value].ddlOppositeSide, true);
 	}
 
 	// =================================================================================================================================================================
@@ -80,14 +88,14 @@ public class MovementF : MonoBehaviour
 
 		// Afficher le nom du fichier à l'écran
 
-		textFileName.text = joints.fileName;
+		textFileName.text = System.IO.Path.GetFileName(joints.fileName);
 
 		// Mettre à jour les paramètres de décolage à l'écran
 
 		dropDownCondition.interactable = true;
 		dropDownCondition.value = joints.condition;
-		inputFieldInitialRotation.interactable = true;
-		inputFieldInitialRotation.text = string.Format("{0:0.0}", joints.takeOffParam.rotation);
+		inputFieldSomersaultPosition.interactable = true;
+		inputFieldSomersaultPosition.text = string.Format("{0:0.0}", joints.takeOffParam.rotation);
 		inputFieldTilt.interactable = true;
 		inputFieldTilt.text = string.Format("{0:0.0}", joints.takeOffParam.tilt);
 		inputFieldHorizontalSpeed.interactable = true;
@@ -170,17 +178,12 @@ public class MovementF : MonoBehaviour
 
 		// Afficher la courbe des positions des angles pour l'articulation sélectionné par défaut
 
-		DisplayDDL(true, 0);
+		DisplayDDL(true, 0, true);
 
 		// Afficher la silhouette au temps t = 0
 
 		AnimationF.Instance.PlayReset();
 		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, 0, 1);
-
-		// Activer les contrôles disponible à l'utilisateur à l'écran
-
-		Main.Instance.EnableDisableControls(true, false);
-		GraphManager.Instance.mouseTrackingStatus(true);
 	}
 
 	// =================================================================================================================================================================
@@ -217,7 +220,25 @@ public class MovementF : MonoBehaviour
 
 		MainParameters.Instance.joints.fileName = fileName;
 		textFileName.text = fileName;
+	}
 
+	// =================================================================================================================================================================
+	/// <summary> Un des boutons Symétrie ou Asymétrie côté gauche et droit a été appuyer. </summary>
+
+	public void ButtonSymetricLeftRight(bool symetricState)
+	{
+		buttonSymetricLeftRightGameObject.SetActive(!symetricState);
+		buttonAsymetricLeftRightGameObject.SetActive(symetricState);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Paramètres du Graphique a été appuyer. </summary>
+
+	public void ButtonGraphSettings()
+	{
+		GraphManager.Instance.mouseTracking = false;
+		panelGraphSettings.SetActive(true);
+		GraphSettings.Instance.Init();
 	}
 
 	// =================================================================================================================================================================
@@ -255,7 +276,7 @@ public class MovementF : MonoBehaviour
 
 		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
 
-		MovementF.Instance.DisplayDDL(false, ddl);
+		DisplayDDL(false, ddl, false);
 
 		// Afficher la silhouette au temps du noeud modifié
 
@@ -279,8 +300,9 @@ public class MovementF : MonoBehaviour
 		int ddl = GraphManager.Instance.ddlUsed;
 		if (MainParameters.Instance.joints.nodes[ddl].T.Length < 3 || MainParameters.Instance.joints.nodes[ddl].Q.Length < 3)
 		{
-			GraphManager.Instance.panelMessage.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgNotEnoughNodes;
-			GraphManager.Instance.panelMessage.SetActive(true);
+			GraphManager.Instance.panelMoveErrMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgNotEnoughNodes;
+			GraphManager.Instance.mouseTracking = false;
+			GraphManager.Instance.panelMoveErrMsg.SetActive(true);
 			return;
 		}
 
@@ -311,7 +333,7 @@ public class MovementF : MonoBehaviour
 
 		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
 
-		MovementF.Instance.DisplayDDL(false, ddl);
+		DisplayDDL(false, ddl, false);
 
 		// Afficher la silhouette au temps du noeud modifié
 
@@ -356,19 +378,38 @@ public class MovementF : MonoBehaviour
 	// =================================================================================================================================================================
 	/// <summary> Afficher la courbe des positions des angles pour l'articulation sélectionné, ainsi que les noeuds. </summary>
 
-	public void DisplayDDL(bool options,int ddl)
+	public void DisplayDDL(bool options,int ddl, bool axisRange)
 	{
-		GraphManager.Instance.DisplayCurveAndNodes(0, ddl);
-		if (MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide >= 0)
-			GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide);
+		if (ddl >= 0)
+		{
+			GraphManager.Instance.DisplayCurveAndNodes(0, ddl, axisRange);
+			if (MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide >= 0)
+				GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide, axisRange);
+		}
 		if (options)
 		{
 			List<string> dropDownOptions = new List<string>();
 			for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
-				dropDownOptions.Add(MainParameters.Instance.joints.nodes[i].name);
+			{
+				if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLHipFlexion.ToLower())
+					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLHipFlexion);
+				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLKneeFlexion.ToLower())
+					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLKneeFlexion);
+				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLLeftArmFlexion.ToLower())
+					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLLeftArmFlexion);
+				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLLeftArmAbduction.ToLower())
+					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLLeftArmAbduction);
+				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLRightArmFlexion.ToLower())
+					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLRightArmFlexion);
+				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLRightArmAbduction.ToLower())
+					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLRightArmAbduction);
+				else
+					dropDownOptions.Add(MainParameters.Instance.joints.nodes[i].name);
+			}
 			dropDownDDLNames.ClearOptions();
 			dropDownDDLNames.AddOptions(dropDownOptions);
-			dropDownDDLNames.value = 0;
+			if (ddl >= 0)
+				dropDownDDLNames.value = ddl;
 		}
 	}
 }

@@ -9,24 +9,28 @@ using System.Collections.Generic;
 public class Main : MonoBehaviour
 {
 	public static Main Instance;
+	public GameObject textVersionFR;
+	public GameObject textVersionEN;
 	public Text textButtonLanguage;
 
 	public Text textTakeOffTitle;
 	public Text textTakeOffSpeed;
 	public Dropdown dropDownTakeOffCondition;
-	public Text textTakeOffInitialRotation;
+	public Text textTakeOffSomersaultPosition;
 	public Text textTakeOffTilt;
 	public Text textTakeOffHorizontalSpeed;
 	public Text textTakeOffVerticalSpeed;
 	public Text textTakeOffSomersaultSpeed;
 	public Text textTakeOffTwistSpeed;
 
-	public GameObject panelMovement;
-	public GameObject panelTakeoffParameters;
-	public GameObject panelMessages;
-	public GameObject panelAnimator;
-	public GameObject panelTopButtons;
-	public GameObject panelOutOfDate;
+	public Text textMessagesTextTitle;
+
+	//public GameObject panelMovement;
+	//public GameObject panelTakeoffParameters;
+	//public GameObject panelMessages;
+	//public GameObject panelAnimator;
+	//public GameObject panelTopButtons;
+	//public GameObject panelOutOfDate;
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
@@ -78,14 +82,31 @@ public class Main : MonoBehaviour
 		{
 			MainParameters.Instance.languages.Used = MainParameters.Instance.languages.french;
 			textButtonLanguage.text = "En";
+			textVersionFR.SetActive(true);
+			textVersionEN.SetActive(false);
 		}
 		else
 		{
 			MainParameters.Instance.languages.Used = MainParameters.Instance.languages.english;
 			textButtonLanguage.text = "Fr";
+			textVersionFR.SetActive(false);
+			textVersionEN.SetActive(true);
 		}
 
 		MainParameters.StrucMessageLists languagesUsed =	MainParameters.Instance.languages.Used;
+
+		// Section graphique du mouvement
+
+		if (MainParameters.Instance.joints.nodes != null)
+			MovementF.Instance.DisplayDDL(true, -1, false);
+		GraphSettings.Instance.textVerticalAxisTitle.text = languagesUsed.movementGraphSettingsVerticalTitle;
+		GraphSettings.Instance.textVerticalAxisLowerBound.text = languagesUsed.movementGraphSettingsLowerBound;
+		GraphSettings.Instance.textVerticalAxisUpperBound.text = languagesUsed.movementGraphSettingsUpperBound;
+		GraphSettings.Instance.textHorizontalAxisTitle.text = languagesUsed.movementGraphSettingsHorizontalTitle;
+		GraphSettings.Instance.textHorizontalAxisLowerBound.text = languagesUsed.movementGraphSettingsLowerBound;
+		GraphSettings.Instance.textHorizontalAxisUpperBound.text = languagesUsed.movementGraphSettingsUpperBound;
+
+		// Section paramètres de décollage
 
 		textTakeOffTitle.text = languagesUsed.takeOffTitle;
 		textTakeOffSpeed.text = languagesUsed.takeOffTitleSpeed;
@@ -102,12 +123,18 @@ public class Main : MonoBehaviour
 		dropDownOptions.Add(languagesUsed.takeOffConditionVault);
 		dropDownTakeOffCondition.ClearOptions();
 		dropDownTakeOffCondition.AddOptions(dropDownOptions);
-		textTakeOffInitialRotation.text = languagesUsed.takeOffInitialRotation;
+		textTakeOffSomersaultPosition.text = languagesUsed.takeOffSomersaultPosition;
 		textTakeOffTilt.text = languagesUsed.takeOffTilt;
 		textTakeOffHorizontalSpeed.text = languagesUsed.takeOffHorizontal;
 		textTakeOffVerticalSpeed.text = languagesUsed.takeOffVertical;
-		textTakeOffSomersaultSpeed.text = languagesUsed.takeOffSomersault;
+		textTakeOffSomersaultSpeed.text = languagesUsed.takeOffSomersaultSpeed;
 		textTakeOffTwistSpeed.text = languagesUsed.takeOffTwist;
+
+		// Section Résultats
+
+		textMessagesTextTitle.text = languagesUsed.displayMsgTitle;
+
+		// Section Animation
 
 		dropDownOptions = new List<string>();
 		dropDownOptions.Add(languagesUsed.animatorPlaySpeedFast);
@@ -136,19 +163,24 @@ public class Main : MonoBehaviour
 		else
 			color = Color.gray;
 
+		MovementF.Instance.dropDownDDLNames.interactable = status;
 		if (mode)
 		{
 			MovementF.Instance.buttonLoad.interactable = status;
 			MovementF.Instance.buttonLoadImage.color = color;
 		}
-		MovementF.Instance.dropDownDDLNames.interactable = status;
 		MovementF.Instance.dropDownInterpolation.interactable = false;				// Non fonctionnelle encore
-		MovementF.Instance.dropDownNumIntervals.interactable = false;               // Non fonctionnelle encore
 		MovementF.Instance.buttonSave.interactable = status;
 		MovementF.Instance.buttonSaveImage.color = color;
+		MovementF.Instance.buttonSymetricLeftRight.interactable = false;            // Non fonctionnelle encore
+		MovementF.Instance.buttonSymetricLeftRightImage.color = Color.gray;         // Non fonctionnelle encore
+		MovementF.Instance.buttonASymetricLeftRight.interactable = status;
+		MovementF.Instance.buttonASymetricLeftRightImage.color = color;
+		MovementF.Instance.buttonGraphSettings.interactable = status;
+		MovementF.Instance.buttonGraphSettingsImage.color = color;
 
 		MovementF.Instance.dropDownCondition.interactable = status;
-		MovementF.Instance.inputFieldInitialRotation.interactable = status;
+		MovementF.Instance.inputFieldSomersaultPosition.interactable = status;
 		MovementF.Instance.inputFieldTilt.interactable = status;
 		MovementF.Instance.inputFieldHorizontalSpeed.interactable = status;
 		MovementF.Instance.inputFieldVerticalSpeed.interactable = status;

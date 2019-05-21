@@ -15,6 +15,7 @@ public class AnimationF : MonoBehaviour
 	public Dropdown dropDownPlayView;
 	public Button buttonPlay;
 	public Image buttonPlayImage;
+	public GameObject buttonStop;
 	public Dropdown dropDownPlaySpeed;
 	public Button buttonGraph;
 	public Image buttonGraphImage;
@@ -124,10 +125,15 @@ public class AnimationF : MonoBehaviour
 
 	public void ButtonPlay()
 	{
+		// Afficher le bouton Stop et désactiver les autres contrôles du logiciel, durant l'animation
+
+		buttonStop.SetActive(true);
+		Main.Instance.EnableDisableControls(false, true);
+
 		// Lecture des paramètres de décolage
 
 		MainParameters.Instance.joints.condition = MovementF.Instance.dropDownCondition.value;
-		MainParameters.Instance.joints.takeOffParam.rotation = float.Parse(MovementF.Instance.inputFieldInitialRotation.text);
+		MainParameters.Instance.joints.takeOffParam.rotation = float.Parse(MovementF.Instance.inputFieldSomersaultPosition.text);
 		MainParameters.Instance.joints.takeOffParam.tilt = float.Parse(MovementF.Instance.inputFieldTilt.text);
 		MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed = float.Parse(MovementF.Instance.inputFieldHorizontalSpeed.text);
 		MainParameters.Instance.joints.takeOffParam.verticalSpeed = float.Parse(MovementF.Instance.inputFieldVerticalSpeed.text);
@@ -193,8 +199,15 @@ public class AnimationF : MonoBehaviour
 
 		// Afficher la silhouette pour toute l'animation
 
-		Main.Instance.EnableDisableControls(false, true);
 		Play(q1, 0, q1.GetUpperBound(1) + 1);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Stop a été appuyer. </summary>
+
+	public void ButtonStop()
+	{
+		PlayEnd();
 	}
 
 	// =================================================================================================================================================================
@@ -210,9 +223,12 @@ public class AnimationF : MonoBehaviour
 		frameN = 0;
 		firstFrame = frFrame;
 		numberFrames = nFrames;
-		timeFrame = joints.duration / numberFrames;
+		if (nFrames > 1)
+			timeFrame = joints.duration / numberFrames;
+		else
+			timeFrame = 0;
 		animateON = true;
-		GraphManager.Instance.mouseTrackingStatus(false);
+		GraphManager.Instance.mouseTracking = false;
 
 		// Création et initialisation des "GameObject Line Renderer"
 
@@ -355,15 +371,19 @@ public class AnimationF : MonoBehaviour
 	// =================================================================================================================================================================
 	/// <summary> Actions à faire quand l'exécution de l'animation est terminé. </summary>
 
-	void PlayEnd()
+	public void PlayEnd()
 	{
 		animateON = false;
-		GraphManager.Instance.mouseTrackingStatus(true);
+		GraphManager.Instance.mouseTracking = true;
 		if (numberFrames > 1)
 		{
 			DisplayNewMessage(false, false, string.Format(" {0} = {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgSimulationDuration, timeElapsed));
 			DisplayNewMessage(false, true, string.Format(" {0}", MainParameters.Instance.languages.Used.displayMsgEndSimulation));
 		}
+
+		// Enlever le bouton Stop et activer les autres contrôles du logiciel
+
+		buttonStop.SetActive(false);
 		Main.Instance.EnableDisableControls(true, true);
 	}
 
