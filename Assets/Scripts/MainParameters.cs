@@ -149,6 +149,9 @@ public class MainParameters
 		public string movementGraphSettingsHorizontalTitle;
 		public string movementGraphSettingsLowerBound;
 		public string movementGraphSettingsUpperBound;
+		public string movementGraphSettingsUpdateSimulation;
+		public string movementGraphSettingsDefaultValuesButton;
+		public string movementGraphSettingsCancelButton;
 
 		public string takeOffTitle;
 		public string takeOffTitleSpeed;
@@ -294,6 +297,12 @@ public class MainParameters
 		languages.english.movementGraphSettingsLowerBound = string.Format("Lower{0}bound", System.Environment.NewLine);
 		languages.french.movementGraphSettingsUpperBound = string.Format("Borne{0}supérieur", System.Environment.NewLine);
 		languages.english.movementGraphSettingsUpperBound = string.Format("Upper{0}bound", System.Environment.NewLine);
+		languages.french.movementGraphSettingsUpdateSimulation = "Mise à jour simulation";
+		languages.english.movementGraphSettingsUpdateSimulation = "Update simulation";
+		languages.french.movementGraphSettingsDefaultValuesButton = string.Format("Valeurs{0}de défaut", System.Environment.NewLine);
+		languages.english.movementGraphSettingsDefaultValuesButton = string.Format("Default{0}values", System.Environment.NewLine);
+		languages.french.movementGraphSettingsCancelButton = "Annuler";
+		languages.english.movementGraphSettingsCancelButton = "Cancel";
 
 		languages.french.takeOffTitle = "Paramètres de décollage:";
 		languages.english.takeOffTitle = "Take-off parameters:";

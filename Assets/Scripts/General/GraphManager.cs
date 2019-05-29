@@ -27,6 +27,9 @@ public class GraphManager : MonoBehaviour
 	public float axisXmax = 0;
 	public float axisYmin = 0;
 	public float axisYmax = 0;
+	public float axisXmaxDefault = 0;
+	public float axisYminDefault = 0;
+	public float axisYmaxDefault = 0;
 
 	public GraphChart graph;
 	float q0MinCurve0;
@@ -79,6 +82,15 @@ public class GraphManager : MonoBehaviour
 				mouseLeftButtonON = false;
 				mouseRightButtonON = false;
 			}
+			return;
+		}
+
+		// Désactiver le menu (qui est affiché quand on appuye sur le bouton droit de la souris) si le bouton de gauche de la souris est appuyé à l'extérieur du menu
+
+		if (Input.GetMouseButtonDown(0) && mouseRightButtonON && !MouseManager.Instance.IsOnGameObject(panelAddRemoveNode))
+		{
+			panelAddRemoveNode.SetActive(false);
+			mouseRightButtonON = false;
 			return;
 		}
 
@@ -237,6 +249,7 @@ public class GraphManager : MonoBehaviour
 		{
 			axisXmin = Mathf.Round(MainParameters.Instance.joints.t0[0] - 0.5f);
 			axisXmax = Mathf.Round(MainParameters.Instance.joints.t0[t0Length - 1] + 0.5f);
+			axisXmaxDefault = axisXmax;
 			graph.DataSource.HorizontalViewOrigin = axisXmin;
 			graph.DataSource.HorizontalViewSize = axisXmax - axisXmin;
 			factorGraphRatioX = graph.WidthRatio / (float)graph.DataSource.HorizontalViewSize;
@@ -252,6 +265,8 @@ public class GraphManager : MonoBehaviour
 			}
 			axisYmin = Mathf.Round((q0Min - 30) / 10) * 10;
 			axisYmax = Mathf.Round((q0Max + 30) / 10) * 10;
+			axisYminDefault = axisYmin;
+			axisYmaxDefault = axisYmax;
 			graph.DataSource.VerticalViewOrigin = axisYmin;
 			graph.DataSource.VerticalViewSize = axisYmax - axisYmin;
 			factorGraphRatioY = graph.HeightRatio / (float)graph.DataSource.VerticalViewSize;

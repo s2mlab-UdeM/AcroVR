@@ -27,9 +27,14 @@ public class GraphSettings : MonoBehaviour
 	public Text textHorizontalAxisUpperBound;
 	public GameObject horizontalAxisSlider;
 	public InputField inputFieldHorizontalAxiesUpperBound;
+	public Toggle toggleGraphSettingsUpdateSimulation;
+
+	public Button buttonGraphSettingsDefaultValues;
+	public Button buttonGraphSettingsCancel;
 
 	bool sliderMode;											// Mode de modification des barres de défilement, false = via un script, true = via un utilisateur (OnValueChange)
 	Vector3 localPosSliderMin, localPosSliderMax;
+	bool verticalAxisLowerBoundModified = true;
 	int verticalAxisLowerBound;									// Borne inférieur de l'axe vertical
 	int verticalAxisLowerBoundPrev;
 	int verticalAxisUpperBound;									// Borne supérieur de l'axe vertical
@@ -49,13 +54,16 @@ public class GraphSettings : MonoBehaviour
 	int minValueDefault = -300;
 	int maxValueDefault = 300;
 
+	// =================================================================================================================================================================
+	/// <summary> Initialisation du script. </summary>
+
 	void Start()
 	{
 		Instance = this;
 	}
 
 	// =================================================================================================================================================================
-	// Initialisation de la barre de défilement double et de ses paramètres, utilisée pour l'axe vertical
+	/// <summary> Initialisation de la barre de défilement double et de ses paramètres, utilisée pour l'axe vertical </summary>
 
 	public void Init()
 	{
@@ -66,6 +74,7 @@ public class GraphSettings : MonoBehaviour
 		// Initialisation des valeurs minimum et maximum de la barre de défilement pour l'axe vertical, selon l'articulation sélectionnée
 
 		errorCode = 0;
+		verticalAxisLowerBoundModified = true;
 		int minValue, maxValue;
 		string ddlName = MovementF.Instance.dropDownDDLNames.captionText.text;
 		if (ddlName.Contains(MainParameters.Instance.languages.Used.movementDDLHipFlexion))
@@ -128,6 +137,8 @@ public class GraphSettings : MonoBehaviour
 		horizontalAxisSlider.GetComponent<Slider>().value = horizontalAxisUpperBound;
 		inputFieldHorizontalAxiesUpperBound.text = string.Format("{0} s", horizontalAxisUpperBound);
 
+		SetToggleUpdateSimulation();
+
 		sliderMode = true;
 	}
 
@@ -137,10 +148,10 @@ public class GraphSettings : MonoBehaviour
 	public void SetVerticalAxisSliderOnValueChanged(float sliderPos)
 	{
 		if (!sliderMode) return;
+		sliderMode = false;
 
 		// Vérifier lequel des 2 boutons est le plus près de la nouvelle position de la barre de défilement
 
-		sliderMode = false;
 		float diffLowerBound;
 		float diffUpperBound;
 		if (verticalAxisLowerBound >= verticalAxisSlider.GetComponent<Slider>().minValue)
@@ -151,31 +162,20 @@ public class GraphSettings : MonoBehaviour
 			diffUpperBound = Mathf.Abs(sliderPos - verticalAxisUpperBound);
 		else
 			diffUpperBound = Mathf.Abs(sliderPos - verticalAxisSlider.GetComponent<Slider>().maxValue);
-		if (diffLowerBound < diffUpperBound || (diffLowerBound == diffUpperBound && sliderPos <= verticalAxisLowerBound))   // Borne inférieur est plus près
+		if (!verticalAxisLowerBoundModified && diffLowerBound <= 1)
 		{
-			if (sliderPos <= verticalAxisUpperBound)
-			{
-				verticalAxisLowerBound = (int)sliderPos;
-				inputFieldVerticalAxiesLowerBound.text = string.Format("{0}°", verticalAxisLowerBound);
-				verticalAxisLowerBoundPrev = verticalAxisLowerBound;
-			}
+			sliderPos = verticalAxisUpperBound + (sliderPos - verticalAxisLowerBound);
+			diffLowerBound = diffUpperBound + 1;
 		}
-		else                                                                                                                // Borne supérieur est plus près
-		{
-			if (sliderPos >= verticalAxisLowerBound)
-			{
-				verticalAxisUpperBound = (int)sliderPos;
-				setHandleVerticalAxisUpperBound(verticalAxisUpperBound);
-				inputFieldVerticalAxiesUpperBound.text = string.Format("{0}°", verticalAxisUpperBound);
-				verticalAxisSlider.GetComponent<Slider>().value = verticalAxisLowerBound;       // Valeur de la borne inférieur
-				verticalAxisUpperBoundPrev = verticalAxisUpperBound;
-			}
-		}
+		if (diffLowerBound < diffUpperBound || (diffLowerBound == diffUpperBound && sliderPos <= verticalAxisLowerBound))
+			SetHandleVerticaleAxisSlider(sliderPos <= verticalAxisUpperBound, sliderPos);			// Borne inférieur est plus près
+		else
+			SetHandleVerticaleAxisSlider(!(sliderPos >= verticalAxisLowerBound + 1), sliderPos);    // Borne supérieur est plus près
 		sliderMode = true;
 	}
 
 	// =================================================================================================================================================================
-	// La borne inférieur de l'axe vertical est spécifié en modifiant la valeur de la boîte d'entrée ("Input Field")
+	/// <summary> La borne inférieur de l'axe vertical est spécifié en modifiant la valeur de la boîte d'entrée ("Input Field") </summary>
 
 	public void SetVerticalAxisLowerBoundOnValueChanged()
 	{
@@ -189,7 +189,7 @@ public class GraphSettings : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	// La borne inférieur de l'axe vertical est spécifié par la fin de l'édition de la boîte d'entrée ("Input Field")
+	/// <summary> La borne inférieur de l'axe vertical est spécifié par la fin de l'édition de la boîte d'entrée ("Input Field") </summary>
 
 	public void SetVerticalAxisLowerBoundOnEndEdit()
 	{
@@ -216,7 +216,7 @@ public class GraphSettings : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	// La borne supérieur de l'axe vertical est spécifié en modifiant la valeur de la boîte d'entrée ("Input Field")
+	/// <summary> La borne supérieur de l'axe vertical est spécifié en modifiant la valeur de la boîte d'entrée ("Input Field") </summary>
 
 	public void SetVerticalAxisUpperBoundOnValueChanged()
 	{
@@ -232,7 +232,7 @@ public class GraphSettings : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	// La borne supérieur de l'axe vertical est spécifié par la fin de l'édition de la boîte d'entrée ("Input Field")
+	/// <summary> La borne supérieur de l'axe vertical est spécifié par la fin de l'édition de la boîte d'entrée ("Input Field") </summary>
 
 	public void SetVerticalAxisUpperBoundOnEndEdit()
 	{
@@ -265,6 +265,51 @@ public class GraphSettings : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
+	/// <summary> Boutons Borne inférieur de l'axe vertical moins ou plus a été appuyer. </summary>
+
+	public void ButtonVerticalAxisLowerBoundMinusPlus(int value)
+	{
+		if (!sliderMode) return;
+		sliderMode = false;
+		verticalAxisLowerBound += value;
+		if (verticalAxisLowerBound >= verticalAxisUpperBound)
+		{
+			verticalAxisLowerBound = verticalAxisLowerBoundPrev;
+			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgLowerBoundOverflow;
+			panelGraphSettingsErrorMsg.SetActive(true);
+		}
+		verticalAxisSlider.GetComponent<Slider>().value = verticalAxisLowerBound;
+		inputFieldVerticalAxiesLowerBound.text = string.Format("{0}°", verticalAxisLowerBound);
+		verticalAxisLowerBoundPrev = verticalAxisLowerBound;
+
+		sliderMode = true;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Boutons Borne supérieur de l'axe vertical moins ou plus a été appuyer. </summary>
+
+	public void ButtonVerticalAxisUpperBoundMinusPlus(int value)
+	{
+		if (!sliderMode) return;
+		sliderMode = false;
+		verticalAxisUpperBound += value;
+		if (verticalAxisUpperBound <= verticalAxisLowerBound)
+		{
+			verticalAxisUpperBound = verticalAxisUpperBoundPrev;
+			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgUpperBoundOverflow;
+			panelGraphSettingsErrorMsg.SetActive(true);
+		}
+		if (verticalAxisUpperBound > verticalAxisSlider.GetComponent<Slider>().maxValue)
+			setHandleVerticalAxisUpperBound(verticalAxisSlider.GetComponent<Slider>().maxValue);
+		else
+			setHandleVerticalAxisUpperBound(verticalAxisUpperBound);
+		inputFieldVerticalAxiesUpperBound.text = string.Format("{0}°", verticalAxisUpperBound);
+		verticalAxisUpperBoundPrev = verticalAxisUpperBound;
+
+		sliderMode = true;
+	}
+
+	// =================================================================================================================================================================
 	/// <summary> La barre déroulante de l'axe horizontal a été déplacer. </summary>
 
 	public void SetHorizontalAxisSliderOnValueChanged(float sliderPos)
@@ -274,11 +319,12 @@ public class GraphSettings : MonoBehaviour
 		horizontalAxisUpperBound = (int)sliderPos;
 		inputFieldHorizontalAxiesUpperBound.text = string.Format("{0} s", horizontalAxisUpperBound);
 		horizontalAxisUpperBoundPrev = horizontalAxisUpperBound;
+		SetToggleUpdateSimulation();
 		sliderMode = true;
 	}
 
 	// =================================================================================================================================================================
-	// La borne supérieur de l'axe horizontal est spécifié en modifiant la valeur de la boîte d'entrée ("Input Field")
+	/// <summary> La borne supérieur de l'axe horizontal est spécifié en modifiant la valeur de la boîte d'entrée ("Input Field") </summary>
 
 	public void SetHorizontalAxisUpperBoundOnValueChanged()
 	{
@@ -287,12 +333,15 @@ public class GraphSettings : MonoBehaviour
 		sliderMode = false;
 		horizontalAxisUpperBound = ReadAxisBoundValue("s", false, inputFieldHorizontalAxiesUpperBound);
 		if (errorCode >= 0)
+		{
 			horizontalAxisSlider.GetComponent<Slider>().value = horizontalAxisUpperBound;
+			SetToggleUpdateSimulation();
+		}
 		sliderMode = true;
 	}
 
 	// =================================================================================================================================================================
-	// La borne supérieur de l'axe horizontal est spécifié par la fin de l'édition de la boîte d'entrée ("Input Field")
+	/// <summary> La borne supérieur de l'axe horizontal est spécifié par la fin de l'édition de la boîte d'entrée ("Input Field") </summary>
 
 	public void SetHorizontalAxisUpperBoundOnEndEdit()
 	{
@@ -315,7 +364,50 @@ public class GraphSettings : MonoBehaviour
 		}
 		inputFieldHorizontalAxiesUpperBound.text = string.Format("{0} s", horizontalAxisUpperBound);
 		horizontalAxisUpperBoundPrev = horizontalAxisUpperBound;
+		SetToggleUpdateSimulation();
 		sliderMode = true;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Valeurs de défaut a été appuyer. </summary>
+
+	public void ButtonDefaultValues()
+	{
+		if (!sliderMode) return;
+		sliderMode = false;
+
+		verticalAxisLowerBound = (int)GraphManager.Instance.axisYminDefault;
+		verticalAxisSlider.GetComponent<Slider>().value = verticalAxisLowerBound;
+		inputFieldVerticalAxiesLowerBound.text = string.Format("{0}°", verticalAxisLowerBound);
+		verticalAxisLowerBoundPrev = verticalAxisLowerBound;
+
+		verticalAxisUpperBound = (int)GraphManager.Instance.axisYmaxDefault;
+		if (verticalAxisUpperBound > verticalAxisSlider.GetComponent<Slider>().maxValue)
+			setHandleVerticalAxisUpperBound(verticalAxisSlider.GetComponent<Slider>().maxValue);
+		else
+			setHandleVerticalAxisUpperBound(verticalAxisUpperBound);
+		inputFieldVerticalAxiesUpperBound.text = string.Format("{0}°", verticalAxisUpperBound);
+		verticalAxisUpperBoundPrev = verticalAxisUpperBound;
+
+		horizontalAxisUpperBound = (int)GraphManager.Instance.axisXmaxDefault;
+		horizontalAxisSlider.GetComponent<Slider>().value = horizontalAxisUpperBound;
+		inputFieldHorizontalAxiesUpperBound.text = string.Format("{0} s", horizontalAxisUpperBound);
+		horizontalAxisUpperBoundPrev = horizontalAxisUpperBound;
+		toggleGraphSettingsUpdateSimulation.isOn = true;
+		toggleGraphSettingsUpdateSimulation.interactable = false;
+		toggleGraphSettingsUpdateSimulation.GetComponentInChildren<Image>().color = Color.gray;
+
+		sliderMode = true;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Annuler a été appuyer. </summary>
+
+	public void ButtonCancel()
+	{
+		panelGraphSettings.SetActive(false);
+		GraphManager.Instance.mouseTracking = true;
+		GraphManager.Instance.mouseDisableLastButton = true;
 	}
 
 	// =================================================================================================================================================================
@@ -323,6 +415,14 @@ public class GraphSettings : MonoBehaviour
 
 	public void ButtonOK()
 	{
+		// Faire une mise à jour de la simulation si nécessaire
+
+		if (toggleGraphSettingsUpdateSimulation.isOn)
+		{
+			MainParameters.Instance.joints.duration = horizontalAxisUpperBound;
+			MovementF.Instance.InterpolationDDL(-1);
+		}
+
 		// Afficher le graphique de nouveau, avec les nouvelles échelles
 
 		GraphManager.Instance.axisXmax = horizontalAxisUpperBound;
@@ -338,7 +438,7 @@ public class GraphSettings : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	// Placer le bouton (handle) de la borne supérieur, sur la barre de défilement double axe vertical
+	/// <summary> Placer le bouton (handle) de la borne supérieur, sur la barre de défilement double axe vertical </summary>
 
 	void setHandleVerticalAxisUpperBound(float value)
 	{
@@ -349,7 +449,7 @@ public class GraphSettings : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	// Lecture de la valeur modifié dans une boîte d'entrée ("Input field")
+	/// <summary> Lecture de la valeur modifié dans une boîte d'entrée ("Input field") </summary>
 
 	int ReadAxisBoundValue(string symbol, bool lowerBound, InputField inputField)
 	{
@@ -376,5 +476,49 @@ public class GraphSettings : MonoBehaviour
 			errorCode = -2;
 		}
 		return value;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Initialisation de la boîte de sélection Mise à jour simulation. </summary>
+
+	void SetToggleUpdateSimulation()
+	{
+		if (horizontalAxisUpperBound > MainParameters.Instance.joints.duration)
+		{
+			toggleGraphSettingsUpdateSimulation.isOn = true;
+			toggleGraphSettingsUpdateSimulation.interactable = false;
+			toggleGraphSettingsUpdateSimulation.GetComponentInChildren<Image>().color = Color.gray;
+		}
+		else
+		{
+			toggleGraphSettingsUpdateSimulation.isOn = false;
+			toggleGraphSettingsUpdateSimulation.interactable = true;
+			toggleGraphSettingsUpdateSimulation.GetComponentInChildren<Image>().color = Color.white;
+		}
+	}
+
+
+	// =================================================================================================================================================================
+	/// <summary> Mise à jour d'un des deux boutons de la barre de défilement verticale. </summary>
+
+	void SetHandleVerticaleAxisSlider(bool lowerBoundHandleUsed, float sliderPos)
+	{
+		if (lowerBoundHandleUsed)
+		{
+			verticalAxisLowerBound = (int)sliderPos;
+			inputFieldVerticalAxiesLowerBound.text = string.Format("{0}°", verticalAxisLowerBound);
+			verticalAxisSlider.GetComponent<Slider>().value = verticalAxisLowerBound;       // Valeur de la borne inférieur
+			verticalAxisLowerBoundPrev = verticalAxisLowerBound;
+			verticalAxisLowerBoundModified = true;
+		}
+		else
+		{
+			verticalAxisUpperBound = (int)sliderPos;
+			setHandleVerticalAxisUpperBound(verticalAxisUpperBound);
+			inputFieldVerticalAxiesUpperBound.text = string.Format("{0}°", verticalAxisUpperBound);
+			verticalAxisSlider.GetComponent<Slider>().value = verticalAxisLowerBound;       // Valeur de la borne inférieur
+			verticalAxisUpperBoundPrev = verticalAxisUpperBound;
+			verticalAxisLowerBoundModified = false;
+		}
 	}
 }
