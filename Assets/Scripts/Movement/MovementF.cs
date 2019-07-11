@@ -300,6 +300,7 @@ public class MovementF : MonoBehaviour
 		int ddl = GraphManager.Instance.ddlUsed;
 		if (MainParameters.Instance.joints.nodes[ddl].T.Length < 3 || MainParameters.Instance.joints.nodes[ddl].Q.Length < 3)
 		{
+			Main.Instance.EnableDisableControls(false, true);
 			GraphManager.Instance.panelMoveErrMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgNotEnoughNodes;
 			GraphManager.Instance.mouseTracking = false;
 			GraphManager.Instance.panelMoveErrMsg.SetActive(true);

@@ -147,7 +147,11 @@ public class AnimationF : MonoBehaviour
 		// Lecture de la vitesse d'exécution de l'animation
 
 		string playSpeed = dropDownPlaySpeed.captionText.text;
-		if (playSpeed == MainParameters.Instance.languages.Used.animatorPlaySpeedSlow)
+		if (playSpeed == MainParameters.Instance.languages.Used.animatorPlaySpeedSlow3)
+			factorPlaySpeed = 10;
+		else if (playSpeed == MainParameters.Instance.languages.Used.animatorPlaySpeedSlow2)
+			factorPlaySpeed = 3;
+		else if (playSpeed == MainParameters.Instance.languages.Used.animatorPlaySpeedSlow1)
 			factorPlaySpeed = 1.5f;
 		else if (playSpeed == MainParameters.Instance.languages.Used.animatorPlaySpeedNormal)
 			factorPlaySpeed = 1;

@@ -178,7 +178,9 @@ public class MainParameters
 		public string animatorPlayViewSagittal;
 		public string animatorPlaySpeedFast;
 		public string animatorPlaySpeedNormal;
-		public string animatorPlaySpeedSlow;
+		public string animatorPlaySpeedSlow1;
+		public string animatorPlaySpeedSlow2;
+		public string animatorPlaySpeedSlow3;
 
 		public string errorMsgVerticalSpeed;
 		public string errorMsgInvalidNodePosition;
@@ -349,8 +351,12 @@ public class MainParameters
 		languages.english.animatorPlaySpeedFast = "Fast speed";
 		languages.french.animatorPlaySpeedNormal = "Vit. normale";
 		languages.english.animatorPlaySpeedNormal = "Normal speed";
-		languages.french.animatorPlaySpeedSlow = "Vit. lente";
-		languages.english.animatorPlaySpeedSlow = "Slow speed";
+		languages.french.animatorPlaySpeedSlow1 = "Vit. lente 1";
+		languages.english.animatorPlaySpeedSlow1 = "Slow speed 1";
+		languages.french.animatorPlaySpeedSlow2 = "Vit. lente 2";
+		languages.english.animatorPlaySpeedSlow2 = "Slow speed 2";
+		languages.french.animatorPlaySpeedSlow3 = "Vit. lente 3";
+		languages.english.animatorPlaySpeedSlow3 = "Slow speed 3";
 
 		languages.french.errorMsgVerticalSpeed = string.Format("Valeur du paramètre Vitesse verticale {0}	  doit être égal ou supérieur à 0", System.Environment.NewLine);
 		languages.english.errorMsgVerticalSpeed = string.Format("Value of the vertical speed parameter {0} must be equal to or greater than 0", System.Environment.NewLine);

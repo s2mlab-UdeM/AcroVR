@@ -142,7 +142,9 @@ public class Main : MonoBehaviour
 		dropDownOptions = new List<string>();
 		dropDownOptions.Add(languagesUsed.animatorPlaySpeedFast);
 		dropDownOptions.Add(languagesUsed.animatorPlaySpeedNormal);
-		dropDownOptions.Add(languagesUsed.animatorPlaySpeedSlow);
+		dropDownOptions.Add(languagesUsed.animatorPlaySpeedSlow1);
+		dropDownOptions.Add(languagesUsed.animatorPlaySpeedSlow2);
+		dropDownOptions.Add(languagesUsed.animatorPlaySpeedSlow3);
 		AnimationF.Instance.dropDownPlaySpeed.ClearOptions();
 		AnimationF.Instance.dropDownPlaySpeed.AddOptions(dropDownOptions);
 	}
@@ -156,9 +158,12 @@ public class Main : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	/// <summary> Activer ou désactiver plusieurs contrôles (boutons, listes déroulantes, ...) du panneau principale. </summary>
+	/// <summary>
+	/// Activer ou désactiver plusieurs contrôles (boutons, listes déroulantes, ...) du panneau principale. </summary>
+	/// <param name="status">État des contrôles, activé ou non. </param>
+	/// <param name="statusLoad">État du bouton Charger, modifié ou non. </param>
 
-	public void EnableDisableControls(bool status, bool mode)
+	public void EnableDisableControls(bool status, bool statusLoad)
 	{
 		Color color;
 		if (status)
@@ -167,7 +172,7 @@ public class Main : MonoBehaviour
 			color = Color.gray;
 
 		MovementF.Instance.dropDownDDLNames.interactable = status;
-		if (mode)
+		if (statusLoad)
 		{
 			MovementF.Instance.buttonLoad.interactable = status;
 			MovementF.Instance.buttonLoadImage.color = color;

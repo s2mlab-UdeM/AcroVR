@@ -21,6 +21,10 @@ public class GraphSettings : MonoBehaviour
 	public Transform transformHandleVerticalAxisUpperBound;
 	public InputField inputFieldVerticalAxiesLowerBound;
 	public InputField inputFieldVerticalAxiesUpperBound;
+	public Button buttonVerticalLowerBoundMinus;
+	public Button buttonVerticalLowerBoundPlus;
+	public Button buttonVerticalUpperBoundMinus;
+	public Button buttonVerticalUpperBoundPlus;
 
 	public Text textHorizontalAxisTitle;
 	public Text textHorizontalAxisLowerBound;
@@ -31,6 +35,7 @@ public class GraphSettings : MonoBehaviour
 
 	public Button buttonGraphSettingsDefaultValues;
 	public Button buttonGraphSettingsCancel;
+	public Button buttonGraphSettingsOK;
 
 	bool sliderMode;											// Mode de modification des barres de défilement, false = via un script, true = via un utilisateur (OnValueChange)
 	Vector3 localPosSliderMin, localPosSliderMax;
@@ -67,6 +72,10 @@ public class GraphSettings : MonoBehaviour
 
 	public void Init()
 	{
+		// Désactiver les contrôles du logiciel
+
+		Main.Instance.EnableDisableControls(false, true);
+
 		// Indiquez que les paramètres de la barre de défilement pour l'axe vertical est modifié via un script
 
 		sliderMode = false;
@@ -200,15 +209,13 @@ public class GraphSettings : MonoBehaviour
 		{
 			verticalAxisLowerBound = verticalAxisLowerBoundPrev;
 			verticalAxisSlider.GetComponent<Slider>().value = verticalAxisLowerBound;
-			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgLowerBoundOverflow;
-			panelGraphSettingsErrorMsg.SetActive(true);
+			DisplayErrorMsg(MainParameters.Instance.languages.Used.errorMsgLowerBoundOverflow);
 		}
 		else if (errorCode == -1)
 		{
 			verticalAxisLowerBound = verticalAxisLowerBoundPrev;
 			verticalAxisSlider.GetComponent<Slider>().value = verticalAxisLowerBound;
-			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgLowerBoundInvalid;
-			panelGraphSettingsErrorMsg.SetActive(true);
+			DisplayErrorMsg(MainParameters.Instance.languages.Used.errorMsgLowerBoundInvalid);
 		}
 		inputFieldVerticalAxiesLowerBound.text = string.Format("{0}°", verticalAxisLowerBound);
 		verticalAxisLowerBoundPrev = verticalAxisLowerBound;
@@ -246,8 +253,7 @@ public class GraphSettings : MonoBehaviour
 				setHandleVerticalAxisUpperBound(verticalAxisSlider.GetComponent<Slider>().maxValue);
 			else
 				setHandleVerticalAxisUpperBound(verticalAxisUpperBound);
-			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgUpperBoundOverflow;
-			panelGraphSettingsErrorMsg.SetActive(true);
+			DisplayErrorMsg(MainParameters.Instance.languages.Used.errorMsgUpperBoundOverflow);
 		}
 		else if (errorCode == -1)
 		{
@@ -256,8 +262,7 @@ public class GraphSettings : MonoBehaviour
 				setHandleVerticalAxisUpperBound(verticalAxisSlider.GetComponent<Slider>().maxValue);
 			else
 				setHandleVerticalAxisUpperBound(verticalAxisUpperBound);
-			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgUpperBoundInvalid;
-			panelGraphSettingsErrorMsg.SetActive(true);
+			DisplayErrorMsg(MainParameters.Instance.languages.Used.errorMsgUpperBoundInvalid);
 		}
 		inputFieldVerticalAxiesUpperBound.text = string.Format("{0}°", verticalAxisUpperBound);
 		verticalAxisUpperBoundPrev = verticalAxisUpperBound;
@@ -275,8 +280,7 @@ public class GraphSettings : MonoBehaviour
 		if (verticalAxisLowerBound >= verticalAxisUpperBound)
 		{
 			verticalAxisLowerBound = verticalAxisLowerBoundPrev;
-			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgLowerBoundOverflow;
-			panelGraphSettingsErrorMsg.SetActive(true);
+			DisplayErrorMsg(MainParameters.Instance.languages.Used.errorMsgLowerBoundOverflow);
 		}
 		verticalAxisSlider.GetComponent<Slider>().value = verticalAxisLowerBound;
 		inputFieldVerticalAxiesLowerBound.text = string.Format("{0}°", verticalAxisLowerBound);
@@ -296,8 +300,7 @@ public class GraphSettings : MonoBehaviour
 		if (verticalAxisUpperBound <= verticalAxisLowerBound)
 		{
 			verticalAxisUpperBound = verticalAxisUpperBoundPrev;
-			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgUpperBoundOverflow;
-			panelGraphSettingsErrorMsg.SetActive(true);
+			DisplayErrorMsg(MainParameters.Instance.languages.Used.errorMsgUpperBoundOverflow);
 		}
 		if (verticalAxisUpperBound > verticalAxisSlider.GetComponent<Slider>().maxValue)
 			setHandleVerticalAxisUpperBound(verticalAxisSlider.GetComponent<Slider>().maxValue);
@@ -352,19 +355,17 @@ public class GraphSettings : MonoBehaviour
 		{
 			horizontalAxisUpperBound = horizontalAxisUpperBoundPrev;
 			horizontalAxisSlider.GetComponent<Slider>().value = horizontalAxisUpperBound;
-			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgUpperBoundOverflow;
-			panelGraphSettingsErrorMsg.SetActive(true);
+			DisplayErrorMsg(MainParameters.Instance.languages.Used.errorMsgUpperBoundOverflow);
 		}
 		else if (errorCode == -1)
 		{
 			horizontalAxisUpperBound = horizontalAxisUpperBoundPrev;
 			horizontalAxisSlider.GetComponent<Slider>().value = horizontalAxisUpperBound;
-			panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgUpperBoundInvalid;
-			panelGraphSettingsErrorMsg.SetActive(true);
+			DisplayErrorMsg(MainParameters.Instance.languages.Used.errorMsgUpperBoundInvalid);
 		}
 		inputFieldHorizontalAxiesUpperBound.text = string.Format("{0} s", horizontalAxisUpperBound);
 		horizontalAxisUpperBoundPrev = horizontalAxisUpperBound;
-		SetToggleUpdateSimulation();
+		if (errorCode >= 0)	SetToggleUpdateSimulation();
 		sliderMode = true;
 	}
 
@@ -408,6 +409,10 @@ public class GraphSettings : MonoBehaviour
 		panelGraphSettings.SetActive(false);
 		GraphManager.Instance.mouseTracking = true;
 		GraphManager.Instance.mouseDisableLastButton = true;
+
+		// Activer les contrôles du logiciel
+
+		Main.Instance.EnableDisableControls(true, true);
 	}
 
 	// =================================================================================================================================================================
@@ -435,17 +440,41 @@ public class GraphSettings : MonoBehaviour
 		panelGraphSettings.SetActive(false);
 		GraphManager.Instance.mouseTracking = true;
 		GraphManager.Instance.mouseDisableLastButton = true;
+
+		// Activer les contrôles du logiciel
+
+		Main.Instance.EnableDisableControls(true, true);
 	}
 
 	// =================================================================================================================================================================
-	/// <summary> Placer le bouton (handle) de la borne supérieur, sur la barre de défilement double axe vertical </summary>
+	/// <summary>
+	/// Activer ou désactiver les contrôles du panneau Paramètres du graphique. </summary>
+	/// <param name="status">État des contrôles, activé ou non. </param>
 
-	void setHandleVerticalAxisUpperBound(float value)
+	public void EnableDisableControls(bool status)
 	{
-		Vector3 localPosVerticalAxisMax = transformHandleVerticalAxisUpperBound.GetComponentInChildren<RectTransform>().localPosition;
-		localPosVerticalAxisMax.x = (value - verticalAxisSlider.GetComponent<Slider>().minValue) * (localPosSliderMax.x - localPosSliderMin.x) /
-								(verticalAxisSlider.GetComponent<Slider>().maxValue - verticalAxisSlider.GetComponent<Slider>().minValue) + localPosSliderMin.x;
-		transformHandleVerticalAxisUpperBound.GetComponentInChildren<RectTransform>().localPosition = localPosVerticalAxisMax;
+		Color color;
+		if (status)
+			color = Color.white;
+		else
+			color = new Vector4(0.8f, 0.8f, 0.8f, 0.5f);
+
+		verticalAxisSlider.GetComponent<Slider>().interactable = status;
+		transformHandleVerticalAxisUpperBound.GetComponent<Image>().color = color;
+		inputFieldVerticalAxiesLowerBound.interactable = status;
+		inputFieldVerticalAxiesUpperBound.interactable = status;
+		buttonVerticalLowerBoundMinus.interactable = status;
+		buttonVerticalLowerBoundPlus.interactable = status;
+		buttonVerticalUpperBoundMinus.interactable = status;
+		buttonVerticalUpperBoundPlus.interactable = status;
+
+		horizontalAxisSlider.GetComponent<Slider>().interactable = status;
+		inputFieldHorizontalAxiesUpperBound.interactable = status;
+		toggleGraphSettingsUpdateSimulation.interactable = status;
+
+		buttonGraphSettingsDefaultValues.interactable = status;
+		buttonGraphSettingsCancel.interactable = status;
+		buttonGraphSettingsOK.interactable = status;
 	}
 
 	// =================================================================================================================================================================
@@ -520,5 +549,26 @@ public class GraphSettings : MonoBehaviour
 			verticalAxisUpperBoundPrev = verticalAxisUpperBound;
 			verticalAxisLowerBoundModified = false;
 		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Placer le bouton (handle) de la borne supérieur, sur la barre de défilement double axe vertical </summary>
+
+	void setHandleVerticalAxisUpperBound(float value)
+	{
+		Vector3 localPosVerticalAxisMax = transformHandleVerticalAxisUpperBound.GetComponentInChildren<RectTransform>().localPosition;
+		localPosVerticalAxisMax.x = (value - verticalAxisSlider.GetComponent<Slider>().minValue) * (localPosSliderMax.x - localPosSliderMin.x) /
+								(verticalAxisSlider.GetComponent<Slider>().maxValue - verticalAxisSlider.GetComponent<Slider>().minValue) + localPosSliderMin.x;
+		transformHandleVerticalAxisUpperBound.GetComponentInChildren<RectTransform>().localPosition = localPosVerticalAxisMax;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Afficher un message d'erreur à l'écran, relatif aux Paramètres du graphique. </summary>
+
+	void DisplayErrorMsg(string msg)
+	{
+		EnableDisableControls(false);
+		panelGraphSettingsErrorMsg.GetComponentInChildren<Text>().text = msg;
+		panelGraphSettingsErrorMsg.SetActive(true);
 	}
 }

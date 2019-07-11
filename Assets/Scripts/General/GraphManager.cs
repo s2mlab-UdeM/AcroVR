@@ -137,6 +137,7 @@ public class GraphManager : MonoBehaviour
 			if ((nodeUsed <= 0 && mousePosX >= MainParameters.Instance.joints.nodes[ddlUsed].T[1]) || (nodeUsed >= numNodes - 1 && mousePosX <= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed - 1]) ||
 				(nodeUsed > 0 && nodeUsed < numNodes - 1 && (mousePosX <= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed - 1] || mousePosX >= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed + 1])))
 			{
+				Main.Instance.EnableDisableControls(false, true);
 				panelMoveErrMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgInvalidNodePosition;
 				GraphManager.Instance.mouseTracking = false;
 				panelMoveErrMsg.SetActive(true);
@@ -189,6 +190,7 @@ public class GraphManager : MonoBehaviour
 
 	public void ButtonOK()
 	{
+		Main.Instance.EnableDisableControls(true, true);
 		panelMoveErrMsg.SetActive(false);
 		mouseTracking = true;
 		mouseDisableLastButton = true;

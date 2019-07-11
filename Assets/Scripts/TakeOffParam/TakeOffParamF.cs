@@ -44,6 +44,7 @@ public class TakeOffParamF : MonoBehaviour
 			if (value < 0)
 			{
 				panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", MainParameters.Instance.joints.takeOffParam.verticalSpeed);
+				Main.Instance.EnableDisableControls(false, true);
 				panelTakeOffErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgVerticalSpeed;
 				panelTakeOffErrorMsg.SetActive(true);
 			}
@@ -63,5 +64,14 @@ public class TakeOffParamF : MonoBehaviour
 			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.000}", value);
 			MainParameters.Instance.joints.takeOffParam.twistSpeed = value;
 		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Fonction exécuté quand le bouton OK du panneau PanelTakeOffErrorMsg est appuyé. </summary>
+
+	public void ErrorMsgButtonOK()
+	{
+		Main.Instance.EnableDisableControls(true, true);
+		panelTakeOffErrorMsg.SetActive(false);
 	}
 }
