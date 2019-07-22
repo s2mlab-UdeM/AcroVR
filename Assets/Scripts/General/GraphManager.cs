@@ -14,6 +14,7 @@ public class GraphManager : MonoBehaviour
 	public GameObject panelAddRemoveNode;
 	public GameObject buttonAddNode;
 	public GameObject buttonRemoveNode;
+	public GameObject buttonCancelChanges;
 	public GameObject panelMoveErrMsg;
 
 	public int ddlUsed = 0;
@@ -165,7 +166,7 @@ public class GraphManager : MonoBehaviour
 			AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
 		}
 
-		// Bouton droit de la souris appuyé => ajouter/effacer un noeud
+		// Bouton droit de la souris appuyé => ajouter/effacer un noeud et autres actions
 
 		if (Input.GetMouseButtonDown(1))
 		{
@@ -175,9 +176,15 @@ public class GraphManager : MonoBehaviour
 
 			buttonAddNode.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonAddNode;
 			buttonRemoveNode.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonRemoveNode;
+			buttonCancelChanges.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonCancelChanges;
 			Vector3 mousePosWorldSpace;
+			Vector3 graphTopRightCornerWorldSpace;
 			graph.PointToWorldSpace(out mousePosWorldSpace, mousePosX, mousePosY);
-			panelAddRemoveNode.transform.position = mousePosWorldSpace + new Vector3(10, 0, 0);
+			graph.PointToWorldSpace(out graphTopRightCornerWorldSpace, axisXmax, 0);
+			if (mousePosWorldSpace.x < graphTopRightCornerWorldSpace.x - 20)
+				panelAddRemoveNode.transform.position = mousePosWorldSpace + new Vector3(10, 0, 0);
+			else
+				panelAddRemoveNode.transform.position = mousePosWorldSpace - new Vector3(10, 0, 0);	// Pour éviter que le menu ne soit pas caché par le panneau Animator, on affiche le menu à gauche et non à droite
 			panelAddRemoveNode.SetActive(true);
 		}
 

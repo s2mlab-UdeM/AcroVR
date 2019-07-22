@@ -13,6 +13,7 @@ public class MovementF : MonoBehaviour
 
 	public Text textFileName;
 
+	public GameObject panelMovement;
 	public Dropdown dropDownDDLNames;
 	public Dropdown dropDownInterpolation;
 	public Button buttonLoad;
@@ -38,6 +39,9 @@ public class MovementF : MonoBehaviour
 	public InputField inputFieldTwistSpeed;
 
 	System.IntPtr hMainUnityWnd;
+
+	MainParameters.StrucNodes[] nodesFromDataFile;
+	float durationFromDataFile;
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
@@ -172,6 +176,11 @@ public class MovementF : MonoBehaviour
 		}
 		MainParameters.Instance.joints.nodes = nodes;
 
+		// Conserver une copie des données des noeuds lues directement du fichier de données
+
+		nodesFromDataFile = NodesCopy(nodes);
+		durationFromDataFile = joints.duration;
+
 		// Interpolation des positions des angles des articulations à traiter
 
 		InterpolationDDL(-1);
@@ -272,7 +281,7 @@ public class MovementF : MonoBehaviour
 
 		// Interpolation des positions des angles pour l'articulation sélectionnée
 
-		MovementF.Instance.InterpolationDDL(ddl);
+		InterpolationDDL(ddl);
 
 		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
 
@@ -330,7 +339,7 @@ public class MovementF : MonoBehaviour
 
 		// Interpolation des positions des angles pour l'articulation sélectionnée
 
-		MovementF.Instance.InterpolationDDL(ddl);
+		InterpolationDDL(ddl);
 
 		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
 
@@ -346,6 +355,49 @@ public class MovementF : MonoBehaviour
 		// Désactiver l'action du clic du bouton droit de la souris
 
 		GraphManager.Instance.mouseRightButtonON = false;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Annuler toutes les modifications faites par l'utilisateur et revenir aux données des noeuds lues du fichier de données. </summary>
+
+	public void CancelChanges()
+	{
+		MainParameters.Instance.joints.nodes = NodesCopy(nodesFromDataFile);
+		MainParameters.Instance.joints.duration = durationFromDataFile;
+
+		// Interpolation des positions des angles pour l'articulation sélectionnée
+
+		InterpolationDDL(-1);
+
+		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
+
+		DisplayDDL(false, GraphManager.Instance.ddlUsed, true);
+
+		// Afficher la silhouette au temps t = 0
+
+		AnimationF.Instance.PlayReset();
+		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, 0, 1);
+
+		// Désactiver l'action du clic du bouton droit de la souris
+
+		GraphManager.Instance.mouseRightButtonON = false;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Copier le contenu d'une structure Nodes dans une autre structure Nodes. </summary>
+
+	MainParameters.StrucNodes[] NodesCopy(MainParameters.StrucNodes[] nodesFrom)
+	{
+		MainParameters.StrucNodes[] nodesTo = new MainParameters.StrucNodes[nodesFrom.Length];
+		for (int i = 0; i < nodesFrom.Length; i++)
+		{
+			nodesTo[i].ddl = nodesFrom[i].ddl;
+			nodesTo[i].name = nodesFrom[i].name;
+			nodesTo[i].T = MathFunc.MatrixCopy(nodesFrom[i].T);
+			nodesTo[i].Q = MathFunc.MatrixCopy(nodesFrom[i].Q);
+			nodesTo[i].ddlOppositeSide = nodesFrom[i].ddlOppositeSide;
+		}
+		return nodesTo;
 	}
 
 	// =================================================================================================================================================================
@@ -368,8 +420,8 @@ public class MovementF : MonoBehaviour
 
 		if (ddl < 0)
 		{
-			MainParameters.Instance.joints.t0 = t0;
-			MainParameters.Instance.joints.q0 = q0;
+			MainParameters.Instance.joints.t0 = MathFunc.MatrixCopy(t0);
+			MainParameters.Instance.joints.q0 = MathFunc.MatrixCopy(q0);
 		}
 		else
 			for (int i = 0; i <= q0.GetUpperBound(1); i++)

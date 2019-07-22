@@ -141,6 +141,7 @@ public class MainParameters
 		public string movementDDLRightArmAbduction;
 		public string movementButtonAddNode;
 		public string movementButtonRemoveNode;
+		public string movementButtonCancelChanges;
 		public string movementLoadDataFileTitle;
 		public string movementLoadDataFileTxtFile;
 		public string movementLoadDataFileAllFiles;
@@ -282,6 +283,8 @@ public class MainParameters
 		languages.english.movementButtonAddNode = "Add node";
 		languages.french.movementButtonRemoveNode = "Effacer un noeud";
 		languages.english.movementButtonRemoveNode = "Remove node";
+		languages.french.movementButtonCancelChanges = "Annuler modif.";
+		languages.english.movementButtonCancelChanges = "Cancel changes";
 		languages.french.movementLoadDataFileTitle = "Ouvrir un Fichier de Simulation";
 		languages.english.movementLoadDataFileTitle = "Open a Simulation File";
 		languages.french.movementLoadDataFileTxtFile = "Fichiers txt";

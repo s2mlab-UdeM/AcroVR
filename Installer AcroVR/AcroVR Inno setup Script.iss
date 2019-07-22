@@ -3,7 +3,7 @@
 
 #define MyCompany "Tekphy"
 #define MyAppName "AcroVR"
-#define MyAppVersion "11.07.2019"
+#define MyAppVersion "18.07.2019"
 #define MyAppPublisher "Tekphy lab"
 #define MyAppExeName "AcroVR.exe"
 
