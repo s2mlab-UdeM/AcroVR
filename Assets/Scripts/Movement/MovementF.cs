@@ -77,7 +77,16 @@ public class MovementF : MonoBehaviour
 			new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileTxtFile, "txt"),
 			new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileAllFiles, "*" ),
 		};
+#if UNITY_STANDALONE_OSX
+		string dirSimulationFiles;
+		int n = Application.dataPath.IndexOf("/AcroVR.app");
+		if (n > 0)
+			dirSimulationFiles = string.Format("{0}/SimulationFiles", Application.dataPath.Substring(0, n));
+		else
+			dirSimulationFiles = string.Format("{0}/Documents", Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+#else
 		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Tekphy\AcroVR\SimulationFiles");
+#endif
 		string fileName = FileBrowser.OpenSingleFile(MainParameters.Instance.languages.Used.movementLoadDataFileTitle, dirSimulationFiles, extensions);
 		if (fileName.Length <= 0)
 			return;
@@ -201,8 +210,12 @@ public class MovementF : MonoBehaviour
 	public void ButtonSave()
 	{
 		// Utilisation d'un répertoire de données par défaut, alors si ce répertoire n'existe pas, il faut le créer
-
+#if UNITY_STANDALONE_OSX
+		string dirSimulationFiles = string.Format("{0}/Documents/AcroVR", Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+#else
 		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%UserProfile%\Documents\AcroVR");
+#endif
+
 		if (!System.IO.Directory.Exists(dirSimulationFiles))
 		{
 			try
@@ -228,7 +241,7 @@ public class MovementF : MonoBehaviour
 		// Afficher le nom du fichier à l'écran
 
 		MainParameters.Instance.joints.fileName = fileName;
-		textFileName.text = fileName;
+		textFileName.text = System.IO.Path.GetFileName(fileName);
 	}
 
 	// =================================================================================================================================================================
