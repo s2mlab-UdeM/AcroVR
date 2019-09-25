@@ -14,7 +14,9 @@ public class GraphManager : MonoBehaviour
 	public GameObject panelAddRemoveNode;
 	public GameObject buttonAddNode;
 	public GameObject buttonRemoveNode;
-	public GameObject buttonCancelChanges;
+	public GameObject buttonCancelChanges1;
+	public GameObject panelCancelChanges;
+	public GameObject buttonCancelChanges2;
 	public GameObject panelMoveErrMsg;
 
 	public int ddlUsed = 0;
@@ -39,6 +41,7 @@ public class GraphManager : MonoBehaviour
 	string[] nodesCategories;
 	string nodesTemp1Category;
 	string nodesTemp2Category;
+	string dataTempCategory;
 	//string cursorCategorie;
 
 	int nodeUsed = 0;
@@ -63,6 +66,7 @@ public class GraphManager : MonoBehaviour
 		nodesCategories = new string[2] { "Nodes1", "Nodes2" };
 		nodesTemp1Category = "NodesTemp1";
 		nodesTemp2Category = "NodesTemp2";
+		dataTempCategory = "DataTemp";
 		//cursorCategorie = "Cursor";
 	}
 
@@ -88,9 +92,10 @@ public class GraphManager : MonoBehaviour
 
 		// Désactiver le menu (qui est affiché quand on appuye sur le bouton droit de la souris) si le bouton de gauche de la souris est appuyé à l'extérieur du menu
 
-		if (Input.GetMouseButtonDown(0) && mouseRightButtonON && !MouseManager.Instance.IsOnGameObject(panelAddRemoveNode))
+		if (Input.GetMouseButtonDown(0) && mouseRightButtonON && !MouseManager.Instance.IsOnGameObject(panelAddRemoveNode) && !MouseManager.Instance.IsOnGameObject(panelCancelChanges))
 		{
 			panelAddRemoveNode.SetActive(false);
+			panelCancelChanges.SetActive(false);
 			mouseRightButtonON = false;
 			return;
 		}
@@ -107,7 +112,7 @@ public class GraphManager : MonoBehaviour
 			return;
 		}
 
-		// Bouton gauche de la souris appuyé => déplacement d'un noeud (Bouton gauche appuyé, effacé le noeud temporaire précédent s'il y a lieu)
+		// Bouton gauche de la souris appuyé => déplacement d'un noeud (Bouton gauche appuyé, modifié l'affichage du noeud à déplacer)
 
 		if (Input.GetMouseButtonDown(0) && !mouseRightButtonON)
 		{
@@ -121,7 +126,10 @@ public class GraphManager : MonoBehaviour
 		{
 			graph.DataSource.StartBatch();
 			graph.DataSource.ClearCategory(nodesTemp1Category);
-			graph.DataSource.AddPointToCategory(nodesTemp1Category, mousePosX, mousePosY);
+			if (MainParameters.Instance.joints.nodes[ddlUsed].interpolation.type == MainParameters.InterpolationType.Quintic)
+				graph.DataSource.AddPointToCategory(nodesTemp1Category, mousePosX, mousePosY);
+			else
+				graph.DataSource.AddPointToCategory(nodesTemp1Category, MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed], mousePosY);
 			graph.DataSource.EndBatch();
 		}
 
@@ -133,59 +141,100 @@ public class GraphManager : MonoBehaviour
 
 			RemoveNodesTemp();
 
-			// Vérifier si la nouvelle position du noeud est correct
+			// Vérifier si la nouvelle position du noeud est correct, si type d'interpolation est Quintic
 
-			if ((nodeUsed <= 0 && mousePosX >= MainParameters.Instance.joints.nodes[ddlUsed].T[1]) || (nodeUsed >= numNodes - 1 && mousePosX <= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed - 1]) ||
-				(nodeUsed > 0 && nodeUsed < numNodes - 1 && (mousePosX <= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed - 1] || mousePosX >= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed + 1])))
+			if (MainParameters.Instance.joints.nodes[ddlUsed].interpolation.type == MainParameters.InterpolationType.Quintic)
 			{
-				Main.Instance.EnableDisableControls(false, true);
-				panelMoveErrMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgInvalidNodePosition;
-				GraphManager.Instance.mouseTracking = false;
-				panelMoveErrMsg.SetActive(true);
-				return;
+				if ((nodeUsed <= 0 && mousePosX >= MainParameters.Instance.joints.nodes[ddlUsed].T[1]) || (nodeUsed >= numNodes - 1 && mousePosX <= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed - 1]) ||
+				(nodeUsed > 0 && nodeUsed < numNodes - 1 && (mousePosX <= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed - 1] || mousePosX >= MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed + 1])))
+				{
+					Main.Instance.EnableDisableControls(false, true);
+					panelMoveErrMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgInvalidNodePosition;
+					GraphManager.Instance.mouseTracking = false;
+					panelMoveErrMsg.SetActive(true);
+					return;
+				}
+
+				// Conserver le temps du nouveau noeud, si type d'interpolation est Quintic
+
+				MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed] = (float)mousePosX;
 			}
 
-			// Conserver le nouveau noeud
+			// Conserver la position de l'angle du nouveau noeud
 
-			MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed] = (float)mousePosX;
 			MainParameters.Instance.joints.nodes[ddlUsed].Q[nodeUsed] = (float)mousePosY / radToDeg;
 
-			// Interpolation des positions des angles pour l'articulation sélectionnée
+			// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
 
-			MovementF.Instance.InterpolationDDL(ddlUsed);
-
-			// Afficher la courbe des positions des angles pour l'articulation sélectionnée
-
-			MovementF.Instance.DisplayDDL(false, ddlUsed, false);
-
-			// Afficher la silhouette au temps du noeud modifié
-
-			AnimationF.Instance.PlayReset();
-			int frame = (int)Mathf.Round((float)mousePosX / MainParameters.Instance.joints.lagrangianModel.dt);
-			if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
-			AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
+			MovementF.Instance.InterpolationAndDisplayDDL(ddlUsed, ddlUsed, (int)Mathf.Round(MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed] / MainParameters.Instance.joints.lagrangianModel.dt), false);
 		}
 
-		// Bouton droit de la souris appuyé => ajouter/effacer un noeud et autres actions
+		// Bouton droit de la souris appuyé
 
 		if (Input.GetMouseButtonDown(1))
 		{
 			mouseRightButtonON = true;
+
 			mousePosSaveX = (float)mousePosX;
 			mousePosSaveY = (float)mousePosY;
 
-			buttonAddNode.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonAddNode;
-			buttonRemoveNode.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonRemoveNode;
-			buttonCancelChanges.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonCancelChanges;
-			Vector3 mousePosWorldSpace;
-			Vector3 graphTopRightCornerWorldSpace;
-			graph.PointToWorldSpace(out mousePosWorldSpace, mousePosX, mousePosY);
-			graph.PointToWorldSpace(out graphTopRightCornerWorldSpace, axisXmax, 0);
-			if (mousePosWorldSpace.x < graphTopRightCornerWorldSpace.x - 20)
-				panelAddRemoveNode.transform.position = mousePosWorldSpace + new Vector3(10, 0, 0);
+			// Type d'interpolation est Quintic => ajouter/effacer un noeud et autres actions
+
+			if (MainParameters.Instance.joints.nodes[ddlUsed].interpolation.type == MainParameters.InterpolationType.Quintic)
+			{
+				buttonAddNode.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonAddNode;
+				buttonRemoveNode.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonRemoveNode;
+				buttonCancelChanges1.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonCancelChanges;
+				DisplayContextMenu(panelAddRemoveNode);
+			}
+
+			// Type d'interpolation est Spline cubique => modifier la pente initiale ou finale (Trouver le noeud précédent la position de la souris) ou encore afficher le bouton CancelChanges
+
 			else
-				panelAddRemoveNode.transform.position = mousePosWorldSpace - new Vector3(10, 0, 0);	// Pour éviter que le menu ne soit pas caché par le panneau Animator, on affiche le menu à gauche et non à droite
-			panelAddRemoveNode.SetActive(true);
+			{
+				nodeUsed = FindPreviousNode();
+				if (nodeUsed >= numNodes - 2)
+					nodeUsed = numNodes - 1;
+
+				if (nodeUsed > 0 && nodeUsed < numNodes - 1)
+				{
+					buttonCancelChanges2.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.movementButtonCancelChanges;
+					DisplayContextMenu(panelCancelChanges);
+				}
+			}
+		}
+
+		// Bouton droit de la souris a été appuyé et type d'interpolation est Spline cubique => modifier la pente initiale ou finale
+
+		if (mouseRightButtonON && MainParameters.Instance.joints.nodes[ddlUsed].interpolation.type == MainParameters.InterpolationType.CubicSpline && (nodeUsed <= 0 || nodeUsed >= numNodes - 1))
+		{
+			// Bouton droit relâché, effacer la pente temporaire et modifier la pente sélectionnée
+
+			if (Input.GetMouseButtonUp(1))
+			{
+				graph.DataSource.StartBatch();
+				graph.DataSource.ClearCategory(dataTempCategory);
+				graph.DataSource.EndBatch();
+				float slope = ((float)mousePosY / radToDeg - MainParameters.Instance.joints.nodes[ddlUsed].Q[nodeUsed]) / ((float)mousePosX - MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed]);
+				if (nodeUsed <= 0)
+					MainParameters.Instance.joints.nodes[ddlUsed].interpolation.slope[0] = slope;
+				else
+					MainParameters.Instance.joints.nodes[ddlUsed].interpolation.slope[1] = slope;
+				int frame = (int)Mathf.Round(MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed] / MainParameters.Instance.joints.lagrangianModel.dt);
+				MovementF.Instance.InterpolationAndDisplayDDL(ddlUsed, ddlUsed, frame, false);
+				mouseRightButtonON = false;
+			}
+
+			// Bouton droit toujours appuyé, afficher la pente temporaire
+
+			else
+			{
+				graph.DataSource.StartBatch();
+				graph.DataSource.ClearCategory(dataTempCategory);
+				graph.DataSource.AddPointToCategory(dataTempCategory, MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed], MainParameters.Instance.joints.nodes[ddlUsed].Q[nodeUsed] * radToDeg);
+				graph.DataSource.AddPointToCategory(dataTempCategory, mousePosX, mousePosY);
+				graph.DataSource.EndBatch();
+			}
 		}
 
 		//if (Input.GetMouseButtonDown(2))
@@ -392,5 +441,21 @@ public class GraphManager : MonoBehaviour
 		while (i < MainParameters.Instance.joints.nodes[ddlUsed].T.Length && mousePosSaveX > MainParameters.Instance.joints.nodes[ddlUsed].T[i])
 			i++;
 		return i - 1;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Afficher un menu (panelAddRemoveNode ou panelCancelChanges) à la position de la souris. </summary>
+
+	void DisplayContextMenu(GameObject panel)
+	{
+		Vector3 mousePosWorldSpace;
+		Vector3 graphTopRightCornerWorldSpace;
+		graph.PointToWorldSpace(out mousePosWorldSpace, mousePosX, mousePosY);
+		graph.PointToWorldSpace(out graphTopRightCornerWorldSpace, axisXmax, 0);
+		if (mousePosWorldSpace.x < graphTopRightCornerWorldSpace.x - 20)
+			panel.transform.position = mousePosWorldSpace + new Vector3(10, 0, 0);		// On affiche le menu à droite
+		else
+			panel.transform.position = mousePosWorldSpace - new Vector3(10, 0, 0);		// Pour éviter que le menu ne soit pas caché par le panneau Animator, on affiche le menu à gauche
+		panel.SetActive(true);
 	}
 }

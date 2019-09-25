@@ -42,6 +42,7 @@ public class MovementF : MonoBehaviour
 
 	MainParameters.StrucNodes[] nodesFromDataFile;
 	float durationFromDataFile;
+	bool calledFromScript;      // Mode de modification d'un contrôle de la scène, false = via l'utilisateur (OnValueChange) ou true = via un script
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
@@ -50,6 +51,7 @@ public class MovementF : MonoBehaviour
 	{
 		Instance = this;
 
+		calledFromScript = false;
 		Main.Instance.EnableDisableControls(false, false);
 	}
 
@@ -58,11 +60,61 @@ public class MovementF : MonoBehaviour
 
 	public void DropDownDDLNamesOnValueChanged(int value)
 	{
-		// Afficher la courbe des positions des angles pour l'articulation sélectionné par défaut
+		if (calledFromScript) return;
 
-		GraphManager.Instance.DisplayCurveAndNodes(0, value, true);
-		if (MainParameters.Instance.joints.nodes[value].ddlOppositeSide >= 0)
-			GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[value].ddlOppositeSide, true);
+		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
+
+		DisplayDDL(value, true);
+
+		// Initialisation de la liste des items que contiendra la liste déroulante Type d'interpolation
+
+		InitDropdownInterpolation(value);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Liste déroulante Type d'interpolation a été modifié. </summary>
+
+	public void DropDownInterpolationOnValueChanged(int value)
+	{
+		if (calledFromScript) return;
+
+		int numIntervals = 0;
+		int ddl = GraphManager.Instance.ddlUsed;
+
+		// Vérifier le type d'interpolation désiré
+
+		MainParameters.Instance.joints.nodes[ddl].interpolation.slope = new float[] { 0, 0 };
+		if (value <= 0)                     // Quintic
+			MainParameters.Instance.joints.nodes[ddl].interpolation.type = MainParameters.InterpolationType.Quintic;
+		else                                // Spline cubique
+		{
+			MainParameters.Instance.joints.nodes[ddl].interpolation.type = MainParameters.InterpolationType.CubicSpline;
+			numIntervals = value + 2;
+
+			// Pour les splines cubiques, le nombre de noeuds (intervalles) est fixe et spécifié par l'utilisateur (entre 3 et 8)
+			// Initialisation des vecteurs temps et position des noeuds, selon le nombre de noeuds spécifié
+
+			float period = MainParameters.Instance.joints.duration / numIntervals;
+			MainParameters.Instance.joints.nodes[ddl].T = new float[numIntervals + 1];
+			float[] q = new float[numIntervals + 1];
+			for (int i = 0; i < numIntervals + 1; i++)
+			{
+				MainParameters.Instance.joints.nodes[ddl].T[i] = period * i;
+				if (i < MainParameters.Instance.joints.nodes[ddl].Q.Length)
+					q[i] = MainParameters.Instance.joints.nodes[ddl].Q[i];
+				else
+					q[i] = 0;
+			}
+			MainParameters.Instance.joints.nodes[ddl].Q = q;
+			MainParameters.Instance.joints.nodes[ddl].interpolation.slope[0] = (MainParameters.Instance.joints.nodes[ddl].Q[1] - MainParameters.Instance.joints.nodes[ddl].Q[0]) / period;
+			MainParameters.Instance.joints.nodes[ddl].interpolation.slope[1] = (MainParameters.Instance.joints.nodes[ddl].Q[numIntervals - 1] - MainParameters.Instance.joints.nodes[ddl].Q[numIntervals]) / period;
+
+		}
+		MainParameters.Instance.joints.nodes[ddl].interpolation.numIntervals = numIntervals;
+
+		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
+
+		InterpolationAndDisplayDDL(ddl, ddl, 0, true);
 	}
 
 	// =================================================================================================================================================================
@@ -190,18 +242,17 @@ public class MovementF : MonoBehaviour
 		nodesFromDataFile = NodesCopy(nodes);
 		durationFromDataFile = joints.duration;
 
-		// Interpolation des positions des angles des articulations à traiter
+		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
 
-		InterpolationDDL(-1);
+		InterpolationAndDisplayDDL(-1, 0, 0, true);
 
-		// Afficher la courbe des positions des angles pour l'articulation sélectionné par défaut
+		// Initialisation de la liste des items que contiendra la liste déroulante Nom de l'articulation
 
-		DisplayDDL(true, 0, true);
+		InitDropdownDDLNames(0);
 
-		// Afficher la silhouette au temps t = 0
+		// Initialisation de la liste des items que contiendra la liste déroulante Type d'interpolation
 
-		AnimationF.Instance.PlayReset();
-		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, 0, 1);
+		InitDropdownInterpolation(0);
 	}
 
 	// =================================================================================================================================================================
@@ -242,6 +293,11 @@ public class MovementF : MonoBehaviour
 
 		MainParameters.Instance.joints.fileName = fileName;
 		textFileName.text = System.IO.Path.GetFileName(fileName);
+
+		// Conserver une copie des données des noeuds lues directement du fichier de données
+
+		nodesFromDataFile = NodesCopy(MainParameters.Instance.joints.nodes);
+		durationFromDataFile = MainParameters.Instance.joints.duration;
 	}
 
 	// =================================================================================================================================================================
@@ -292,20 +348,10 @@ public class MovementF : MonoBehaviour
 		MainParameters.Instance.joints.nodes[ddl].T = MathFunc.MatrixCopy(T);
 		MainParameters.Instance.joints.nodes[ddl].Q = MathFunc.MatrixCopy(Q);
 
-		// Interpolation des positions des angles pour l'articulation sélectionnée
+		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
 
-		InterpolationDDL(ddl);
-
-		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
-
-		DisplayDDL(false, ddl, false);
-
-		// Afficher la silhouette au temps du noeud modifié
-
-		AnimationF.Instance.PlayReset();
 		int frame = (int)Mathf.Round(GraphManager.Instance.mousePosSaveX / MainParameters.Instance.joints.lagrangianModel.dt);
-		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
-		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
+		InterpolationAndDisplayDDL(ddl, ddl, frame, false);
 
 		// Désactiver l'action du clic du bouton droit de la souris
 
@@ -350,20 +396,10 @@ public class MovementF : MonoBehaviour
 		MainParameters.Instance.joints.nodes[ddl].T = MathFunc.MatrixCopy(T);
 		MainParameters.Instance.joints.nodes[ddl].Q = MathFunc.MatrixCopy(Q);
 
-		// Interpolation des positions des angles pour l'articulation sélectionnée
+		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
 
-		InterpolationDDL(ddl);
-
-		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
-
-		DisplayDDL(false, ddl, false);
-
-		// Afficher la silhouette au temps du noeud modifié
-
-		AnimationF.Instance.PlayReset();
 		int frame = (int)Mathf.Round(GraphManager.Instance.mousePosSaveX / MainParameters.Instance.joints.lagrangianModel.dt);
-		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
-		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
+		InterpolationAndDisplayDDL(ddl, ddl, frame, false);
 
 		// Désactiver l'action du clic du bouton droit de la souris
 
@@ -378,18 +414,13 @@ public class MovementF : MonoBehaviour
 		MainParameters.Instance.joints.nodes = NodesCopy(nodesFromDataFile);
 		MainParameters.Instance.joints.duration = durationFromDataFile;
 
-		// Interpolation des positions des angles pour l'articulation sélectionnée
+		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
 
-		InterpolationDDL(-1);
+		InterpolationAndDisplayDDL(-1, GraphManager.Instance.ddlUsed, 0, true);
 
-		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
+		// Initialisation de la liste des items que contiendra la liste déroulante Type d'interpolation
 
-		DisplayDDL(false, GraphManager.Instance.ddlUsed, true);
-
-		// Afficher la silhouette au temps t = 0
-
-		AnimationF.Instance.PlayReset();
-		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, 0, 1);
+		InitDropdownInterpolation(GraphManager.Instance.ddlUsed);
 
 		// Désactiver l'action du clic du bouton droit de la souris
 
@@ -408,9 +439,32 @@ public class MovementF : MonoBehaviour
 			nodesTo[i].name = nodesFrom[i].name;
 			nodesTo[i].T = MathFunc.MatrixCopy(nodesFrom[i].T);
 			nodesTo[i].Q = MathFunc.MatrixCopy(nodesFrom[i].Q);
+			nodesTo[i].interpolation.type = nodesFrom[i].interpolation.type;
+			nodesTo[i].interpolation.numIntervals = nodesFrom[i].interpolation.numIntervals;
+			nodesTo[i].interpolation.slope = MathFunc.MatrixCopy(nodesFrom[i].interpolation.slope);
 			nodesTo[i].ddlOppositeSide = nodesFrom[i].ddlOppositeSide;
 		}
 		return nodesTo;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné. </summary>
+
+	public void InterpolationAndDisplayDDL(int ddlInterpolation, int ddlDisplay, int frame, bool axisRange)
+	{
+		// Interpolation des positions des angles pour l'articulation sélectionnée
+
+		InterpolationDDL(ddlInterpolation);
+
+		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
+
+		DisplayDDL(ddlDisplay, axisRange);
+
+		// Afficher la silhouette au temps du noeud modifié
+
+		AnimationF.Instance.PlayReset();
+		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
+		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
 	}
 
 	// =================================================================================================================================================================
@@ -444,7 +498,7 @@ public class MovementF : MonoBehaviour
 	// =================================================================================================================================================================
 	/// <summary> Afficher la courbe des positions des angles pour l'articulation sélectionné, ainsi que les noeuds. </summary>
 
-	public void DisplayDDL(bool options,int ddl, bool axisRange)
+	public void DisplayDDL(int ddl, bool axisRange)
 	{
 		if (ddl >= 0)
 		{
@@ -452,30 +506,60 @@ public class MovementF : MonoBehaviour
 			if (MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide >= 0)
 				GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide, axisRange);
 		}
-		if (options)
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Initialisation de la liste des items que contiendra la liste déroulante Nom de l'articulation. </summary>
+
+	public void InitDropdownDDLNames(int ddl)
+	{
+		List<string> dropDownOptions = new List<string>();
+		for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
 		{
-			List<string> dropDownOptions = new List<string>();
-			for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
-			{
-				if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLHipFlexion.ToLower())
-					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLHipFlexion);
-				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLKneeFlexion.ToLower())
-					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLKneeFlexion);
-				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLLeftArmFlexion.ToLower())
-					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLLeftArmFlexion);
-				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLLeftArmAbduction.ToLower())
-					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLLeftArmAbduction);
-				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLRightArmFlexion.ToLower())
-					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLRightArmFlexion);
-				else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLRightArmAbduction.ToLower())
-					dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLRightArmAbduction);
-				else
-					dropDownOptions.Add(MainParameters.Instance.joints.nodes[i].name);
-			}
-			dropDownDDLNames.ClearOptions();
-			dropDownDDLNames.AddOptions(dropDownOptions);
-			if (ddl >= 0)
-				dropDownDDLNames.value = ddl;
+			if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLHipFlexion.ToLower())
+				dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLHipFlexion);
+			else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLKneeFlexion.ToLower())
+				dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLKneeFlexion);
+			else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLLeftArmFlexion.ToLower())
+				dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLLeftArmFlexion);
+			else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLLeftArmAbduction.ToLower())
+				dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLLeftArmAbduction);
+			else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLRightArmFlexion.ToLower())
+				dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLRightArmFlexion);
+			else if (MainParameters.Instance.joints.nodes[i].name.ToLower() == MainParameters.Instance.languages.english.movementDDLRightArmAbduction.ToLower())
+				dropDownOptions.Add(MainParameters.Instance.languages.Used.movementDDLRightArmAbduction);
+			else
+				dropDownOptions.Add(MainParameters.Instance.joints.nodes[i].name);
+		}
+		dropDownDDLNames.ClearOptions();
+		dropDownDDLNames.AddOptions(dropDownOptions);
+		if (ddl >= 0)
+		{
+			calledFromScript = true;
+			dropDownDDLNames.value = ddl;
+			calledFromScript = false;
+		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Initialisation de la liste des items que contiendra la liste déroulante Type d'interpolation. </summary>
+
+	public void InitDropdownInterpolation(int ddl)
+	{
+		List<string> dropDownOptions = new List<string>();
+		dropDownOptions.Add("Quintic");
+		for (int i = 3; i <= 8; i++)
+			dropDownOptions.Add(string.Format("{0} {1}", MainParameters.Instance.languages.Used.movementInterpolationCubicSpline, i));
+		dropDownInterpolation.ClearOptions();
+		dropDownInterpolation.AddOptions(dropDownOptions);
+		if (ddl >= 0)
+		{
+			calledFromScript = true;
+			if (MainParameters.Instance.joints.nodes[ddl].interpolation.type == MainParameters.InterpolationType.Quintic)
+				dropDownInterpolation.value = 0;
+			else
+				dropDownInterpolation.value = MainParameters.Instance.joints.nodes[ddl].interpolation.numIntervals - 2;
+			calledFromScript = false;
 		}
 	}
 }

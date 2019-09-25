@@ -15,8 +15,12 @@ public class MainParameters
 	/// <summary> Description de la structure contenant les informations sur le type d'interpolation utilisé (quintic ou spline cubique). </summary>
 	public struct StrucInterpolation
 	{
+		/// <summary> Type d'interpolation utilisé (quintic ou spline cubique). </summary>
 		public InterpolationType type;
+		/// <summary> Nombre d'intervalle utilisé (spline cubique seulement). </summary>
 		public int numIntervals;
+		/// <summary> Pente initiale et finale (spline cubique seulement). </summary>
+		public float[] slope;
 	}
 
 	/// <summary> Structure contenant les informations sur le type d'interpolation utilisé par défaut. </summary>
@@ -139,6 +143,7 @@ public class MainParameters
 		public string movementDDLLeftArmAbduction;
 		public string movementDDLRightArmFlexion;
 		public string movementDDLRightArmAbduction;
+		public string movementInterpolationCubicSpline;
 		public string movementButtonAddNode;
 		public string movementButtonRemoveNode;
 		public string movementButtonCancelChanges;
@@ -229,7 +234,8 @@ public class MainParameters
 
 		interpolationDefault.type = InterpolationType.Quintic;
 		interpolationDefault.numIntervals = 0;
-        takeOffParamDefault.verticalSpeed = 0;
+		interpolationDefault.slope = new float[] { 0, 0 };
+		takeOffParamDefault.verticalSpeed = 0;
         takeOffParamDefault.anteroposteriorSpeed = 0;
         takeOffParamDefault.somersaultSpeed = 0;
         takeOffParamDefault.twistSpeed = 0;
@@ -278,6 +284,8 @@ public class MainParameters
 		languages.english.movementDDLRightArmFlexion = "Right_Arm_Flexion";
 		languages.french.movementDDLRightArmAbduction = "Bras_Droit_Abduction";
 		languages.english.movementDDLRightArmAbduction = "Right_Arm_Abduction";
+		languages.french.movementInterpolationCubicSpline = "Spline cub.";
+		languages.english.movementInterpolationCubicSpline = "Cubic spl.";
 
 		languages.french.movementButtonAddNode = "Ajouter un noeud";
 		languages.english.movementButtonAddNode = "Add node";
@@ -365,7 +373,7 @@ public class MainParameters
 		languages.english.errorMsgVerticalSpeed = string.Format("Value of the vertical speed parameter {0} must be equal to or greater than 0", System.Environment.NewLine);
 		languages.french.errorMsgInvalidNodePosition = string.Format("Le noeud ne peut pas être déplacer avant/après {0} le noeud précédent/suivant (selon l'échelle des temps)", System.Environment.NewLine);
 		languages.english.errorMsgInvalidNodePosition = string.Format("Node cannot be place before/after {0} the previous/next node (following the time scale)", System.Environment.NewLine);
-		languages.french.errorMsgNotEnoughNodes = string.Format("Au moins 2 noeuds doit être défini,{0}donc la suppression ignoré", System.Environment.NewLine);
+		languages.french.errorMsgNotEnoughNodes = string.Format("Au moins 2 noeuds doit être défini,{0}donc la suppression est ignoré", System.Environment.NewLine);
 		languages.english.errorMsgNotEnoughNodes = string.Format("At least 2 nodes must exist,{0}so node can't be removed", System.Environment.NewLine);
 		languages.french.errorMsgLowerBoundOverflow = string.Format("La borne inférieur ne peut pas être plus grande ou égale à la borne supérieur");
 		languages.english.errorMsgLowerBoundOverflow = string.Format("Lower bound cannot be greater or equal to the upper bound");

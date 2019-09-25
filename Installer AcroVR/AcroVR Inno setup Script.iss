@@ -3,7 +3,7 @@
 
 #define MyCompany "Tekphy"
 #define MyAppName "AcroVR"
-#define MyAppVersion "23.07.2019"
+#define MyAppVersion "25.09.2019"
 #define MyAppPublisher "Tekphy lab"
 #define MyAppExeName "AcroVR.exe"
 
@@ -29,6 +29,8 @@ OutputBaseFilename="Setup_{#MyAppName}_{#MyAppVersion}"
 SetupIconFile="{#MySetupDir}\{#MySetupIcon}"
 Compression=lzma
 SolidCompression=yes
+DisableWelcomePage=no
+DisableDirPage=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

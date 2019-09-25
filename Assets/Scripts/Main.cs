@@ -98,7 +98,11 @@ public class Main : MonoBehaviour
 		// Section graphique du mouvement
 
 		if (MainParameters.Instance.joints.nodes != null)
-			MovementF.Instance.DisplayDDL(true, -1, false);
+		{
+			MovementF.Instance.DisplayDDL(-1, false);
+			MovementF.Instance.InitDropdownDDLNames(-1);
+			MovementF.Instance.InitDropdownInterpolation(-1);
+		}
 		GraphSettings.Instance.textVerticalAxisTitle.text = languagesUsed.movementGraphSettingsVerticalTitle;
 		GraphSettings.Instance.textVerticalAxisLowerBound.text = languagesUsed.movementGraphSettingsLowerBound;
 		GraphSettings.Instance.textVerticalAxisUpperBound.text = languagesUsed.movementGraphSettingsUpperBound;
@@ -177,7 +181,7 @@ public class Main : MonoBehaviour
 			MovementF.Instance.buttonLoad.interactable = status;
 			MovementF.Instance.buttonLoadImage.color = color;
 		}
-		MovementF.Instance.dropDownInterpolation.interactable = false;				// Non fonctionnelle encore
+		MovementF.Instance.dropDownInterpolation.interactable = status;
 		MovementF.Instance.buttonSave.interactable = status;
 		MovementF.Instance.buttonSaveImage.color = color;
 		MovementF.Instance.buttonSymetricLeftRight.interactable = false;            // Non fonctionnelle encore

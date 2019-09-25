@@ -29,6 +29,6 @@ public class MouseManager : MonoBehaviour
 		Vector3[] gameObjectPos = new Vector3[2];
 		gameObjectPos[0] = RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, menuPos[0]);
 		gameObjectPos[1] = RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, menuPos[2]);
-		return (inputMousePos.x >= gameObjectPos[0].x && inputMousePos.x <= gameObjectPos[1].x && inputMousePos.y >= gameObjectPos[0].y && inputMousePos.y <= gameObjectPos[1].y);
+		return (gameObject.activeSelf && inputMousePos.x >= gameObjectPos[0].x && inputMousePos.x <= gameObjectPos[1].x && inputMousePos.y >= gameObjectPos[0].y && inputMousePos.y <= gameObjectPos[1].y);
 	}
 }

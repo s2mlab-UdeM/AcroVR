@@ -106,9 +106,23 @@ public class DataFileManager : MonoBehaviour
             {
                 jointsTemp.nodes[ddlNum].ddl = int.Parse(values[0]);
                 jointsTemp.nodes[ddlNum].name = values[1];
-                jointsTemp.nodes[ddlNum].T = ExtractDataTQ(values[2]);
-                jointsTemp.nodes[ddlNum].Q = ExtractDataTQ(values[3]);
 				jointsTemp.nodes[ddlNum].interpolation = MainParameters.Instance.interpolationDefault;
+				int indexTQ = 2;
+				if (values.Length > 5)
+				{
+					string[] subValues;
+					subValues = Regex.Split(values[2], ",");
+					if (subValues[0].Contains(MainParameters.InterpolationType.CubicSpline.ToString()))
+						jointsTemp.nodes[ddlNum].interpolation.type = MainParameters.InterpolationType.CubicSpline;
+					else
+						jointsTemp.nodes[ddlNum].interpolation.type = MainParameters.InterpolationType.Quintic;
+					jointsTemp.nodes[ddlNum].interpolation.numIntervals = int.Parse(subValues[1]);
+					jointsTemp.nodes[ddlNum].interpolation.slope[0] = float.Parse(subValues[2]);
+					jointsTemp.nodes[ddlNum].interpolation.slope[1] = float.Parse(subValues[3]);
+					indexTQ++;
+				}
+				jointsTemp.nodes[ddlNum].T = ExtractDataTQ(values[indexTQ]);
+				jointsTemp.nodes[ddlNum].Q = ExtractDataTQ(values[indexTQ + 1]);
 				jointsTemp.nodes[ddlNum].ddlOppositeSide = -1;
 				ddlNum++;
             }
@@ -135,11 +149,12 @@ public class DataFileManager : MonoBehaviour
 			MainParameters.Instance.joints.takeOffParam.tilt, System.Environment.NewLine,
 			MainParameters.Instance.joints.takeOffParam.rotation, System.Environment.NewLine, System.Environment.NewLine);
 
-		fileLines = string.Format("{0}Nodes{1}DDL, name, T, Q{2}", fileLines, System.Environment.NewLine, System.Environment.NewLine);
+		fileLines = string.Format("{0}Nodes{1}DDL, name, interpolation (type, numIntervals, slopes), T, Q{2}", fileLines, System.Environment.NewLine, System.Environment.NewLine);
 
 		for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
 		{
-			fileLines = string.Format("{0}{1}:{2}:", fileLines, i + 1, MainParameters.Instance.joints.nodes[i].name);
+			fileLines = string.Format("{0}{1}:{2}:{3},{4},{5:0.000000},{6:0.000000}:", fileLines, i + 1, MainParameters.Instance.joints.nodes[i].name, MainParameters.Instance.joints.nodes[i].interpolation.type,
+				MainParameters.Instance.joints.nodes[i].interpolation.numIntervals, MainParameters.Instance.joints.nodes[i].interpolation.slope[0], MainParameters.Instance.joints.nodes[i].interpolation.slope[1]);
 			for (int j = 0; j < MainParameters.Instance.joints.nodes[i].T.Length; j++)
 			{
 				if (j < MainParameters.Instance.joints.nodes[i].T.Length - 1)

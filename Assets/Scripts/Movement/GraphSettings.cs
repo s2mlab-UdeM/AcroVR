@@ -433,7 +433,7 @@ public class GraphSettings : MonoBehaviour
 		GraphManager.Instance.axisXmax = horizontalAxisUpperBound;
 		GraphManager.Instance.axisYmin = verticalAxisLowerBound;
 		GraphManager.Instance.axisYmax = verticalAxisUpperBound;
-		MovementF.Instance.DisplayDDL(false, GraphManager.Instance.ddlUsed, false);
+		MovementF.Instance.DisplayDDL(GraphManager.Instance.ddlUsed, false);
 
 		// Quitter le panneau Paramètres du graphique
 
