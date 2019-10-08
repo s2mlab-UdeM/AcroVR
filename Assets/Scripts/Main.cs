@@ -11,6 +11,7 @@ public class Main : MonoBehaviour
 	public static Main Instance;
 	public GameObject textVersionFR;
 	public GameObject textVersionEN;
+	public Button buttonLanguage;
 	public Text textButtonLanguage;
 
 	public Text textTakeOffTitle;
@@ -92,7 +93,6 @@ public class Main : MonoBehaviour
 			textVersionFR.SetActive(false);
 			textVersionEN.SetActive(true);
 		}
-
 		MainParameters.StrucMessageLists languagesUsed =	MainParameters.Instance.languages.Used;
 
 		// Section graphique du mouvement
@@ -165,7 +165,7 @@ public class Main : MonoBehaviour
 	/// <summary>
 	/// Activer ou désactiver plusieurs contrôles (boutons, listes déroulantes, ...) du panneau principale. </summary>
 	/// <param name="status">État des contrôles, activé ou non. </param>
-	/// <param name="statusLoad">État du bouton Charger, modifié ou non. </param>
+	/// <param name="statusLoad">État des boutons Charger et Changer la langue, modifié ou non. </param>
 
 	public void EnableDisableControls(bool status, bool statusLoad)
 	{
@@ -178,6 +178,7 @@ public class Main : MonoBehaviour
 		MovementF.Instance.dropDownDDLNames.interactable = status;
 		if (statusLoad)
 		{
+			buttonLanguage.interactable = status;
 			MovementF.Instance.buttonLoad.interactable = status;
 			MovementF.Instance.buttonLoadImage.color = color;
 		}
@@ -205,8 +206,16 @@ public class Main : MonoBehaviour
 		AnimationF.Instance.buttonPlay.interactable = status;
 		AnimationF.Instance.buttonPlayImage.color = color;
 		AnimationF.Instance.dropDownPlaySpeed.interactable = status;
-		AnimationF.Instance.buttonGraph.interactable = false;                       // Non fonctionnelle encore
-		AnimationF.Instance.buttonGraphImage.color = Color.gray;					// Non fonctionnelle encore
+		if (status && MainParameters.Instance.joints.rot != null)
+		{
+			AnimationF.Instance.buttonGraph.interactable = true;
+			AnimationF.Instance.buttonGraphImage.color = Color.white;
+		}
+		else
+		{
+			AnimationF.Instance.buttonGraph.interactable = false;
+			AnimationF.Instance.buttonGraphImage.color = Color.gray;
+		}
 	}
 
 	//System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));

@@ -44,6 +44,8 @@ public class GraphManager : MonoBehaviour
 	string dataTempCategory;
 	//string cursorCategorie;
 
+	string[] dataCurvesCategories;
+
 	int nodeUsed = 0;
 	int numNodes = 0;
 	float radToDeg = 180 / Mathf.PI;
@@ -68,6 +70,8 @@ public class GraphManager : MonoBehaviour
 		nodesTemp2Category = "NodesTemp2";
 		dataTempCategory = "DataTemp";
 		//cursorCategorie = "Cursor";
+
+		dataCurvesCategories = new string[3] { "Data1", "Data2", "Data3" };
 	}
 
 	// =================================================================================================================================================================
@@ -242,7 +246,7 @@ public class GraphManager : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
-	/// <summary> Bouton OK a été appuyer. </summary>
+	/// <summary> Bouton OK du panneau qui affiche un message d'erreur a été appuyer. </summary>
 
 	public void ButtonOK()
 	{
@@ -457,5 +461,65 @@ public class GraphManager : MonoBehaviour
 		else
 			panel.transform.position = mousePosWorldSpace - new Vector3(10, 0, 0);		// Pour éviter que le menu ne soit pas caché par le panneau Animator, on affiche le menu à gauche
 		panel.SetActive(true);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Afficher une ou plusieurs courbes dans le graphique spécifié. </summary>
+
+	public void DisplayCurves(GraphChart graphCurves, float[] t, float[] data)
+	{
+		float[,] data1 = new float[data.GetUpperBound(0) + 1,1];
+		for (int i = 0; i <= data.GetUpperBound(0); i++)
+			data1[i,0] = data[i];
+		DisplayCurves(graphCurves, t, data1);
+	}
+
+	public void DisplayCurves(GraphChart graphCurves, float[] t, float[,] data)
+	{
+		if (graphCurves == null) return;
+		graphCurves.DataSource.StartBatch();
+
+		// Effacer les courbes précédentes
+
+		for (int i = 0; i < dataCurvesCategories.Length; i++)
+			graphCurves.DataSource.ClearCategory(dataCurvesCategories[i]);
+
+		// Ajouter toutes les données dans la ou les nouvelles courbes Data
+		// Calculer les valeurs minimum et maximum
+
+		float tMin = 999999;
+		float tMax = -999999;
+		float dataMin = 999999;
+		float dataMax = -999999;
+		for (int i = 0; i <= data.GetUpperBound(1); i++)
+		{
+			for (int j = 0; j < t.Length; j++)
+			{
+				graphCurves.DataSource.AddPointToCategory(dataCurvesCategories[i], t[j], data[j, i]);
+				if (i <= 0 && t[j] < tMin) tMin = t[j];
+				if (i <= 0 && t[j] > tMax) tMax = t[j];
+				if (data[j, i] < dataMin) dataMin = data[j, i];
+				if (data[j, i] > dataMax) dataMax = data[j, i];
+			}
+		}
+
+		// Définir les échelles des temps et des données
+
+		graphCurves.DataSource.HorizontalViewOrigin = tMin;
+		graphCurves.DataSource.HorizontalViewSize = tMax - tMin;
+		if (tMax - tMin <= 2)
+			graphCurves.GetComponent<HorizontalAxis>().MainDivisions.FractionDigits = 2;
+		else
+			graphCurves.GetComponent<HorizontalAxis>().MainDivisions.FractionDigits = 1;
+		graphCurves.DataSource.VerticalViewOrigin = dataMin;
+		graphCurves.DataSource.VerticalViewSize = dataMax - dataMin;
+		if (dataMax - dataMin <= 0.2)
+			graphCurves.GetComponent<VerticalAxis>().MainDivisions.FractionDigits = 3;
+		else if (dataMax - dataMin <= 2)
+			graphCurves.GetComponent<VerticalAxis>().MainDivisions.FractionDigits = 2;
+		else
+			graphCurves.GetComponent<VerticalAxis>().MainDivisions.FractionDigits = 1;
+
+		graphCurves.DataSource.EndBatch();
 	}
 }

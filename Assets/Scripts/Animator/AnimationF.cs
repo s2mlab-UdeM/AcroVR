@@ -19,6 +19,7 @@ public class AnimationF : MonoBehaviour
 	public Dropdown dropDownPlaySpeed;
 	public Button buttonGraph;
 	public Image buttonGraphImage;
+	public GameObject panelResultsGraphics;
 
 	public Text textScrollViewMessages;
 
@@ -212,6 +213,28 @@ public class AnimationF : MonoBehaviour
 	public void ButtonStop()
 	{
 		PlayEnd();
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Graphiques des résultats a été appuyer. </summary>
+
+	public void ButtonGraph()
+	{
+		Main.Instance.EnableDisableControls(false, true);
+		EnableDisableAnimationOutline(false);
+		GraphManager.Instance.mouseTracking = false;
+		panelResultsGraphics.SetActive(true);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton OK du panneau Graphiques des résultats a été appuyer. </summary>
+
+	public void ButtonGraphOK()
+	{
+		Main.Instance.EnableDisableControls(true, true);
+		EnableDisableAnimationOutline(true);
+		GraphManager.Instance.mouseTracking = true;
+		panelResultsGraphics.SetActive(false);
 	}
 
 	// =================================================================================================================================================================
@@ -427,6 +450,25 @@ public class AnimationF : MonoBehaviour
 			tagX[i] = (float)tag1[i];
 			tagY[i] = (float)tag1[i + newTagLength];
 			tagZ[i] = (float)tag1[i + newTagLength * 2];
+		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Activer ou désactiver la silhouette. </summary>
+
+	void EnableDisableAnimationOutline(bool status)
+	{
+		if (lineStickFigure != null)
+		{
+			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.stickFigure.Length / 2; i++)
+				lineStickFigure[i].enabled = status;
+		}
+		if (lineCenterOfMass != null)
+			lineCenterOfMass.enabled = status;
+		if (lineFilledFigure != null)
+		{
+			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.filledFigure.Length / 4; i++)
+				lineFilledFigure[i].enabled = status;
 		}
 	}
 

@@ -107,27 +107,6 @@ public class MainParameters
     public int conditionDefault;
 	#endregion
 
-	#region SplinesParameters
-	///// <summary> Description de la structure contenant les coefficents splines interpolés des données réelles des angles des articulations (DDL). </summary>
-	//// Interpolation de type spline cubique
-	//public struct StrucCoefSplines
-	//{
-	//	public float[,] pp;					// [m,n] --> m = nombre de frames, n = nombre de coefficents
-	//	public float[,] ppdot;              // [m,n] --> m = nombre de frames, n = nombre de coefficents
-	//	public float[,] ppddot;             // [m,n] --> m = nombre de frames, n = nombre de coefficents
-	//}
-
-	///// <summary> Description de la structure contenant les données relatifs aux splines interpolés des données réelles des angles des articulations (DDL). </summary>
-	//public struct StrucSplines
-	//{
-	//	public float[] T;                   // [n] --> n = nombre de frames
-	//	public StrucCoefSplines[] coefs;    // [n] --> n = nombre de DDL
-	//}
-
-	///// <summary> Structure contenant les coefficents splines interpolés des données réelles des angles des articulations (DDL). </summary>
-	//public StrucSplines splines;
-	#endregion
-
 	#region ScrollViewMessages
 	///// <summary> Liste des messages qui seront affichés dans la boîte des messages. </summary>
 	public List<string> scrollViewMessages;
@@ -188,6 +167,22 @@ public class MainParameters
 		public string animatorPlaySpeedSlow2;
 		public string animatorPlaySpeedSlow3;
 
+		public string resultsGraphicsSelectionRotationsVsTime;
+		public string resultsGraphicsSelectionTiltVsTime;
+		public string resultsGraphicsSelectionTiltVsSomersault;
+		public string resultsGraphicsSelectionTiltVsTwist;
+		public string resultsGraphicsSelectionTwistVsSomersault;
+		public string resultsGraphicsSelectionAngularSpeedVsTime;
+		public string resultsGraphicsLabelAxisTime;
+		public string resultsGraphicsLabelAxisRotation;
+		public string resultsGraphicsLabelAxisTilt;
+		public string resultsGraphicsLabelAxisSomersault;
+		public string resultsGraphicsLabelAxisTwist;
+		public string resultsGraphicsLabelAxisAngularSpeed;
+		public string resultsGraphicsLegendCurveNameSomersault;
+		public string resultsGraphicsLegendCurveNameTilt;
+		public string resultsGraphicsLegendCurveNameTwist;
+
 		public string errorMsgVerticalSpeed;
 		public string errorMsgInvalidNodePosition;
 		public string errorMsgNotEnoughNodes;
@@ -221,6 +216,9 @@ public class MainParameters
 	/// <summary> Structure contenant la liste des messages utilisés en français et en anglais. </summary>
 	public StrucLanguages languages;
 	#endregion
+
+	/// <summary> Numéros des types de graphique des résultats qui seront affiché dans le panneau des graphiques des résultats. </summary>
+	public int[] resultsGraphicsUsed;
 
 	#region singleton 
 	// modèle singleton tiré du site : https://msdn.microsoft.com/en-us/library/ff650316.aspx
@@ -261,14 +259,13 @@ public class MainParameters
 		joints.rot = null;
 		joints.rotdot = null;
 
-		// Initialisation des paramètres reliés aux coefficents splines interpolés des données réelles des angles des articulations.
-
-		//splines = new StrucSplines();
-		//splines.coefs = null;
-
 		// Initialisation de la liste des messages, utilisé pour la boîte des messages.
 
 		scrollViewMessages = new List<string>();
+
+		// Initialisation des numéros des types de graphique des résultats qui seront affiché
+
+		resultsGraphicsUsed = new int[2] { 0, 5 };
 
 		// Initialisation de la liste des messages en français et en anglais.
 
@@ -368,6 +365,37 @@ public class MainParameters
 		languages.english.animatorPlaySpeedSlow2 = "Slow speed 2";
 		languages.french.animatorPlaySpeedSlow3 = "Vit. lente 3";
 		languages.english.animatorPlaySpeedSlow3 = "Slow speed 3";
+
+		languages.french.resultsGraphicsSelectionRotationsVsTime = "Rotations vs temps";
+		languages.english.resultsGraphicsSelectionRotationsVsTime = "Rotations vs time";
+		languages.french.resultsGraphicsSelectionTiltVsTime = "Inclinaison vs temps";
+		languages.english.resultsGraphicsSelectionTiltVsTime = "Tilt vs time";
+		languages.french.resultsGraphicsSelectionTiltVsSomersault = "Inclinaison vs salto";
+		languages.english.resultsGraphicsSelectionTiltVsSomersault = "Tilt vs somersault";
+		languages.french.resultsGraphicsSelectionTiltVsTwist = "Inclinaison vs vrille";
+		languages.english.resultsGraphicsSelectionTiltVsTwist = "Tilt vs twist";
+		languages.french.resultsGraphicsSelectionTwistVsSomersault = "Vrille vs salto";
+		languages.english.resultsGraphicsSelectionTwistVsSomersault = "Twist vs somersault";
+		languages.french.resultsGraphicsSelectionAngularSpeedVsTime = "Vitesse angulaire vs temps";
+		languages.english.resultsGraphicsSelectionAngularSpeedVsTime = "Angular speed vs time";
+		languages.french.resultsGraphicsLabelAxisTime = "Temps (s)";
+		languages.english.resultsGraphicsLabelAxisTime = "Time (s)";
+		languages.french.resultsGraphicsLabelAxisRotation = "Rotation (rév.)";
+		languages.english.resultsGraphicsLabelAxisRotation = "Rotation (rev.)";
+		languages.french.resultsGraphicsLabelAxisTilt = "Inclinaison (rév.)";
+		languages.english.resultsGraphicsLabelAxisTilt = "Tilt (rev.)";
+		languages.french.resultsGraphicsLabelAxisSomersault = "Salto (rév.)";
+		languages.english.resultsGraphicsLabelAxisSomersault = "Somersault (rev.)";
+		languages.french.resultsGraphicsLabelAxisTwist = "Vrille (rév.)";
+		languages.english.resultsGraphicsLabelAxisTwist = "Twist (rev.)";
+		languages.french.resultsGraphicsLabelAxisAngularSpeed = "Vitesse angulaire (rév./s)";
+		languages.english.resultsGraphicsLabelAxisAngularSpeed = "Angular speed (rev./s)";
+		languages.french.resultsGraphicsLegendCurveNameSomersault = "Salto";
+		languages.english.resultsGraphicsLegendCurveNameSomersault = "Somersault";
+		languages.french.resultsGraphicsLegendCurveNameTilt = "Inclinaison";
+		languages.english.resultsGraphicsLegendCurveNameTilt = "Tilt";
+		languages.french.resultsGraphicsLegendCurveNameTwist = "Vrille";
+		languages.english.resultsGraphicsLegendCurveNameTwist = "Twist";
 
 		languages.french.errorMsgVerticalSpeed = string.Format("Valeur du paramètre Vitesse verticale {0}	  doit être égal ou supérieur à 0", System.Environment.NewLine);
 		languages.english.errorMsgVerticalSpeed = string.Format("Value of the vertical speed parameter {0} must be equal to or greater than 0", System.Environment.NewLine);

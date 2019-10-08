@@ -252,6 +252,7 @@ public class MathFunc
 
 		// Integrate corrections and add to P to produce smoothed phase values
 		// MATLAB: p(2:m,:) = p(2:m,:) + cumsum(dp_corr,1);
+		pp[0] = p[0];						// Ajouter par Marcel Beaulieu, pour que la fonction soit complètement équivalente à la fonction Matlab
 		for (j = 1; j < n; j++)
 			pp[j] = p[j] + cumsum[j - 1];
 
