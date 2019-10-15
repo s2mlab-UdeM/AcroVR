@@ -26,6 +26,7 @@ public class AnimationF : MonoBehaviour
 	LineRenderer[] lineStickFigure;
 	LineRenderer lineCenterOfMass;
 	LineRenderer[] lineFilledFigure;
+	LineRenderer[] lineFloor;
 
 	public bool animateON = false;
 	int frameN = 0;
@@ -38,6 +39,8 @@ public class AnimationF : MonoBehaviour
 	float tagZMin = 0;
 	float tagZMax = 0;
 	float factorTags2Screen = 1;
+	float factorTags2ScreenX = 1;
+	float factorTags2ScreenY = 1;
 	float animationMaxDimOnScreen = 20;         // Dimension maximum de la silhouette à l'écran en unité de "Line renderer" (même dimension dans les 3 directions x, y, z)
 
 	float timeElapsed = 0;
@@ -58,6 +61,7 @@ public class AnimationF : MonoBehaviour
 		lineStickFigure = null;
 		lineCenterOfMass = null;
 		lineFilledFigure = null;
+		lineFloor = null;
 
 		dropDownPlayMode.interactable = false;
 		dropDownPlayView.interactable = false;
@@ -182,12 +186,13 @@ public class AnimationF : MonoBehaviour
 			tagXMin = tagYMin = tagZMin = 9999;
 			tagXMax = tagYMax = tagZMax = -9999;
 			qf = new double[q1.GetUpperBound(0) + 1];
-			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q2.Length; i++)
-				qf[MainParameters.Instance.joints.lagrangianModel.q2[i] - 1] = 0;
 			for (int i = 0; i <= q1.GetUpperBound(1); i++)
 			{
-				for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.q1.Length; j++)
-					qf[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1] = q1[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1, i];
+				qf = MathFunc.MatrixGetColumnD(q1, i);
+				if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)       // Mode Gesticulation: Les DDL racine doivent être à zéro
+					for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.q1.Length; j++)
+						qf[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1] = 0;
+
 				EvaluateTags(qf, out tagX, out tagY, out tagZ);
 				tagXMin = Math.Min(tagXMin, Mathf.Min(tagX));
 				tagXMax = Math.Max(tagXMax, Mathf.Max(tagX));
@@ -251,7 +256,12 @@ public class AnimationF : MonoBehaviour
 		firstFrame = frFrame;
 		numberFrames = nFrames;
 		if (nFrames > 1)
-			timeFrame = joints.duration / numberFrames;
+		{
+			if (joints.tc > 0)							// Il y a eu contact avec le sol, alors seulement une partie des données sont utilisé
+				timeFrame = joints.tc / (numberFrames - 1);
+			else										// Aucun contact avec le sol, alors toutes les données sont utilisé
+				timeFrame = joints.duration / (numberFrames - 1);
+		}
 		else
 			timeFrame = 0;
 		animateON = true;
@@ -267,6 +277,18 @@ public class AnimationF : MonoBehaviour
 			lineRenderer.startWidth = 0.04f;
 			lineRenderer.endWidth = 0.04f;
 			lineRenderer.gameObject.layer = 8;
+
+			lineFloor = new LineRenderer[4];
+			for (int i = 0; i < 4; i++)
+			{
+				lineFloor[i] = Instantiate(lineRenderer);
+				lineFloor[i].startColor = Color.green;
+				lineFloor[i].endColor = Color.green;
+				lineFloor[i].startWidth = 0.1f;
+				lineFloor[i].endWidth = 0.1f;
+				lineFloor[i].name = string.Format("LineFloor{0}", i + 1);
+				lineFloor[i].transform.parent = panelAnimator.transform;
+			}
 
 			lineStickFigure = new LineRenderer[joints.lagrangianModel.stickFigure.Length / 2];
 			for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
@@ -310,6 +332,8 @@ public class AnimationF : MonoBehaviour
 		DrawObjects.Instance.Delete(lineCenterOfMass);
 		for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
 			DrawObjects.Instance.Delete(lineFilledFigure[i]);
+		for (int i = 0; i < 4; i++)
+			DrawObjects.Instance.Delete(lineFloor[i]);
 
 		// Initialisation du vecteur Q
 
@@ -349,28 +373,40 @@ public class AnimationF : MonoBehaviour
 		}
 
 		// On applique le facteur de correspondance pour optimiser l'affichage de la silhouette
+		// On centre la silhouette au milieu de l'espace disponible à l'écran (PanelAnimator)
 
+		float tagHalfMaxMinZ = (tagZMax - tagZMin) * factorTags2Screen / 2;
 		for (int i = 0; i < newTagLength; i++)
 		{
 			tagX[i] = (tagX[i] - tagXMin) * factorTags2Screen - (tagXMax - tagXMin) * factorTags2Screen / 2;
 			tagY[i] = (tagY[i] - tagYMin) * factorTags2Screen - (tagYMax - tagYMin) * factorTags2Screen / 2;
-			tagZ[i] = (tagZ[i] - tagZMin) * factorTags2Screen - (tagZMax - tagZMin) * factorTags2Screen / 2;
+			tagZ[i] = (tagZ[i] - tagZMin) * factorTags2Screen - tagHalfMaxMinZ;
 		}
 
-		// On centre la silhouette au milieu de l'espace disponible à l'écran (PanelAnimator)
 		// On conserve la nouvelle matrice de "tags" sous une forme Vector3
 
 		Vector3[] tag = new Vector3[newTagLength];
 		for (int i = 0; i < newTagLength; i++)
 			tag[i] = new Vector3(tagX[i], tagY[i], tagZ[i]);
 
-		// Afficher la silhouette
+		// Afficher la silhouette et le plancher si nécessaire
 
 		for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
 			DrawObjects.Instance.Line(lineStickFigure[i], tag[joints.lagrangianModel.stickFigure[i, 0] - 1], tag[joints.lagrangianModel.stickFigure[i, 1] - 1]);
 		DrawObjects.Instance.Circle(lineCenterOfMass, 0.08f, tag[newTagLength - 1]);
 		for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
 			DrawObjects.Instance.Triangle(lineFilledFigure[i], tag[joints.lagrangianModel.filledFigure[i, 0] - 1], tag[joints.lagrangianModel.filledFigure[i, 1] - 1], tag[joints.lagrangianModel.filledFigure[i, 2] - 1]);
+
+		if (numberFrames > 1 && playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
+		{
+			float tagHalfMaxMinX = (tagXMax - tagXMin) * factorTags2ScreenX / 2;
+			float tagHalfMaxMinY = (tagYMax - tagYMin) * factorTags2ScreenY / 2;
+			float originZ = -tagZMin * factorTags2Screen - tagHalfMaxMinZ;
+			DrawObjects.Instance.Line(lineFloor[0], new Vector3(-tagHalfMaxMinX, -tagHalfMaxMinY, originZ), new Vector3(tagHalfMaxMinX, -tagHalfMaxMinY, originZ));
+			DrawObjects.Instance.Line(lineFloor[1], new Vector3(tagHalfMaxMinX, -tagHalfMaxMinY, originZ), new Vector3(tagHalfMaxMinX, tagHalfMaxMinY, originZ));
+			DrawObjects.Instance.Line(lineFloor[2], new Vector3(tagHalfMaxMinX, tagHalfMaxMinY, originZ), new Vector3(-tagHalfMaxMinX, tagHalfMaxMinY, originZ));
+			DrawObjects.Instance.Line(lineFloor[3], new Vector3(-tagHalfMaxMinX, tagHalfMaxMinY, originZ), new Vector3(-tagHalfMaxMinX, -tagHalfMaxMinY, originZ));
+		}
 
 		// Afficher le déplacement d'un curseur selon l'échelle des temps, dans le graphique qui affiche les positions des angles pour l'articulation sélectionné
 
@@ -470,6 +506,11 @@ public class AnimationF : MonoBehaviour
 			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.filledFigure.Length / 4; i++)
 				lineFilledFigure[i].enabled = status;
 		}
+		if (lineFloor != null)
+		{
+			for (int i = 0; i < 4; i++)
+				lineFloor[i].enabled = status;
+		}
 	}
 
 	// =================================================================================================================================================================
@@ -499,10 +540,12 @@ public class AnimationF : MonoBehaviour
 	{
 		// Calcul du facteur de correspondance.
 
+		factorTags2ScreenX = animationMaxDimOnScreen / (tagXMax - tagXMin);
+		factorTags2ScreenY = animationMaxDimOnScreen / (tagYMax - tagYMin);
 		if (tagXMax - tagXMin > tagYMax - tagYMin && tagXMax - tagXMin > tagZMax - tagZMin)
-			factorTags2Screen = animationMaxDimOnScreen / (tagXMax - tagXMin);
+			factorTags2Screen = factorTags2ScreenX;
 		else if (tagYMax - tagYMin > tagZMax - tagZMin)
-			factorTags2Screen = animationMaxDimOnScreen / (tagYMax - tagYMin);
+			factorTags2Screen = factorTags2ScreenY;
 		else
 			factorTags2Screen = animationMaxDimOnScreen / (tagZMax - tagZMin);
 	}
