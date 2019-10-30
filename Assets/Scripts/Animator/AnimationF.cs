@@ -11,6 +11,7 @@ public class AnimationF : MonoBehaviour
 	public Camera cameraAnimation;
 	public GameObject panelAnimator;
 	public Text textChrono;
+	public Text textMsg;
 	public Dropdown dropDownPlayMode;
 	public Dropdown dropDownPlayView;
 	public Button buttonPlay;
@@ -52,6 +53,10 @@ public class AnimationF : MonoBehaviour
 	float[,] q;
 	double[] qf;
 
+	float[,] debug = new float[300,3];
+	int iFrame = 0;
+	float[,] debugFrame = new float[3000,2];
+
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
@@ -82,6 +87,13 @@ public class AnimationF : MonoBehaviour
 
 	void Update()
 	{
+		if (iFrame < 3000)
+		{
+			debugFrame[iFrame, 0] = frameN;
+			debugFrame[iFrame, 1] = Time.deltaTime;
+			iFrame++;
+		}
+
 		// Exécuter seulement si l'animation a été démarré
 
 		if (!animateON) return;
@@ -93,6 +105,7 @@ public class AnimationF : MonoBehaviour
 		if (Time.time - timeStarted >= (timeFrame * frameN) * factorPlaySpeed)
 		{
 			timeElapsed = Time.time - timeStarted;
+			debug[frameN, 0] = timeElapsed;
 
 			// Affichage du chronomètre
 
@@ -102,9 +115,25 @@ public class AnimationF : MonoBehaviour
 			// Affichage de la silhouette à chaque frame, pour le nombre de frames spécifié.
 
 			if (frameN < numberFrames)
+			{
+				float aa = Time.time;
+				debug[frameN, 1] = Time.time - aa;
 				PlayOneFrame();
+				debug[frameN, 2] = Time.time - aa;
+			}
 			else
+			{
+				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("timeStarted = {0}, frameN = {1}, numberFrames = {2}, timeFrame = {3}, factorPlaySpeed = {4}{5}",
+					timeStarted, frameN, numberFrames, timeFrame, factorPlaySpeed, System.Environment.NewLine));
+				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
+				for (int i = 0; i <= frameN; i++)
+					System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("debug = {0}, {1}, {2}{3}", debug[i,0], debug[i, 1], debug[i, 2], System.Environment.NewLine));
+				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
+				for (int i = 0; i < iFrame; i++)
+					System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("debugFrame = {0}, {1}{2}", debugFrame[i,0], debugFrame[i, 1], System.Environment.NewLine));
+				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
 				PlayEnd();
+			}
 		}
 	}
 
@@ -247,6 +276,10 @@ public class AnimationF : MonoBehaviour
 
 	public void Play(float[,] qq, int frFrame, int nFrames)
 	{
+		debug = new float[300, 3];
+		iFrame = 0;
+		debugFrame = new float[3000, 2];
+
 		MainParameters.StrucJoints joints = MainParameters.Instance.joints;
 
 		// Initialisation de certains paramètres
@@ -266,6 +299,10 @@ public class AnimationF : MonoBehaviour
 			timeFrame = 0;
 		animateON = true;
 		GraphManager.Instance.mouseTracking = false;
+
+		// Effacer le message affiché au bas du panneau d'animation
+
+		textMsg.text = "";
 
 		// Création et initialisation des "GameObject Line Renderer"
 
@@ -438,11 +475,19 @@ public class AnimationF : MonoBehaviour
 	{
 		animateON = false;
 		GraphManager.Instance.mouseTracking = true;
+
+		// Afficher un message de fin d'exécution de l'animation dans la boîte des messages
+
 		if (numberFrames > 1)
 		{
 			DisplayNewMessage(false, false, string.Format(" {0} = {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgSimulationDuration, timeElapsed));
 			DisplayNewMessage(false, true, string.Format(" {0}", MainParameters.Instance.languages.Used.displayMsgEndSimulation));
 		}
+
+		// Afficher un message, au bas du panneau de l'animation, pour indiquer que la contact avec le sol est très rapide, si c'est le cas
+
+		if (q.GetUpperBound(1) <= 5)
+			textMsg.text = MainParameters.Instance.languages.Used.animatorMsgGroundContact;
 
 		// Enlever le bouton Stop et activer les autres contrôles du logiciel
 

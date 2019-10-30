@@ -33,6 +33,9 @@ public class Main : MonoBehaviour
 	//public GameObject panelTopButtons;
 	//public GameObject panelOutOfDate;
 
+	int iFrame = 0;
+	float[] debugFrame = new float[500];
+
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
@@ -71,6 +74,23 @@ public class Main : MonoBehaviour
 		//		panelOutOfDate.SetActive(true);                                         // Activé le panneau pour indiquer que le logiciel est désactivé
 		//	}
 		//}
+	}
+
+	void Update()
+	{
+		if (iFrame < 500)
+		{
+			debugFrame[iFrame] = Time.deltaTime;
+			iFrame++;
+		}
+		else if (iFrame < 1000)
+		{
+			for (int i = 0; i < iFrame; i++)
+				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("debugFrame = {0}, {1}{2}", i, debugFrame[i], System.Environment.NewLine));
+			System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("{0}", System.Environment.NewLine));
+			System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("Min & max = {0}, {1}{2}", Mathf.Min(debugFrame), Mathf.Max(debugFrame), System.Environment.NewLine));
+			iFrame = 2000;
+		}
 	}
 
 	// =================================================================================================================================================================
@@ -185,10 +205,7 @@ public class Main : MonoBehaviour
 		MovementF.Instance.dropDownInterpolation.interactable = status;
 		MovementF.Instance.buttonSave.interactable = status;
 		MovementF.Instance.buttonSaveImage.color = color;
-		MovementF.Instance.buttonSymetricLeftRight.interactable = false;            // Non fonctionnelle encore
-		MovementF.Instance.buttonSymetricLeftRightImage.color = Color.gray;         // Non fonctionnelle encore
-		MovementF.Instance.buttonASymetricLeftRight.interactable = status;
-		MovementF.Instance.buttonASymetricLeftRightImage.color = color;
+		MovementF.Instance.EnableDisableSymetricLeftRight(status, false);
 		MovementF.Instance.buttonGraphSettings.interactable = status;
 		MovementF.Instance.buttonGraphSettingsImage.color = color;
 

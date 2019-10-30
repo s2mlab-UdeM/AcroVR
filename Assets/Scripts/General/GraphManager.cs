@@ -168,7 +168,7 @@ public class GraphManager : MonoBehaviour
 
 			MainParameters.Instance.joints.nodes[ddlUsed].Q[nodeUsed] = (float)mousePosY / radToDeg;
 
-			// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
+			// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné
 
 			MovementF.Instance.InterpolationAndDisplayDDL(ddlUsed, ddlUsed, (int)Mathf.Round(MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed] / MainParameters.Instance.joints.lagrangianModel.dt), false);
 		}
@@ -453,13 +453,16 @@ public class GraphManager : MonoBehaviour
 	void DisplayContextMenu(GameObject panel)
 	{
 		Vector3 mousePosWorldSpace;
-		Vector3 graphTopRightCornerWorldSpace;
+		Vector3[] menuPos = new Vector3[4];
+		Vector3[] graphPos = new Vector3[4];
 		graph.PointToWorldSpace(out mousePosWorldSpace, mousePosX, mousePosY);
-		graph.PointToWorldSpace(out graphTopRightCornerWorldSpace, axisXmax, 0);
-		if (mousePosWorldSpace.x < graphTopRightCornerWorldSpace.x - 20)
-			panel.transform.position = mousePosWorldSpace + new Vector3(10, 0, 0);		// On affiche le menu à droite
+		panel.GetComponent<RectTransform>().GetWorldCorners(menuPos);
+		graph.GetComponent<RectTransform>().GetWorldCorners(graphPos);
+		float width = menuPos[2].x - menuPos[1].x;
+		if (mousePosWorldSpace.x < graphPos[2].x - width)
+			panel.transform.position = mousePosWorldSpace + new Vector3(width / 2, 0, 0);		// On affiche le menu à droite
 		else
-			panel.transform.position = mousePosWorldSpace - new Vector3(10, 0, 0);		// Pour éviter que le menu ne soit pas caché par le panneau Animator, on affiche le menu à gauche
+			panel.transform.position = mousePosWorldSpace - new Vector3(width / 2, 0, 0);		// Pour éviter que le menu ne soit pas caché par le panneau Animator, on affiche le menu à gauche
 		panel.SetActive(true);
 	}
 

@@ -26,8 +26,18 @@ public class TakeOffParamF : MonoBehaviour
 		float value = float.Parse(panel.GetComponentInChildren<InputField>().text);
 		if (panel.name == "PanelSomersaultPosition")
 		{
-			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", value);
-			MainParameters.Instance.joints.takeOffParam.rotation = value;
+			if (value < -180 || value > 180)
+			{
+				panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", MainParameters.Instance.joints.takeOffParam.rotation);
+				Main.Instance.EnableDisableControls(false, true);
+				panelTakeOffErrorMsg.GetComponentInChildren<Text>().text = MainParameters.Instance.languages.Used.errorMsgSomersaultPosition;
+				panelTakeOffErrorMsg.SetActive(true);
+			}
+			else
+			{
+				panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.0}", value);
+				MainParameters.Instance.joints.takeOffParam.rotation = value;
+			}
 		}
 		else if (panel.name == "PanelTilt")
 		{
@@ -64,6 +74,8 @@ public class TakeOffParamF : MonoBehaviour
 			panel.GetComponentInChildren<InputField>().text = string.Format("{0:0.000}", value);
 			MainParameters.Instance.joints.takeOffParam.twistSpeed = value;
 		}
+		else
+			Debug.Log("ERREUR - Nom de panneau inconnu");
 	}
 
 	// =================================================================================================================================================================

@@ -116,6 +116,9 @@ public class MainParameters
 	/// <summary> Description de la structure contenant la liste des messages utilisés. </summary>
 	public struct StrucMessageLists
 	{
+		public string leftSide;
+		public string rightSide;
+
 		public string movementDDLHipFlexion;
 		public string movementDDLKneeFlexion;
 		public string movementDDLLeftArmFlexion;
@@ -166,6 +169,7 @@ public class MainParameters
 		public string animatorPlaySpeedSlow1;
 		public string animatorPlaySpeedSlow2;
 		public string animatorPlaySpeedSlow3;
+		public string animatorMsgGroundContact;
 
 		public string resultsGraphicsSelectionRotationsVsTime;
 		public string resultsGraphicsSelectionTiltVsTime;
@@ -183,6 +187,7 @@ public class MainParameters
 		public string resultsGraphicsLegendCurveNameTilt;
 		public string resultsGraphicsLegendCurveNameTwist;
 
+		public string errorMsgSomersaultPosition;
 		public string errorMsgVerticalSpeed;
 		public string errorMsgInvalidNodePosition;
 		public string errorMsgNotEnoughNodes;
@@ -268,6 +273,11 @@ public class MainParameters
 		resultsGraphicsUsed = new int[2] { 0, 5 };
 
 		// Initialisation de la liste des messages en français et en anglais.
+
+		languages.french.leftSide = "gauche";
+		languages.english.leftSide = "left";
+		languages.french.rightSide = "droit";
+		languages.english.rightSide = "right";
 
 		languages.french.movementDDLHipFlexion = "Hanche_Flexion";
 		languages.english.movementDDLHipFlexion = "Hip_Flexion";
@@ -365,6 +375,8 @@ public class MainParameters
 		languages.english.animatorPlaySpeedSlow2 = "Slow speed 2";
 		languages.french.animatorPlaySpeedSlow3 = "Vit. lente 3";
 		languages.english.animatorPlaySpeedSlow3 = "Slow speed 3";
+		languages.french.animatorMsgGroundContact = "Note: Contact avec le sol très rapide";
+		languages.english.animatorMsgGroundContact = "Note: Contact with the ground very fast";
 
 		languages.french.resultsGraphicsSelectionRotationsVsTime = "Rotations vs temps";
 		languages.english.resultsGraphicsSelectionRotationsVsTime = "Rotations vs time";
@@ -397,7 +409,9 @@ public class MainParameters
 		languages.french.resultsGraphicsLegendCurveNameTwist = "Vrille";
 		languages.english.resultsGraphicsLegendCurveNameTwist = "Twist";
 
-		languages.french.errorMsgVerticalSpeed = string.Format("Valeur du paramètre Vitesse verticale {0}	  doit être égal ou supérieur à 0", System.Environment.NewLine);
+		languages.french.errorMsgSomersaultPosition = string.Format("Valeur du paramètre position du salto{0}  doit être entre -180° et 180°", System.Environment.NewLine);
+		languages.english.errorMsgSomersaultPosition = string.Format("Value of the somersault position parameter{0} must be between -180° and 180°", System.Environment.NewLine);
+		languages.french.errorMsgVerticalSpeed = string.Format("Valeur du paramètre vitesse verticale {0}	  doit être égal ou supérieur à 0", System.Environment.NewLine);
 		languages.english.errorMsgVerticalSpeed = string.Format("Value of the vertical speed parameter {0} must be equal to or greater than 0", System.Environment.NewLine);
 		languages.french.errorMsgInvalidNodePosition = string.Format("Le noeud ne peut pas être déplacer avant/après {0} le noeud précédent/suivant (selon l'échelle des temps)", System.Environment.NewLine);
 		languages.english.errorMsgInvalidNodePosition = string.Format("Node cannot be place before/after {0} the previous/next node (following the time scale)", System.Environment.NewLine);

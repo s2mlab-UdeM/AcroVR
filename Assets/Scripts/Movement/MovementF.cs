@@ -38,11 +38,14 @@ public class MovementF : MonoBehaviour
 	public InputField inputFieldSomersaultSpeed;
 	public InputField inputFieldTwistSpeed;
 
+	public bool calledFromScript;      // Mode de modification d'un contrôle de la scène, false = via l'utilisateur (OnValueChange) ou true = via un script
+
 	System.IntPtr hMainUnityWnd;
 
 	MainParameters.StrucNodes[] nodesFromDataFile;
 	float durationFromDataFile;
-	bool calledFromScript;      // Mode de modification d'un contrôle de la scène, false = via l'utilisateur (OnValueChange) ou true = via un script
+
+	bool enableSymetricLeftRight;		// True = les deux côtés gauche et droit sont modifié en symétrie, false = asymétrique
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
@@ -52,6 +55,7 @@ public class MovementF : MonoBehaviour
 		Instance = this;
 
 		calledFromScript = false;
+		enableSymetricLeftRight = false;
 		Main.Instance.EnableDisableControls(false, false);
 	}
 
@@ -69,6 +73,10 @@ public class MovementF : MonoBehaviour
 		// Initialisation de la liste des items que contiendra la liste déroulante Type d'interpolation
 
 		InitDropdownInterpolation(value);
+
+		// Activation du bouton Symétrie ou Asymétrie côté gauche et droit
+
+		EnableDisableSymetricLeftRight(true, true);
 	}
 
 	// =================================================================================================================================================================
@@ -239,7 +247,7 @@ public class MovementF : MonoBehaviour
 
 		// Conserver une copie des données des noeuds lues directement du fichier de données
 
-		nodesFromDataFile = NodesCopy(nodes);
+		nodesFromDataFile = CopyNodes(nodes);
 		durationFromDataFile = joints.duration;
 
 		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
@@ -261,12 +269,12 @@ public class MovementF : MonoBehaviour
 	public void ButtonSave()
 	{
 		// Utilisation d'un répertoire de données par défaut, alors si ce répertoire n'existe pas, il faut le créer
+
 #if UNITY_STANDALONE_OSX
 		string dirSimulationFiles = string.Format("{0}/Documents/AcroVR", Environment.GetFolderPath(Environment.SpecialFolder.Personal));
 #else
 		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%UserProfile%\Documents\AcroVR");
 #endif
-
 		if (!System.IO.Directory.Exists(dirSimulationFiles))
 		{
 			try
@@ -296,7 +304,7 @@ public class MovementF : MonoBehaviour
 
 		// Conserver une copie des données des noeuds lues directement du fichier de données
 
-		nodesFromDataFile = NodesCopy(MainParameters.Instance.joints.nodes);
+		nodesFromDataFile = CopyNodes(MainParameters.Instance.joints.nodes);
 		durationFromDataFile = MainParameters.Instance.joints.duration;
 	}
 
@@ -305,6 +313,18 @@ public class MovementF : MonoBehaviour
 
 	public void ButtonSymetricLeftRight(bool symetricState)
 	{
+		enableSymetricLeftRight = symetricState;
+		if (symetricState)
+		{
+			// Copier le contenu d'une articulation d'une structure Nodes dans son articulation opposé associé, s'il y en a une
+
+			CopyDDL(GraphManager.Instance.ddlUsed);
+
+			// Afficher la courbe des positions des angles pour les articulations sélectionnée et opposé associé
+			// Afficher la silhouette au temps = 0
+
+			DisplayDDLAndPlay(GraphManager.Instance.ddlUsed, 0, true);
+		}
 		buttonSymetricLeftRightGameObject.SetActive(!symetricState);
 		buttonAsymetricLeftRightGameObject.SetActive(symetricState);
 	}
@@ -348,7 +368,7 @@ public class MovementF : MonoBehaviour
 		MainParameters.Instance.joints.nodes[ddl].T = MathFunc.MatrixCopy(T);
 		MainParameters.Instance.joints.nodes[ddl].Q = MathFunc.MatrixCopy(Q);
 
-		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
+		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné
 
 		int frame = (int)Mathf.Round(GraphManager.Instance.mousePosSaveX / MainParameters.Instance.joints.lagrangianModel.dt);
 		InterpolationAndDisplayDDL(ddl, ddl, frame, false);
@@ -396,7 +416,7 @@ public class MovementF : MonoBehaviour
 		MainParameters.Instance.joints.nodes[ddl].T = MathFunc.MatrixCopy(T);
 		MainParameters.Instance.joints.nodes[ddl].Q = MathFunc.MatrixCopy(Q);
 
-		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
+		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné
 
 		int frame = (int)Mathf.Round(GraphManager.Instance.mousePosSaveX / MainParameters.Instance.joints.lagrangianModel.dt);
 		InterpolationAndDisplayDDL(ddl, ddl, frame, false);
@@ -411,7 +431,7 @@ public class MovementF : MonoBehaviour
 
 	public void CancelChanges()
 	{
-		MainParameters.Instance.joints.nodes = NodesCopy(nodesFromDataFile);
+		MainParameters.Instance.joints.nodes = CopyNodes(nodesFromDataFile);
 		MainParameters.Instance.joints.duration = durationFromDataFile;
 
 		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
@@ -422,6 +442,10 @@ public class MovementF : MonoBehaviour
 
 		InitDropdownInterpolation(GraphManager.Instance.ddlUsed);
 
+		// Activation du bouton Symétrie ou Asymétrie côté gauche et droit
+
+		EnableDisableSymetricLeftRight(true, true);
+
 		// Désactiver l'action du clic du bouton droit de la souris
 
 		GraphManager.Instance.mouseRightButtonON = false;
@@ -430,7 +454,7 @@ public class MovementF : MonoBehaviour
 	// =================================================================================================================================================================
 	/// <summary> Copier le contenu d'une structure Nodes dans une autre structure Nodes. </summary>
 
-	MainParameters.StrucNodes[] NodesCopy(MainParameters.StrucNodes[] nodesFrom)
+	MainParameters.StrucNodes[] CopyNodes(MainParameters.StrucNodes[] nodesFrom)
 	{
 		MainParameters.StrucNodes[] nodesTo = new MainParameters.StrucNodes[nodesFrom.Length];
 		for (int i = 0; i < nodesFrom.Length; i++)
@@ -448,6 +472,26 @@ public class MovementF : MonoBehaviour
 	}
 
 	// =================================================================================================================================================================
+	/// <summary> Copier le contenu d'une articulation d'une structure Nodes dans son articulation opposé associé, s'il y en a une. </summary>
+
+	void CopyDDL(int ddlFrom)
+	{
+		if (enableSymetricLeftRight)
+		{
+			// Copier l'articulation sélectionnée (angles interpolés et noeuds) dans l'articulation opposé associé
+
+			int ddlOppSide = MainParameters.Instance.joints.nodes[ddlFrom].ddlOppositeSide;
+			MainParameters.Instance.joints.nodes[ddlOppSide].T = MathFunc.MatrixCopy(MainParameters.Instance.joints.nodes[ddlFrom].T);
+			MainParameters.Instance.joints.nodes[ddlOppSide].Q = MathFunc.MatrixCopy(MainParameters.Instance.joints.nodes[ddlFrom].Q);
+			MainParameters.Instance.joints.nodes[ddlOppSide].interpolation.type = MainParameters.Instance.joints.nodes[ddlFrom].interpolation.type;
+			MainParameters.Instance.joints.nodes[ddlOppSide].interpolation.numIntervals = MainParameters.Instance.joints.nodes[ddlFrom].interpolation.numIntervals;
+			MainParameters.Instance.joints.nodes[ddlOppSide].interpolation.slope = MathFunc.MatrixCopy(MainParameters.Instance.joints.nodes[ddlFrom].interpolation.slope);
+			for (int i = 0; i <= MainParameters.Instance.joints.q0.GetUpperBound(1); i++)
+				MainParameters.Instance.joints.q0[ddlOppSide, i] = MainParameters.Instance.joints.q0[ddlFrom, i];
+		}
+	}
+
+	// =================================================================================================================================================================
 	/// <summary> Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné. </summary>
 
 	public void InterpolationAndDisplayDDL(int ddlInterpolation, int ddlDisplay, int frame, bool axisRange)
@@ -456,15 +500,9 @@ public class MovementF : MonoBehaviour
 
 		InterpolationDDL(ddlInterpolation);
 
-		// Afficher la courbe des positions des angles pour l'articulation sélectionnée
+		// Affichaer la courbe des positions des angles et les noeuds pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné
 
-		DisplayDDL(ddlDisplay, axisRange);
-
-		// Afficher la silhouette au temps du noeud modifié
-
-		AnimationF.Instance.PlayReset();
-		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
-		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
+		DisplayDDLAndPlay(ddlDisplay, frame, axisRange);
 	}
 
 	// =================================================================================================================================================================
@@ -485,14 +523,36 @@ public class MovementF : MonoBehaviour
 
 		// Conserver les données interpolées dans MainParameters
 
-		if (ddl < 0)
+		if (ddl < 0)				// Toutes les articulations
 		{
 			MainParameters.Instance.joints.t0 = MathFunc.MatrixCopy(t0);
 			MainParameters.Instance.joints.q0 = MathFunc.MatrixCopy(q0);
 		}
-		else
+		else						// Seulement une articulation
+		{
 			for (int i = 0; i <= q0.GetUpperBound(1); i++)
 				MainParameters.Instance.joints.q0[ddl, i] = q0[ddl, i];
+
+			// Copier le contenu d'une articulation d'une structure Nodes dans son articulation opposé associé, s'il y en a une et si la symétrie des côtés gauche et droit est activé
+
+			CopyDDL(ddl);
+		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Affichaer la courbe des positions des angles et les noeuds pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné. </summary>
+
+	public void DisplayDDLAndPlay(int ddlDisplay, int frame, bool axisRange)
+	{
+		// Afficher la courbe des positions des angles et les noeuds pour l'articulation sélectionnée
+
+		DisplayDDL(ddlDisplay, axisRange);
+
+		// Afficher la silhouette au temps du noeud modifié
+
+		AnimationF.Instance.PlayReset();
+		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
+		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
 	}
 
 	// =================================================================================================================================================================
@@ -561,5 +621,47 @@ public class MovementF : MonoBehaviour
 				dropDownInterpolation.value = MainParameters.Instance.joints.nodes[ddl].interpolation.numIntervals - 2;
 			calledFromScript = false;
 		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Activer ou désactiver le bouton Symétrie ou Asymétrie côté gauche et droit . </summary>
+
+	public void EnableDisableSymetricLeftRight(bool status, bool enable)
+	{
+		Color color;
+		if (status)
+			color = Color.white;
+		else
+			color = Color.gray;
+
+		calledFromScript = true;
+		if (enable) enableSymetricLeftRight = false;
+		if (dropDownDDLNames.captionText.text.ToLower().Contains(MainParameters.Instance.languages.Used.leftSide) ||
+			dropDownDDLNames.captionText.text.ToLower().Contains(MainParameters.Instance.languages.Used.rightSide))
+		{
+			if (!enableSymetricLeftRight)
+			{
+				buttonSymetricLeftRight.gameObject.SetActive(true);
+				buttonSymetricLeftRight.interactable = status;
+				buttonSymetricLeftRightImage.color = color;
+				buttonASymetricLeftRight.gameObject.SetActive(false);
+			}
+			else
+			{
+				buttonSymetricLeftRight.gameObject.SetActive(false);
+				buttonASymetricLeftRight.gameObject.SetActive(true);
+				buttonASymetricLeftRight.interactable = status;
+				buttonASymetricLeftRightImage.color = color;
+			}
+		}
+		else
+		{
+			buttonSymetricLeftRight.gameObject.SetActive(true);
+			buttonSymetricLeftRight.interactable = false;
+			buttonSymetricLeftRightImage.color = Color.gray;
+			buttonASymetricLeftRight.gameObject.SetActive(false);
+			enableSymetricLeftRight = false;
+		}
+		calledFromScript = false;
 	}
 }
