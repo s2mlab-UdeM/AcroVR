@@ -14,6 +14,9 @@ public class MovementF : MonoBehaviour
 	public Text textFileName;
 
 	public GameObject panelMovement;
+	public GameObject panelLegend;
+	public Text textCurveName1;
+	public Text textCurveName2;
 	public Dropdown dropDownDDLNames;
 	public Dropdown dropDownInterpolation;
 	public Button buttonLoad;
@@ -31,6 +34,7 @@ public class MovementF : MonoBehaviour
 	public GameObject panelGraphSettings;
 
 	public Dropdown dropDownCondition;
+	public Dropdown dropDownInitialPosture;
 	public InputField inputFieldSomersaultPosition;
 	public InputField inputFieldTilt;
 	public InputField inputFieldHorizontalSpeed;
@@ -564,7 +568,14 @@ public class MovementF : MonoBehaviour
 		{
 			GraphManager.Instance.DisplayCurveAndNodes(0, ddl, axisRange);
 			if (MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide >= 0)
+			{
 				GraphManager.Instance.DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide, axisRange);
+				textCurveName1.text = MainParameters.Instance.languages.Used.leftSide;
+				textCurveName2.text = MainParameters.Instance.languages.Used.rightSide;
+				panelLegend.SetActive(true);
+			}
+			else
+				panelLegend.SetActive(false);
 		}
 	}
 
@@ -636,8 +647,8 @@ public class MovementF : MonoBehaviour
 
 		calledFromScript = true;
 		if (enable) enableSymetricLeftRight = false;
-		if (dropDownDDLNames.captionText.text.ToLower().Contains(MainParameters.Instance.languages.Used.leftSide) ||
-			dropDownDDLNames.captionText.text.ToLower().Contains(MainParameters.Instance.languages.Used.rightSide))
+		if (dropDownDDLNames.captionText.text.ToLower().Contains(MainParameters.Instance.languages.Used.leftSide.ToLower()) ||
+			dropDownDDLNames.captionText.text.ToLower().Contains(MainParameters.Instance.languages.Used.rightSide.ToLower()))
 		{
 			if (!enableSymetricLeftRight)
 			{

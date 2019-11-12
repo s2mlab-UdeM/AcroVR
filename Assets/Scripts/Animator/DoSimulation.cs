@@ -102,6 +102,8 @@ public class DoSimulation
 		Options options = new Options();
 		options.InitialStep = joints.lagrangianModel.dt;
 
+		// Extraire les données obtenues du Runge-Kutta et conserver seulement les points interpolés aux frames désirés, selon la durée et le dt utilisé
+
 		var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(x0), ShortDynamics, options);
 		var points = sol.SolveFromToStep(0, joints.duration + joints.lagrangianModel.dt, joints.lagrangianModel.dt).ToArray();
 

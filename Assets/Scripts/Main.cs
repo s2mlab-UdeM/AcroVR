@@ -17,6 +17,7 @@ public class Main : MonoBehaviour
 	public Text textTakeOffTitle;
 	public Text textTakeOffSpeed;
 	public Dropdown dropDownTakeOffCondition;
+	public Text textTakeOffInitialPosture;
 	public Text textTakeOffSomersaultPosition;
 	public Text textTakeOffTilt;
 	public Text textTakeOffHorizontalSpeed;
@@ -102,6 +103,11 @@ public class Main : MonoBehaviour
 			MovementF.Instance.DisplayDDL(-1, false);
 			MovementF.Instance.InitDropdownDDLNames(-1);
 			MovementF.Instance.InitDropdownInterpolation(-1);
+			if (MainParameters.Instance.joints.nodes[GraphManager.Instance.ddlUsed].ddlOppositeSide >= 0)
+			{
+				MovementF.Instance.textCurveName1.text = languagesUsed.leftSide;
+				MovementF.Instance.textCurveName2.text = languagesUsed.rightSide;
+			}
 		}
 		GraphSettings.Instance.textVerticalAxisTitle.text = languagesUsed.movementGraphSettingsVerticalTitle;
 		GraphSettings.Instance.textVerticalAxisLowerBound.text = languagesUsed.movementGraphSettingsLowerBound;
@@ -130,6 +136,7 @@ public class Main : MonoBehaviour
 		dropDownOptions.Add(languagesUsed.takeOffConditionVault);
 		dropDownTakeOffCondition.ClearOptions();
 		dropDownTakeOffCondition.AddOptions(dropDownOptions);
+		textTakeOffInitialPosture.text = languagesUsed.takeOffInitialPosture;
 		textTakeOffSomersaultPosition.text = languagesUsed.takeOffSomersaultPosition;
 		textTakeOffTilt.text = languagesUsed.takeOffTilt;
 		textTakeOffHorizontalSpeed.text = languagesUsed.takeOffHorizontal;
@@ -143,6 +150,11 @@ public class Main : MonoBehaviour
 
 		// Section Animation
 
+		if (AnimationF.Instance.lineStickFigure != null)
+		{
+			AnimationF.Instance.textCurveName1.text = languagesUsed.leftSide;
+			AnimationF.Instance.textCurveName2.text = languagesUsed.rightSide;
+		}
 		dropDownOptions = new List<string>();
 		dropDownOptions.Add(languagesUsed.animatorPlaySpeedFast);
 		dropDownOptions.Add(languagesUsed.animatorPlaySpeedNormal);
@@ -190,6 +202,7 @@ public class Main : MonoBehaviour
 		MovementF.Instance.buttonGraphSettingsImage.color = color;
 
 		MovementF.Instance.dropDownCondition.interactable = status;
+		MovementF.Instance.dropDownInitialPosture.interactable = false;					// Non fonctionnelle encore
 		MovementF.Instance.inputFieldSomersaultPosition.interactable = status;
 		MovementF.Instance.inputFieldTilt.interactable = status;
 		MovementF.Instance.inputFieldHorizontalSpeed.interactable = status;

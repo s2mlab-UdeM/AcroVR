@@ -10,10 +10,16 @@ public class AnimationF : MonoBehaviour
 	public static AnimationF Instance;
 	public Camera cameraAnimation;
 	public GameObject panelAnimator;
+	public GameObject panelLegend;
+	public Text textCurveName1;
+	public Text textCurveName2;
 	public Text textChrono;
 	public Text textMsg;
 	public Dropdown dropDownPlayMode;
 	public Dropdown dropDownPlayView;
+	public Button buttonRealTime;
+	public Image buttonRealTimeImage;
+	public GameObject buttonOffline;
 	public Button buttonPlay;
 	public Image buttonPlayImage;
 	public GameObject buttonStop;
@@ -24,7 +30,7 @@ public class AnimationF : MonoBehaviour
 
 	public Text textScrollViewMessages;
 
-	LineRenderer[] lineStickFigure;
+	public LineRenderer[] lineStickFigure;
 	LineRenderer lineCenterOfMass;
 	LineRenderer[] lineFilledFigure;
 	LineRenderer[] lineFloor;
@@ -66,6 +72,8 @@ public class AnimationF : MonoBehaviour
 
 		dropDownPlayMode.interactable = false;
 		dropDownPlayView.interactable = false;
+		buttonRealTime.interactable = false;
+		buttonRealTimeImage.color = Color.gray;
 		buttonPlay.interactable = false;
 		buttonPlayImage.color = Color.gray;
 		dropDownPlaySpeed.interactable = false;
@@ -124,6 +132,22 @@ public class AnimationF : MonoBehaviour
 			cameraAnimation.transform.position = new Vector3(-18, 0, 0);
 			cameraAnimation.transform.rotation = Quaternion.Euler(0, 90, 90);
 		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton RealTime a été appuyer. </summary>
+
+	public void ButtonRealTime()
+	{
+		buttonOffline.SetActive(true);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Offline a été appuyer. </summary>
+
+	public void ButtonOffline()
+	{
+		buttonOffline.SetActive(false);
 	}
 
 	// =================================================================================================================================================================
@@ -301,6 +325,16 @@ public class AnimationF : MonoBehaviour
 				lineStickFigure[i] = Instantiate(lineRenderer);
 				lineStickFigure[i].name = string.Format("LineStickFigure{0}", i + 1);
 				lineStickFigure[i].transform.parent = panelAnimator.transform;
+				if (i <= 2 || (i >= 17 && i <= 19))								// Côté gauche (jambe, pied, bras et main)
+				{
+					lineStickFigure[i].startColor = new Color(0, 0.5882f, 0, 1);
+					lineStickFigure[i].endColor = new Color(0, 0.5882f, 0, 1);
+				}
+				else if ((i >= 3 && i <= 5) || (i >= 20 && i <= 22))             // Côté droit
+				{
+					lineStickFigure[i].startColor = new Color(0.9412f, 0, 0.9412f, 1);
+					lineStickFigure[i].endColor = new Color(0.9412f, 0, 0.9412f, 1);
+				}
 			}
 
 			lineCenterOfMass = Instantiate(lineRenderer);
@@ -320,6 +354,10 @@ public class AnimationF : MonoBehaviour
 			}
 
 			Destroy(lineObject);
+
+			textCurveName1.text = MainParameters.Instance.languages.Used.leftSide;
+			textCurveName2.text = MainParameters.Instance.languages.Used.rightSide;
+			panelLegend.SetActive(true);
 		}
 	}
 

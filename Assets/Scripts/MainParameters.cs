@@ -153,6 +153,7 @@ public class MainParameters
 		public string takeOffConditionHighBar;
 		public string takeOffConditionUnevenBars;
 		public string takeOffConditionVault;
+		public string takeOffInitialPosture;
 		public string takeOffSomersaultPosition;
 		public string takeOffTilt;
 		public string takeOffHorizontal;
@@ -274,10 +275,10 @@ public class MainParameters
 
 		// Initialisation de la liste des messages en français et en anglais.
 
-		languages.french.leftSide = "gauche";
-		languages.english.leftSide = "left";
-		languages.french.rightSide = "droit";
-		languages.english.rightSide = "right";
+		languages.french.leftSide = "Gauche";
+		languages.english.leftSide = "Left";
+		languages.french.rightSide = "Droit";
+		languages.english.rightSide = "Right";
 
 		languages.french.movementDDLHipFlexion = "Hanche_Flexion";
 		languages.english.movementDDLHipFlexion = "Hip_Flexion";
@@ -348,6 +349,8 @@ public class MainParameters
 		languages.english.takeOffConditionUnevenBars = "Uneven Bars";
 		languages.french.takeOffConditionVault = "Saut à la perche";
 		languages.english.takeOffConditionVault = "Vault";
+		languages.french.takeOffInitialPosture = "Posture initiale:";
+		languages.english.takeOffInitialPosture = "Initial posture:";
 		languages.french.takeOffSomersaultPosition = "Salto (°)";
 		languages.english.takeOffSomersaultPosition = "Somersault (°)";
 		languages.french.takeOffTilt = "Inclinaison (°)";

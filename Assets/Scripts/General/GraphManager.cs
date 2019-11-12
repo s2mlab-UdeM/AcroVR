@@ -11,6 +11,12 @@ public class GraphManager : MonoBehaviour
 {
 	public static GraphManager Instance;
 	public Canvas canvas;
+	public Material data1GraphLine;
+	public Material nodes1GraphPoint;
+	public Material dataLeftGraphLine;
+	public Material nodesLeftGraphPoint;
+	public Material dataRightGraphLine;
+	public Material nodesRightGraphPoint;
 	public GameObject panelAddRemoveNode;
 	public GameObject buttonAddNode;
 	public GameObject buttonRemoveNode;
@@ -304,6 +310,32 @@ public class GraphManager : MonoBehaviour
 			if (axisRange || (MainParameters.Instance.joints.nodes[ddl].T[i] <= axisXmax && value >= axisYmin && value <= axisYmax))
 				graph.DataSource.AddPointToCategory(nodesCategories[curve], MainParameters.Instance.joints.nodes[ddl].T[i], value);
 		}
+
+		// Modifier les couleurs des courbes du graphique selon le type d'articulation affiché
+
+		Material dataGraphLine;
+		Material nodesGraphPoint;
+		MaterialTiling tiling = new MaterialTiling(false, 45.5f);
+		if (MainParameters.Instance.joints.nodes[ddl].name.ToLower().Contains(MainParameters.Instance.languages.french.leftSide.ToLower()) ||
+			MainParameters.Instance.joints.nodes[ddl].name.ToLower().Contains(MainParameters.Instance.languages.english.leftSide.ToLower()))
+		{
+			dataGraphLine = dataLeftGraphLine;
+			nodesGraphPoint = nodesLeftGraphPoint;
+		}
+		else if (MainParameters.Instance.joints.nodes[ddl].name.ToLower().Contains(MainParameters.Instance.languages.french.rightSide.ToLower()) ||
+			MainParameters.Instance.joints.nodes[ddl].name.ToLower().Contains(MainParameters.Instance.languages.english.rightSide.ToLower()))
+		{
+			dataGraphLine = dataRightGraphLine;
+			nodesGraphPoint = nodesRightGraphPoint;
+		}
+		else
+		{
+			dataGraphLine = data1GraphLine;
+			nodesGraphPoint = nodes1GraphPoint;
+		}
+		graph.DataSource.SetCategoryLine(dataCategories[curve], dataGraphLine, 2.58f, tiling);
+		graph.DataSource.SetCategoryPoint(nodesCategories[curve], nodesGraphPoint, 8);
+
 
 		// Définir les échelles des temps et des angles
 
