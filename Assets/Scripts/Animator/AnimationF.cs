@@ -17,16 +17,22 @@ public class AnimationF : MonoBehaviour
 	public Text textMsg;
 	public Dropdown dropDownPlayMode;
 	public Dropdown dropDownPlayView;
-	public Button buttonRealTime;
-	public Image buttonRealTimeImage;
-	public GameObject buttonOffline;
+	public Dropdown dropDownPlaySpeed;
 	public Button buttonPlay;
 	public Image buttonPlayImage;
 	public GameObject buttonStop;
-	public Dropdown dropDownPlaySpeed;
 	public Button buttonGraph;
 	public Image buttonGraphImage;
 	public GameObject panelResultsGraphics;
+	public Button buttonRealTime;
+	public Image buttonRealTimeImage;
+	public GameObject buttonOffline;
+	public Button buttonFirstPerson;
+	public Image buttonFirstPersonImage;
+	public GameObject buttonThirdPerson;
+	public Button buttonVRHeadSet;
+	public Image buttonVRHeadSetImage;
+	public GameObject buttonNoVRHeadSet;
 
 	public Text textScrollViewMessages;
 
@@ -72,13 +78,17 @@ public class AnimationF : MonoBehaviour
 
 		dropDownPlayMode.interactable = false;
 		dropDownPlayView.interactable = false;
-		buttonRealTime.interactable = false;
-		buttonRealTimeImage.color = Color.gray;
 		buttonPlay.interactable = false;
 		buttonPlayImage.color = Color.gray;
 		dropDownPlaySpeed.interactable = false;
 		buttonGraph.interactable = false;
 		buttonGraphImage.color = Color.gray;
+		buttonRealTime.interactable = false;
+		buttonRealTimeImage.color = Color.gray;
+		buttonFirstPerson.interactable = false;
+		buttonFirstPersonImage.color = Color.gray;
+		buttonVRHeadSet.interactable = false;
+		buttonVRHeadSetImage.color = Color.gray;
 
 		if (Screen.width / Screen.height >= 1.7)
 			animationMaxDimOnScreen = 20;
@@ -132,22 +142,6 @@ public class AnimationF : MonoBehaviour
 			cameraAnimation.transform.position = new Vector3(-18, 0, 0);
 			cameraAnimation.transform.rotation = Quaternion.Euler(0, 90, 90);
 		}
-	}
-
-	// =================================================================================================================================================================
-	/// <summary> Bouton RealTime a été appuyer. </summary>
-
-	public void ButtonRealTime()
-	{
-		buttonOffline.SetActive(true);
-	}
-
-	// =================================================================================================================================================================
-	/// <summary> Bouton Offline a été appuyer. </summary>
-
-	public void ButtonOffline()
-	{
-		buttonOffline.SetActive(false);
 	}
 
 	// =================================================================================================================================================================
@@ -265,6 +259,54 @@ public class AnimationF : MonoBehaviour
 		EnableDisableAnimationOutline(true);
 		GraphManager.Instance.mouseTracking = true;
 		panelResultsGraphics.SetActive(false);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton RealTime a été appuyer. </summary>
+
+	public void ButtonRealTime()
+	{
+		buttonOffline.SetActive(true);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton Offline a été appuyer. </summary>
+
+	public void ButtonOffline()
+	{
+		buttonOffline.SetActive(false);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton FirstPerson a été appuyer. </summary>
+
+	public void ButtonFirstPerson()
+	{
+		buttonThirdPerson.SetActive(true);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton ThirdPerson a été appuyer. </summary>
+
+	public void ButtonThirdPerson()
+	{
+		buttonThirdPerson.SetActive(false);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton VR HeadSet a été appuyer. </summary>
+
+	public void ButtonVRHeadSet()
+	{
+		buttonNoVRHeadSet.SetActive(true);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton ThirdPerson a été appuyer. </summary>
+
+	public void ButtonNoVRHeadSet()
+	{
+		buttonNoVRHeadSet.SetActive(false);
 	}
 
 	// =================================================================================================================================================================
