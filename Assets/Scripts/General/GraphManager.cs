@@ -239,6 +239,7 @@ public class GraphManager : MonoBehaviour
 
 			else
 			{
+				panelCancelChanges.SetActive(false);
 				graph.DataSource.StartBatch();
 				graph.DataSource.ClearCategory(dataTempCategory);
 				graph.DataSource.AddPointToCategory(dataTempCategory, MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed], MainParameters.Instance.joints.nodes[ddlUsed].Q[nodeUsed] * radToDeg);

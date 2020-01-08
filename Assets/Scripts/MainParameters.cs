@@ -209,6 +209,47 @@ public class MainParameters
 		public string displayMsgFinalTilt;
 		public string displayMsgSimulationDuration;
 		public string displayMsgEndSimulation;
+
+		public string toolTipButtonToolTips;
+		public string toolTipButtonLanguage;
+		public string toolTipButtonQuit;
+		public string toolTipPanelGraph;
+		public string toolTipButtonAddNode;
+		public string toolTipButtonRemoveNode;
+		public string toolTipButtonCancelChanges;
+		public string toolTipDropDownDDLNames;
+		public string toolTipDropDownInterpolation;
+		public string toolTipButtonLoad;
+		public string toolTipButtonSave;
+		public string toolTipButtonSymetricLeftRight;
+		public string toolTipButtonGraphSettings;
+		public string toolTipDropDownPlayMode;
+		public string toolTipDropDownPlayView;
+		public string toolTipDropDownPlaySpeed;
+		public string toolTipButtonPlay;
+		public string toolTipButtonStop;
+		public string toolTipButtonGraph;
+		public string toolTipTakeOffCondition;
+		public string toolTipTakeOffInitialPosture;
+		public string toolTipTakeOffSomersaultPosition;
+		public string toolTipTakeOffTilt;
+		public string toolTipTakeOffHorizontal;
+		public string toolTipTakeOffVertical;
+		public string toolTipTakeOffSomersaultSpeed;
+		public string toolTipTakeOffTwist;
+		public string toolTipGraphSettingsVerticalLowerBound;
+		public string toolTipGraphSettingsVerticalUpperBound;
+		public string toolTipGraphSettingsVerticalSlider;
+		public string toolTipGraphSettingsVerticalLowerMinus10;
+		public string toolTipGraphSettingsVerticalLowerPlus10;
+		public string toolTipGraphSettingsVerticalUpperMinus10;
+		public string toolTipGraphSettingsVerticalUpperPlus10;
+		public string toolTipGraphSettingsHorizontalUpperBound;
+		public string toolTipGraphSettingsHorizontalSlider;
+		public string toolTipGraphSettingsUpdateSimulation;
+		public string toolTipGraphSettingsDefaultValues;
+		public string toolTipGraphSettingsCancel;
+		public string toolTipGraphSettingsOK;
 	}
 
 	/// <summary> Description de la structure contenant la liste des messages utilisés en français et en anglais. </summary>
@@ -453,6 +494,93 @@ public class MainParameters
 		languages.english.displayMsgSimulationDuration = "Simulation real duration";
 		languages.french.displayMsgEndSimulation = "Simulation terminée";
 		languages.english.displayMsgEndSimulation = "Simulation completed";
+
+		// Aide contextuelle
+
+		languages.french.toolTipButtonToolTips = "Afficher une aide contextuelle, selon le mouvement de la souris";
+		languages.english.toolTipButtonToolTips = "Display tool tips, following mouse movement";
+		languages.french.toolTipButtonLanguage = "Switch all texts in english";
+		languages.english.toolTipButtonLanguage = "Change tous les textes en français";
+		languages.french.toolTipButtonQuit = "Quitter le logiciel";
+		languages.english.toolTipButtonQuit = "Quit";
+
+		languages.french.toolTipPanelGraph = string.Format("Déplacer/Ajouter/Effacer un noeud,{0}    modifier pente initiale/finale{0}    ou réinitialiser le graphique{0} avec un des boutons de la souris", System.Environment.NewLine);
+		languages.english.toolTipPanelGraph = string.Format("     Move/Add/Remove node,{0}      modify initial/final slope{0}           or reset graphic{0}with the use of a mouse buttons", System.Environment.NewLine);
+		languages.french.toolTipButtonAddNode = "Ajouter un noeud à la position de la souris";
+		languages.english.toolTipButtonAddNode = "Add node at the mouse position";
+		languages.french.toolTipButtonRemoveNode = "Effacer le noeud qui est le plus près de la position de la souris";
+		languages.english.toolTipButtonRemoveNode = "Remove closest node of the mouse position";
+		languages.french.toolTipButtonCancelChanges = "Annuler toutes les modifications depuis le dernier chargement/conservation d'un fichier";
+		languages.english.toolTipButtonCancelChanges = "Cancel all changes since last file load/save";
+		languages.french.toolTipDropDownDDLNames = "Sélectionner une articulation à afficher";
+		languages.english.toolTipDropDownDDLNames = "Select a DDL to display";
+		languages.french.toolTipDropDownInterpolation = "Sélectionner un type d'interpolation";
+		languages.english.toolTipDropDownInterpolation = "Select an interpolation type";
+		languages.french.toolTipButtonLoad = "Charger un nouveau fichier de simulation";
+		languages.english.toolTipButtonLoad = "Load a new simulation file";
+		languages.french.toolTipButtonSave = "Conserver dans un fichier";
+		languages.english.toolTipButtonSave = "Save in a file";
+		languages.french.toolTipButtonSymetricLeftRight = string.Format("Déplacer les articulations gauche & droite{0}de façon symétrique ou asymétrique", System.Environment.NewLine);
+		languages.english.toolTipButtonSymetricLeftRight = string.Format("Move DDL left & right{0}in symetric or asymetric manner", System.Environment.NewLine);
+		languages.french.toolTipButtonGraphSettings = "Modifier les échelles du graphique";
+		languages.english.toolTipButtonGraphSettings = "Modify the graphic scales";
+
+		languages.french.toolTipTakeOffCondition = "Sélectionner une condition d'envol";
+		languages.english.toolTipTakeOffCondition = "Select flight condition";
+		languages.french.toolTipTakeOffInitialPosture = "Sélectionner la posture initial, si dans mode temps réel";
+		languages.english.toolTipTakeOffInitialPosture = "Select initial posture, if in real time mode";
+		languages.french.toolTipTakeOffSomersaultPosition = "Sélectionner la position de salto initiale";
+		languages.english.toolTipTakeOffSomersaultPosition = "Select somersault initial position";
+		languages.french.toolTipTakeOffTilt = "Sélectionner la position d'inclinaison initiale";
+		languages.english.toolTipTakeOffTilt = "Select tilt initial position";
+		languages.french.toolTipTakeOffHorizontal = "Sélectionner la vitesse de déplacement horizontal";
+		languages.english.toolTipTakeOffHorizontal = "Select horizontal movement speed";
+		languages.french.toolTipTakeOffVertical = "Sélectionner la vitesse de déplacement vertical";
+		languages.english.toolTipTakeOffVertical = "Select vertical movement speed";
+		languages.french.toolTipTakeOffSomersaultSpeed = "Sélectionner la vitesse de rotation des saltos";
+		languages.english.toolTipTakeOffSomersaultSpeed = "Select somersault rotation speed";
+		languages.french.toolTipTakeOffTwist = "Sélectionner la vitesse de rotation des vrilles";
+		languages.english.toolTipTakeOffTwist = "Select twist rotation speed";
+
+		languages.french.toolTipGraphSettingsVerticalLowerBound = "Entrer une valeur d'angle inférieur à la borne supérieur";
+		languages.english.toolTipGraphSettingsVerticalLowerBound = "Enter an angle value smaller than the upper bound";
+		languages.french.toolTipGraphSettingsVerticalUpperBound = "Entrer une valeur d'angle supérieur à la borne inférieur";
+		languages.english.toolTipGraphSettingsVerticalUpperBound = "Enter an angle value greater than the lower bound";
+		languages.french.toolTipGraphSettingsVerticalSlider = "Déplacer l'un des deux boutons pour modifier les bornes de l'axe vertical";
+		languages.english.toolTipGraphSettingsVerticalSlider = "Move one of the two knobs to modify the bounds of the vertical axis";
+		languages.french.toolTipGraphSettingsVerticalLowerMinus10 = "Diminuer la borne inférieur de 10°";
+		languages.english.toolTipGraphSettingsVerticalLowerMinus10 = "Decrease the lower bound by 10°";
+		languages.french.toolTipGraphSettingsVerticalLowerPlus10 = "Augmenter la borne inférieur de 10°";
+		languages.english.toolTipGraphSettingsVerticalLowerPlus10 = "Increase the lower bound by 10°";
+		languages.french.toolTipGraphSettingsVerticalUpperMinus10 = "Diminuer la borne supérieur de 10°";
+		languages.english.toolTipGraphSettingsVerticalUpperMinus10 = "Decrease the upper bound by 10°";
+		languages.french.toolTipGraphSettingsVerticalUpperPlus10 = "Augmenter la borne supérieur de 10°";
+		languages.english.toolTipGraphSettingsVerticalUpperPlus10 = "Increase the upper bound by 10°";
+		languages.french.toolTipGraphSettingsHorizontalUpperBound = "Entrer une valeur d'angle supérieur à la borne inférieur";
+		languages.english.toolTipGraphSettingsHorizontalUpperBound = "Enter an angle value greater than the lower bound";
+		languages.french.toolTipGraphSettingsHorizontalSlider = "Déplacer le bouton pour modifier la borne supérieur de l'axe horizontal";
+		languages.english.toolTipGraphSettingsHorizontalSlider = "Move the knob to modify the upper bound of the horizontal axis";
+		languages.french.toolTipGraphSettingsUpdateSimulation = "Mettre à jour l'axe horizontal (temps) pour fixer le maximum à la borne supérieur";
+		languages.english.toolTipGraphSettingsUpdateSimulation = "Update horizontal axe (time) to fix the maximum at the upper bound";
+		languages.french.toolTipGraphSettingsDefaultValues = "Remettre toutes les bornes à leurs valeurs de défaut";
+		languages.english.toolTipGraphSettingsDefaultValues = "Reset all bounds to theirs defaults values";
+		languages.french.toolTipGraphSettingsCancel = "Quitter le menu sans utiliser les nouvelles bornes";
+		languages.english.toolTipGraphSettingsCancel = "Quit menu without using the new bounds";
+		languages.french.toolTipGraphSettingsOK = "Quitter le menu et utiliser les nouvelles bornes";
+		languages.english.toolTipGraphSettingsOK = "Quit menu and use the new bounds";
+
+		languages.french.toolTipDropDownPlayMode = "Sélectionner le type d'animation";
+		languages.english.toolTipDropDownPlayMode = "Select animation playing mode";
+		languages.french.toolTipDropDownPlayView = "Sélectionner la vue de l'animation";
+		languages.english.toolTipDropDownPlayView = "Select animation view";
+		languages.french.toolTipDropDownPlaySpeed = "Sélectionner la vitesse d'exécution de l'animation";
+		languages.english.toolTipDropDownPlaySpeed = "Select animation playing speed";
+		languages.french.toolTipButtonPlay = "Démarrer l'animation";
+		languages.english.toolTipButtonPlay = "Start animation";
+		languages.french.toolTipButtonStop = "Arrêter l'animation";
+		languages.english.toolTipButtonStop = "Stop animation";
+		languages.french.toolTipButtonGraph = "Afficher les graphiques résultats";
+		languages.english.toolTipButtonGraph = "Display result graphics";
 
 		languages.Used = languages.french;
 	}

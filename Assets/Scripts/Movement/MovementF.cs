@@ -14,6 +14,7 @@ public class MovementF : MonoBehaviour
 	public Text textFileName;
 
 	public GameObject panelMovement;
+	public GameObject panelGraph;
 	public GameObject panelLegend;
 	public Text textCurveName1;
 	public Text textCurveName2;
@@ -41,6 +42,8 @@ public class MovementF : MonoBehaviour
 	public InputField inputFieldVerticalSpeed;
 	public InputField inputFieldSomersaultSpeed;
 	public InputField inputFieldTwistSpeed;
+
+	public GameObject panelToolT;
 
 	public bool calledFromScript;      // Mode de modification d'un contrôle de la scène, false = via l'utilisateur (OnValueChange) ou true = via un script
 
@@ -134,6 +137,8 @@ public class MovementF : MonoBehaviour
 
 	public void ButtonLoad()
 	{
+		//		System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("ButtonLoad #0{0}", System.Environment.NewLine));
+
 		// Sélection d'un fichier de données dans le répertoire des fichiers de simulation, par défaut
 
 		ExtensionFilter[] extensions = new[]
@@ -283,10 +288,12 @@ public class MovementF : MonoBehaviour
 		{
 			try
 			{
+				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("OK #1{0}", System.Environment.NewLine));
 				System.IO.Directory.CreateDirectory(dirSimulationFiles);
 			}
 			catch
 			{
+				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("OK #2{0}", System.Environment.NewLine));
 				dirSimulationFiles = "";
 			}
 		}

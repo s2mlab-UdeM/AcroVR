@@ -11,8 +11,13 @@ public class Main : MonoBehaviour
 	public static Main Instance;
 	public GameObject textVersionFR;
 	public GameObject textVersionEN;
+	public Button buttonToolTips;
+	public Image buttonToolTipsImage;
+	public GameObject buttonNoToolTips;
+	public Image buttonNoToolTipsImage;
 	public Button buttonLanguage;
 	public Text textButtonLanguage;
+	public GameObject buttonQuit;
 
 	public Text textTakeOffTitle;
 	public Text textTakeOffSpeed;
@@ -27,12 +32,14 @@ public class Main : MonoBehaviour
 
 	public Text textMessagesTextTitle;
 
-	//public GameObject panelMovement;
-	//public GameObject panelTakeoffParameters;
-	//public GameObject panelMessages;
-	//public GameObject panelAnimator;
-	//public GameObject panelTopButtons;
-	//public GameObject panelOutOfDate;
+	public GameObject panelMovement;				// Utilisées pour désactiver automatiquement le logiciel après une date spécifiée
+	public GameObject panelTakeoffParameters;
+	public GameObject panelMessages;
+	public GameObject panelAnimator;
+	public GameObject panelTopButtons;
+	public GameObject panelOutOfDate;
+
+	public bool toolTipsON;
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
@@ -40,38 +47,69 @@ public class Main : MonoBehaviour
 	void Start ()
 	{
 		Instance = this;
+		toolTipsON = true;
 
-		// Logiciel sera désactivé automatiquement après la date spécifié ci-dessous
+		// Logiciel sera désactivé automatiquement après la date spécifiée ci - dessous
 		// Un fichier "bidon" est créé pour gérer les cas où l'utilisateur aurait modifié la date par la suite, alors le logiciel resterait désactivé quand même
 		// Une façon simple de réactiver le logiciel est d'effacer le fichier "bidon"
 
-		//string checkFileName = Application.persistentDataPath + @"/AcroVR.dll";
-		//DateTime endDate = new DateTime(2019, 5, 1);									// Date = 1 mai 2019
-		//if (DateTime.Today >= endDate)                                                  // Date spécifié passé
-		//{
-		//	System.IO.File.WriteAllText(checkFileName, "$$&*&@@@!!");                   // On modifie le fichier pour indiquer que le logiciel est désactivé
-		//	panelMovement.SetActive(false);                                             // Désactivé tous les panneaux
-		//	panelTakeoffParameters.SetActive(false);
-		//	panelMessages.SetActive(false);
-		//	panelAnimator.SetActive(false);
-		//	panelTopButtons.SetActive(false);
-		//	panelOutOfDate.SetActive(true);                                             // Activé le panneau pour indiquer que le logiciel est désactivé
-		//}
-		//else if (!System.IO.File.Exists(checkFileName))
-		//	System.IO.File.WriteAllText(checkFileName, "$%&*&@@@!!");                   // Création du fichier à la première exécution
-		//else
-		//{
-		//	string fileContents = System.IO.File.ReadAllText(checkFileName);
-		//	if (fileContents.IndexOf("$$") >= 0)                                        // Date modifié et fichier modifié, alors logiciel est désactivé
-		//	{
-		//		panelMovement.SetActive(false);                                         // Désactivé tous les panneaux
-		//		panelTakeoffParameters.SetActive(false);
-		//		panelMessages.SetActive(false);
-		//		panelAnimator.SetActive(false);
-		//		panelTopButtons.SetActive(false);
-		//		panelOutOfDate.SetActive(true);                                         // Activé le panneau pour indiquer que le logiciel est désactivé
-		//	}
-		//}
+//#if UNITY_STANDALONE_OSX
+//		string dirCheckFileName = string.Format("{0}/Documents/AcroVR/Lib", Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+//		string checkFileName = string.Format("{0}/AcroVR.dll", dirCheckFileName);
+//#else
+//		string checkFileName = Application.persistentDataPath + @"/AcroVR.dll";
+//#endif
+//		DateTime endDate = new DateTime(2019, 12, 6);                                   // Date = 6 déc 2019
+//		if (DateTime.Today >= endDate)                                                  // Date spécifié passé
+//		{
+//			System.IO.File.WriteAllText(checkFileName, "$$&*&@@@!!");                   // On modifie le fichier pour indiquer que le logiciel est désactivé
+//			panelMovement.SetActive(false);                                             // Désactivé tous les panneaux
+//			panelTakeoffParameters.SetActive(false);
+//			panelMessages.SetActive(false);
+//			panelAnimator.SetActive(false);
+//			panelTopButtons.SetActive(false);
+//			panelOutOfDate.SetActive(true);                                             // Activé le panneau pour indiquer que le logiciel est désactivé
+//		}
+//		else if (!System.IO.File.Exists(checkFileName))
+//		{
+//#if UNITY_STANDALONE_OSX
+//			System.IO.Directory.CreateDirectory(dirCheckFileName);                      // Création du répertoire où sera le fichier, obligatoire pour Mac
+//#endif
+//			System.IO.File.WriteAllText(checkFileName, "$%&*&@@@!!");                   // Création du fichier à la première exécution
+//		}
+//		else
+//		{
+//			string fileContents = System.IO.File.ReadAllText(checkFileName);
+//			if (fileContents.IndexOf("$$") >= 0)                                        // Date modifié et fichier modifié, alors logiciel est désactivé
+//			{
+//				panelMovement.SetActive(false);                                         // Désactivé tous les panneaux
+//				panelTakeoffParameters.SetActive(false);
+//				panelMessages.SetActive(false);
+//				panelAnimator.SetActive(false);
+//				panelTopButtons.SetActive(false);
+//				panelOutOfDate.SetActive(true);                                         // Activé le panneau pour indiquer que le logiciel est désactivé
+//			}
+//		}
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton ToolTips a été appuyer. </summary>
+
+	public void ButtonToolTips()
+	{
+		toolTipsON = false;
+		buttonToolTips.gameObject.SetActive(false);
+		buttonNoToolTips.SetActive(true);
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Bouton NoToolTips a été appuyer. </summary>
+
+	public void ButtonNoToolTips()
+	{
+		toolTipsON = true;
+		buttonToolTips.gameObject.SetActive(true);
+		buttonNoToolTips.SetActive(false);
 	}
 
 	// =================================================================================================================================================================
@@ -190,6 +228,10 @@ public class Main : MonoBehaviour
 		MovementF.Instance.dropDownDDLNames.interactable = status;
 		if (statusLoad)
 		{
+			buttonToolTips.interactable = status;
+			buttonToolTipsImage.color = color;
+			buttonNoToolTips.GetComponent<Button>().interactable = status;
+			buttonNoToolTipsImage.color = color;
 			buttonLanguage.interactable = status;
 			MovementF.Instance.buttonLoad.interactable = status;
 			MovementF.Instance.buttonLoadImage.color = color;
@@ -213,9 +255,9 @@ public class Main : MonoBehaviour
 		AnimationF.Instance.textChrono.text = "";
 		AnimationF.Instance.dropDownPlayMode.interactable = status;
 		AnimationF.Instance.dropDownPlayView.interactable = status;
+		AnimationF.Instance.dropDownPlaySpeed.interactable = status;
 		AnimationF.Instance.buttonPlay.interactable = status;
 		AnimationF.Instance.buttonPlayImage.color = color;
-		AnimationF.Instance.dropDownPlaySpeed.interactable = status;
 		if (status && MainParameters.Instance.joints.rot != null)
 		{
 			AnimationF.Instance.buttonGraph.interactable = true;
