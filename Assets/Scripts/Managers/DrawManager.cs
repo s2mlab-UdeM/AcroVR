@@ -1,36 +1,67 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using System.Linq;
+using System.Text;
 using Microsoft.Research.Oslo;
+using System.Runtime.InteropServices;
+using System.Collections;
+using System.Collections.Generic;
 
 public class DrawManager : MonoBehaviour
 {
+    /*    const string dllpath = "biorbd_c.dll";
+        [DllImport(dllpath)] static extern IntPtr c_biorbdModel(StringBuilder pathToModel);
+        [DllImport(dllpath)] static extern int c_nQ(IntPtr model);
+        [DllImport(dllpath)] static extern void c_massMatrix(IntPtr model, IntPtr q, IntPtr massMatrix);
+        [DllImport(dllpath)] static extern void c_inverseDynamics(IntPtr model, IntPtr q, IntPtr qdot, IntPtr qddot, IntPtr tau);
+        [DllImport(dllpath)] static extern void c_solveLinearSystem(IntPtr matA, int nbCol, int nbLigne, IntPtr matB, IntPtr solX);*/
+
+    ////////////////
+    public GameObject girl1;
+    public GameObject girl2;
+    GameObject girl1Prefab;
+    GameObject girl2Prefab;
+    ////////////////
     /// <summary>
     /// Hip
-    private GameObject xbotLeftUp;
-    private GameObject xbotRightUp;
+    private GameObject girl1LeftUp;
+    private GameObject girl1RightUp;
     // Knee
-    private GameObject xbotLeftLeg;
-    private GameObject xbotRightLeg;
+    private GameObject girl1LeftLeg;
+    private GameObject girl1RightLeg;
     // Shoulder
-    private GameObject xbotLeftArm;
-    private GameObject xbotRightArm;
+    private GameObject girl1LeftArm;
+    private GameObject girl1RightArm;
     // Root
-    private GameObject xbotHip;
+    private GameObject girl1Hip;
+    /// </summary>
+
+    /// <summary>
+    /// Hip
+    private GameObject girl2LeftUp;
+    private GameObject girl2RightUp;
+    // Knee
+    private GameObject girl2LeftLeg;
+    private GameObject girl2RightLeg;
+    // Shoulder
+    private GameObject girl2LeftArm;
+    private GameObject girl2RightArm;
+    // Root
+    private GameObject girl2Hip;
     /// </summary>
 
     float[,] q;
-    double[] qf;
-    int frameN = 0;
+    float[,] q_girl2;
+    public double[] qf;
+    double[] qf_girl2;
+    public int frameN = 0;
     int firstFrame = 0;
     int numberFrames = 0;
     float timeElapsed = 0;
     float timeFrame = 0;
     float timeStarted = 0;
-    bool animateON = false;
-    float factorPlaySpeed = 1;
+    public bool animateON = false;
+    float factorPlaySpeed = 3f;
 
     float tagXMin = 0;
     float tagXMax = 0;
@@ -47,32 +78,46 @@ public class DrawManager : MonoBehaviour
 
     float ThetaScale;
 
-    LineRenderer[] lineStickFigure;
-    LineRenderer lineCenterOfMass;
-    LineRenderer[] lineFilledFigure;
+    /*    LineRenderer[] lineStickFigure;
+        LineRenderer lineCenterOfMass;
+        LineRenderer[] lineFilledFigure;
 
-    public GameObject stickMan;
+        public GameObject stickMan;*/
+
+    private int cntAvatar;
 
     float[,] q1;
+    float[,] q1_girl2;
+
+    bool isPaused = false;
+    public bool isEditing = false;
+
+    //    IntPtr ptr_model;
 
     void Awake()
     {
+        girl1Prefab = (GameObject)Resources.Load("girl1", typeof(GameObject));
+        girl1 = Instantiate(girl1Prefab);
+
         ///////////////////////////
         // Hip
-        xbotLeftUp = GameObject.Find("mixamorig:LeftUpLeg");
-        xbotRightUp = GameObject.Find("mixamorig:RightUpLeg");
+        girl1LeftUp = girl1.transform.Find("Petra.002/hips/thigh.L").gameObject;
+        girl1RightUp = girl1.transform.Find("Petra.002/hips/thigh.R").gameObject;
         // Knee
-        xbotLeftLeg = GameObject.Find("mixamorig:LeftLeg");
-        xbotRightLeg = GameObject.Find("mixamorig:RightLeg");
+        girl1LeftLeg = girl1.transform.Find("Petra.002/hips/thigh.L/shin.L").gameObject;
+        girl1RightLeg = girl1.transform.Find("Petra.002/hips/thigh.R/shin.R").gameObject;
         // Shoulder
-        xbotRightArm = GameObject.Find("mixamorig:RightArm");
-        xbotLeftArm = GameObject.Find("mixamorig:LeftArm");
+        girl1RightArm = girl1.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.R/upper_arm.R").gameObject;
+        girl1LeftArm = girl1.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.L/upper_arm.L").gameObject;
         // Root
-        xbotHip = GameObject.Find("mixamorig:Hips");
-        ////////////////////
+        girl1Hip = girl1.transform.Find("Petra.002/hips").gameObject;
+        ///////////////////////////
 
-        stickMan = GameObject.Find("StickMan");
+        //        stickMan = GameObject.Find("StickMan");
+
         ThetaScale = 0.01f;
+        girl1.SetActive(false);
+        cntAvatar = 1;
     }
 
     void Update()
@@ -91,15 +136,51 @@ public class DrawManager : MonoBehaviour
         }
     }
 
-    public void ShowAvatar()
+/*    void FixedUpdate()
     {
+        if (!animateON) return;
+
+        if (frameN < numberFrames)
+            PlayOneFrame();
+        else
+            PlayEnd();
+    }*/
+  
+    public void ShowAvatar(int num)
+    {
+        cntAvatar = num;
         if (MainParameters.Instance.joints.nodes == null) return;
+        girl1.SetActive(true);
+        girl1.transform.rotation = Quaternion.identity;
+        transform.parent.GetComponentInChildren<StatManager>().DestroyHandleCircle();
 
         q1 = MakeSimulation();
 
         // test0 = q1[12,51]
         // test1 = q1[12,54]
         Play_s(q1, 0, q1.GetUpperBound(1) + 1);
+
+        if (cntAvatar > 1)
+        {
+            ///////////////////////////
+            // Hip
+            girl2Prefab = (GameObject)Resources.Load("girl2", typeof(GameObject));
+            girl2 = Instantiate(girl2Prefab);
+            girl2LeftUp = girl2.transform.Find("Petra.002/hips/thigh.L").gameObject;
+            girl2RightUp = girl2.transform.Find("Petra.002/hips/thigh.R").gameObject;
+            // Knee
+            girl2LeftLeg = girl2.transform.Find("Petra.002/hips/thigh.L/shin.L").gameObject;
+            girl2RightLeg = girl2.transform.Find("Petra.002/hips/thigh.R/shin.R").gameObject;
+            // Shoulder
+            girl2RightArm = girl2.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.R/upper_arm.R").gameObject;
+            girl2LeftArm = girl2.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.L/upper_arm.L").gameObject;
+            // Root
+            girl2Hip = girl2.transform.Find("Petra.002/hips").gameObject;
+            ////////////////////
+            transform.parent.GetComponentInChildren<GameManager>().MissionLoad();
+            q1_girl2 = MakeSimulation();
+            q_girl2 = MathFunc.MatrixCopy(q1_girl2);
+        }
     }
 
     public void PlayAvatar()
@@ -107,9 +188,12 @@ public class DrawManager : MonoBehaviour
         Play_s(q1, 0, q1.GetUpperBound(1) + 1);
     }
 
-    private void PlayEnd()
+    public void PlayEnd()
     {
-        animateON = false;
+//        animateON = false;
+        //        frameN = 0;
+        transform.parent.GetComponentInChildren<GameManager>().InterpolationDDL();
+        transform.parent.GetComponentInChildren<GameManager>().DisplayDDL(0, true);
     }
 
     private void Play_s(float[,] qq, int frFrame, int nFrames)
@@ -132,17 +216,16 @@ public class DrawManager : MonoBehaviour
 
         animateON = true;
 
-        if (lineStickFigure == null && lineCenterOfMass == null && lineFilledFigure == null)
+/*        if (lineStickFigure == null && lineCenterOfMass == null && lineFilledFigure == null)
         {
             GameObject lineObject = new GameObject();
             LineRenderer lineRenderer = lineObject.AddComponent<LineRenderer>();
             lineRenderer.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
-//            lineRenderer.startWidth = 0.04f;
-//            lineRenderer.endWidth = 0.04f;
-            lineRenderer.startWidth = 0.5f;
-            lineRenderer.endWidth = 0.5f;
+            lineRenderer.startWidth = 0.04f;
+            lineRenderer.endWidth = 0.04f;
 
             lineStickFigure = new LineRenderer[joints.lagrangianModel.stickFigure.Length / 2];
+
             for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
             {
                 lineStickFigure[i] = Instantiate(lineRenderer);
@@ -168,6 +251,7 @@ public class DrawManager : MonoBehaviour
             lineCenterOfMass.transform.parent = stickMan.transform;
 
             lineFilledFigure = new LineRenderer[joints.lagrangianModel.filledFigure.Length / 4];
+
             for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
             {
                 lineFilledFigure[i] = Instantiate(lineRenderer);
@@ -177,8 +261,8 @@ public class DrawManager : MonoBehaviour
                 lineFilledFigure[i].transform.parent = stickMan.transform;
             }
 
-           Destroy(lineObject);
-        }
+            Destroy(lineObject);
+        }*/
     }
 
     private void Quintic_s(float t, float ti, float tj, float qi, float qj, out float p, out float v, out float a)
@@ -230,8 +314,8 @@ public class DrawManager : MonoBehaviour
         MainParameters.StrucJoints joints = MainParameters.Instance.joints;
         float[] q0 = new float[joints.lagrangianModel.nDDL];
         float[] q0dot = new float[joints.lagrangianModel.nDDL];
-        float[] q0dotdot = new float[joints.lagrangianModel.nDDL];
 
+//        float[] q0dotdot = new float[joints.lagrangianModel.nDDL];
 //        Trajectory_s(joints.lagrangianModel, 0, joints.lagrangianModel.q2, out q0, out q0dot, out q0dotdot);
 
         for (int i = 0; i < 6; i++)
@@ -336,12 +420,19 @@ public class DrawManager : MonoBehaviour
         options.InitialStep = joints.lagrangianModel.dt;
 
         var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(x0), ShortDynamics_s, options);
+
+        ///////
+//        ptr_model = c_biorbdModel(new StringBuilder("Modele_HuManS_somersault.s2mMod"));
+//        var sol = Ode.RK45(0, new Vector(x0), ShortDynamicsBiorbd_s, options); //FD avec Biorbd
+        ///////
+
         var points = sol.SolveFromToStep(0, joints.duration + joints.lagrangianModel.dt, joints.lagrangianModel.dt).ToArray();
 
         // test0 = point[51]
         // test1 = point[251]
         double[] t = new double[points.GetUpperBound(0) + 1];
         double[,] q = new double[joints.lagrangianModel.nDDL, points.GetUpperBound(0) + 1];
+        double[,] qdot = new double[joints.lagrangianModel.nDDL, points.GetUpperBound(0) + 1];
         for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
         {
             for (int j = 0; j <= points.GetUpperBound(0); j++)
@@ -350,6 +441,7 @@ public class DrawManager : MonoBehaviour
                     t[j] = points[j].T;
 
                 q[i, j] = points[j].X[i];
+                qdot[i, j] = points[j].X[joints.lagrangianModel.nDDL + i];
             }
         }
 
@@ -373,14 +465,34 @@ public class DrawManager : MonoBehaviour
 
         MainParameters.Instance.joints.t = new float[tIndex];
         float[,] qOut = new float[joints.lagrangianModel.nDDL, tIndex];
+        float[,] qdot1 = new float[joints.lagrangianModel.nDDL, tIndex];
         for (int i = 0; i < tIndex; i++)
         {
             MainParameters.Instance.joints.t[i] = (float)t[i];
             for (int j = 0; j < joints.lagrangianModel.nDDL; j++)
             {
                 qOut[j, i] = (float)q[j, i];
+                qdot1[j, i] = (float)qdot[j, i];
             }
         }
+
+        MainParameters.Instance.joints.rot = new float[tIndex, rotation.Length];
+        MainParameters.Instance.joints.rotdot = new float[tIndex, rotation.Length];
+        float[,] rotAbs = new float[tIndex, rotation.Length];
+        for (int i = 0; i < rotation.Length; i++)
+        {
+            float[] rotCol = new float[tIndex];
+            float[] rotdotCol = new float[tIndex];
+            rotCol = MathFunc.unwrap(MathFunc.MatrixGetRow(qOut, rotation[i] - 1));
+            rotdotCol = MathFunc.unwrap(MathFunc.MatrixGetRow(qdot1, rotation[i] - 1));
+            for (int j = 0; j < tIndex; j++)
+            {
+                MainParameters.Instance.joints.rot[j, i] = rotCol[j] / (2 * (float)Math.PI);
+                MainParameters.Instance.joints.rotdot[j, i] = rotdotCol[j] / (2 * (float)Math.PI);
+                rotAbs[j, i] = Math.Abs(MainParameters.Instance.joints.rot[j, i]);
+            }
+        }
+
         return qOut;
     }
 
@@ -408,6 +520,273 @@ public class DrawManager : MonoBehaviour
             tagZ[i] = (float)tag1[i + newTagLength * 2];
         }
     }
+
+    private float[] qValuesHumans2Biorbd(float[] vecteurHumans)
+    {
+        //Correspondace des DDL entre les 2 modèles via un fichier matlab
+        int nDDL = 14;// c_nQ(ptr_model);
+        float[] vecteurBiorbd = new float[nDDL];
+
+        vecteurBiorbd[0] = vecteurHumans[6];
+        vecteurBiorbd[1] = vecteurHumans[7];
+        vecteurBiorbd[2] = vecteurHumans[8];
+        vecteurBiorbd[3] = -vecteurHumans[9];
+        vecteurBiorbd[4] = vecteurHumans[10];
+        vecteurBiorbd[5] = vecteurHumans[11];
+
+        vecteurBiorbd[6] = vecteurHumans[0];
+        vecteurBiorbd[7] = -vecteurHumans[1];
+        vecteurBiorbd[8] = vecteurHumans[0];
+        vecteurBiorbd[9] = -vecteurHumans[1];
+        vecteurBiorbd[10] = vecteurHumans[2];
+        vecteurBiorbd[11] = vecteurHumans[3];
+        vecteurBiorbd[12] = vecteurHumans[4];
+        vecteurBiorbd[13] = -vecteurHumans[5];
+
+        return vecteurBiorbd;
+    }
+
+    private double[] Humans2Biorbd(double[] vecteurHumans)
+    {
+        //Correspondace des DDL entre les 2 modèles via un fichier matlab
+        int nDDL = 14;// c_nQ(ptr_model);
+        int nDDLhumans = 12;
+        double[] vecteurBiorbd = new double[nDDL * 2];
+
+        vecteurBiorbd[0] = vecteurHumans[6];
+        vecteurBiorbd[1] = vecteurHumans[7];
+        vecteurBiorbd[2] = vecteurHumans[8];
+        vecteurBiorbd[3] = -vecteurHumans[9];
+        vecteurBiorbd[4] = vecteurHumans[10];
+        vecteurBiorbd[5] = vecteurHumans[11];
+
+        vecteurBiorbd[6] = vecteurHumans[0];
+        vecteurBiorbd[7] = -vecteurHumans[1];
+        vecteurBiorbd[8] = vecteurHumans[0];
+        vecteurBiorbd[9] = -vecteurHumans[1];
+        vecteurBiorbd[10] = vecteurHumans[2];
+        vecteurBiorbd[11] = vecteurHumans[3];
+        vecteurBiorbd[12] = vecteurHumans[4];
+        vecteurBiorbd[13] = -vecteurHumans[5];
+
+        vecteurBiorbd[0 + nDDL] = vecteurHumans[6 + nDDLhumans];
+        vecteurBiorbd[1 + nDDL] = vecteurHumans[7 + nDDLhumans];
+        vecteurBiorbd[2 + nDDL] = vecteurHumans[8 + nDDLhumans];
+        vecteurBiorbd[3 + nDDL] = -vecteurHumans[9 + nDDLhumans];
+        vecteurBiorbd[4 + nDDL] = vecteurHumans[10 + nDDLhumans];
+        vecteurBiorbd[5 + nDDL] = vecteurHumans[11 + nDDLhumans];
+
+        vecteurBiorbd[6 + nDDL] = vecteurHumans[0 + nDDLhumans];
+        vecteurBiorbd[7 + nDDL] = -vecteurHumans[1 + nDDLhumans];
+        vecteurBiorbd[8 + nDDL] = vecteurHumans[0 + nDDLhumans];
+        vecteurBiorbd[9 + nDDL] = -vecteurHumans[1 + nDDLhumans];
+        vecteurBiorbd[10 + nDDL] = vecteurHumans[2 + nDDLhumans];
+        vecteurBiorbd[11 + nDDL] = vecteurHumans[3 + nDDLhumans];
+        vecteurBiorbd[12 + nDDL] = vecteurHumans[4 + nDDLhumans];
+        vecteurBiorbd[13 + nDDL] = -vecteurHumans[5 + nDDLhumans];
+        return vecteurBiorbd;
+    }
+
+    private double[] Biorbd2Humans(double[] vecteurBiorbd)
+    {
+        //Correspondace des DDL entre les 2 modèles via un fichier matlab
+        int nDDL = 12; //nDDL modèle humans
+        int nDDLbiorbd = 14;// c_nQ(ptr_model);
+        double[] vecteurHumans = new double[nDDL * 2];
+
+        vecteurHumans[6] = vecteurBiorbd[0];
+        vecteurHumans[7] = vecteurBiorbd[1];
+        vecteurHumans[8] = vecteurBiorbd[2];
+        vecteurHumans[9] = -vecteurBiorbd[3];
+        vecteurHumans[10] = vecteurBiorbd[4];
+        vecteurHumans[11] = vecteurBiorbd[5];
+
+        vecteurHumans[0] = vecteurBiorbd[6];
+        vecteurHumans[1] = -vecteurBiorbd[7];
+        vecteurHumans[2] = vecteurBiorbd[10];
+        vecteurHumans[3] = vecteurBiorbd[11];
+        vecteurHumans[4] = vecteurBiorbd[12];
+        vecteurHumans[5] = -vecteurBiorbd[13];
+
+        vecteurHumans[6 + nDDL] = vecteurBiorbd[0 + nDDLbiorbd];
+        vecteurHumans[7 + nDDL] = vecteurBiorbd[1 + nDDLbiorbd];
+        vecteurHumans[8 + nDDL] = vecteurBiorbd[2 + nDDLbiorbd];
+        vecteurHumans[9 + nDDL] = -vecteurBiorbd[3 + nDDLbiorbd];
+        vecteurHumans[10 + nDDL] = vecteurBiorbd[4 + nDDLbiorbd];
+        vecteurHumans[11 + nDDL] = vecteurBiorbd[5 + nDDLbiorbd];
+
+        vecteurHumans[0 + nDDL] = vecteurBiorbd[6 + nDDLbiorbd];
+        vecteurHumans[1 + nDDL] = -vecteurBiorbd[7 + nDDLbiorbd];
+        vecteurHumans[2 + nDDL] = vecteurBiorbd[10 + nDDLbiorbd];
+        vecteurHumans[3 + nDDL] = vecteurBiorbd[11 + nDDLbiorbd];
+        vecteurHumans[4 + nDDL] = vecteurBiorbd[12 + nDDLbiorbd];
+        vecteurHumans[5 + nDDL] = -vecteurBiorbd[13 + nDDLbiorbd];
+
+        return vecteurHumans;
+    }
+
+    private double[,] TransformerVecteurEnMatrice(double[] vecteur)
+    {
+        //Utilisée pour des matrices carrées
+        double nouvelleDimension = Math.Sqrt(vecteur.Length);
+        int dim = (int)nouvelleDimension;
+        double[,] nouvelleMatrice = new double[dim, dim];
+        for (int i = 0; i < nouvelleMatrice.GetLength(0); i++)
+        {
+            for (int j = 0; j < nouvelleMatrice.GetLength(1); j++)
+            {
+                nouvelleMatrice[j, i] = vecteur[j + nouvelleMatrice.GetLength(0) * i]; //On change le vecteur en matrice carrée
+            }
+        }
+        return nouvelleMatrice;
+    }
+
+    private double[,] RetrecirMatriceCarre(double[,] matrice, int nouvelleTaille)
+    {
+        //NouvelleTaille doit être inférieure à la taille de matrice
+        double[,] nouvelleMatrice = new double[nouvelleTaille, nouvelleTaille];
+        for (int i = 0; i < nouvelleTaille; i++)
+        {
+            for (int j = 0; j < nouvelleTaille; j++)
+            {
+                nouvelleMatrice[i, j] = matrice[i, j];
+            }
+        }
+        return nouvelleMatrice;
+    }
+
+    private double[] TransformerMatriceEnVecteur(double[,] matrice)
+    {
+        //Utilisée pour des matrices carrées
+        double[] nouveauVecteur = new double[matrice.GetLength(0) * matrice.GetLength(1)];
+        for (int i = 0; i < matrice.GetLength(0); i++)
+        {
+            for (int j = 0; j < matrice.GetLength(1); j++)
+            {
+                nouveauVecteur[j + i * matrice.GetLength(0)] = matrice[j, i]; //On change la matriceA carré en vecteur n fois plus grand
+            }
+        }
+        return nouveauVecteur;
+    }
+
+/*    private Vector ShortDynamicsBiorbd_s(double t, Vector x)
+    {
+        //Declaration des pointeurs
+        IntPtr ptr_massMatrix;
+        IntPtr ptr_tau;
+        IntPtr ptr_Q;
+        IntPtr ptr_V;
+        IntPtr ptr_qddot2;
+        IntPtr ptr_matA;
+        IntPtr ptr_solX;
+
+        int NDDL = c_nQ(ptr_model); //Récupère le nombre de DDL du modèle biorbd
+        int NROOT = 6; //On admet que la racine possède 6 ddl
+        int NDDLhumans = 12;
+        double[] xBiorbd = new double[NDDL * 2];
+
+        double[] Qintegrateur = new double[NDDL];
+        double[] Vintegrateur = new double[NDDL];
+        double[] m_taud = new double[NDDL];
+        double[] massMatrix = new double[NDDL * NDDL];
+
+        float[] qd = new float[NDDLhumans];
+        float[] qdotd = new float[NDDLhumans];
+        float[] qddotd = new float[NDDLhumans];
+        float[] qdBiorbd = new float[NDDL];
+        float[] qdotdBiorbd = new float[NDDL];
+        float[] qddotdBiorbd = new float[NDDL];
+
+        double[] qddot2 = new double[NDDL];
+        double[] qddot1integ = new double[NDDL * 2];
+        double[] qddot1integHumans = new double[NDDLhumans];
+
+        //Allocations des pointeurs, sinon génère erreurs de segmentation
+        ptr_Q = Marshal.AllocCoTaskMem(sizeof(double) * Qintegrateur.Length);
+        ptr_V = Marshal.AllocCoTaskMem(sizeof(double) * Vintegrateur.Length);
+        ptr_qddot2 = Marshal.AllocCoTaskMem(sizeof(double) * qddot2.Length);
+        ptr_massMatrix = Marshal.AllocCoTaskMem(sizeof(double) * massMatrix.Length);
+        ptr_tau = Marshal.AllocCoTaskMem(sizeof(double) * m_taud.Length);
+
+        xBiorbd = Humans2Biorbd(x); //On convertit les DDL du modèle humans pour le modèle biorbd
+
+        for (int i = 0; i < NDDL; i++)
+        {
+            Qintegrateur[i] = xBiorbd[i];
+            Vintegrateur[i] = xBiorbd[i + NDDL];
+        }
+
+        Trajectory_s(MainParameters.Instance.joints.lagrangianModel, (float)t, MainParameters.Instance.joints.lagrangianModel.q2, out qd, out qdotd, out qddotd);
+
+        qdBiorbd = qValuesHumans2Biorbd(qd);
+        qdotdBiorbd = qValuesHumans2Biorbd(qdotd);
+        qddotdBiorbd = qValuesHumans2Biorbd(qddotd);
+
+        for (int i = 0; i < qddot2.Length; i++)
+        {
+            qddot2[i] = qddotdBiorbd[i] + 10 * (qdBiorbd[i] - Qintegrateur[i]) + 3 * (qdotdBiorbd[i] - Vintegrateur[i]);
+        }
+
+        for (int i = 0; i < NROOT; i++)
+        {
+            qddot2[i] = 0;
+        }
+
+        Marshal.Copy(Qintegrateur, 0, ptr_Q, Qintegrateur.Length);
+        Marshal.Copy(Vintegrateur, 0, ptr_V, Vintegrateur.Length);
+        Marshal.Copy(qddot2, 0, ptr_qddot2, qddot2.Length);
+
+        c_massMatrix(ptr_model, ptr_Q, ptr_massMatrix); //Génère la matrice de masse
+
+        Marshal.Copy(ptr_massMatrix, massMatrix, 0, massMatrix.Length);
+
+        c_inverseDynamics(ptr_model, ptr_Q, ptr_V, ptr_qddot2, ptr_tau);
+
+        Marshal.Copy(ptr_tau, m_taud, 0, m_taud.Length);
+
+        double[,] squareMassMatrix = new double[NDDL, NDDL];
+        squareMassMatrix = TransformerVecteurEnMatrice(massMatrix); //La matrice de masse générée est sous forme d'un vecteur de taille NDDL*NDDL
+
+        double[,] matriceA = new double[NROOT, NROOT];
+        matriceA = RetrecirMatriceCarre(squareMassMatrix, NROOT); //On réduit la matrice de masse
+
+        double[] matAGrandVecteur = new double[NROOT * NROOT];
+        matAGrandVecteur = TransformerMatriceEnVecteur(matriceA); //La nouvelle matrice doit être convertie en vecteur pour qu'elle puisse être utilisée dans biorbd
+
+        ptr_matA = Marshal.AllocCoTaskMem(sizeof(double) * matAGrandVecteur.Length);
+        ptr_solX = Marshal.AllocCoTaskMem(sizeof(double) * NROOT);
+
+        Marshal.Copy(matAGrandVecteur, 0, ptr_matA, matAGrandVecteur.Length);
+
+        c_solveLinearSystem(ptr_matA, NROOT, NROOT, ptr_tau, ptr_solX); //Résouds l'équation Ax=b
+
+        double[] solutionX = new double[NROOT];
+        Marshal.Copy(ptr_solX, solutionX, 0, solutionX.Length);
+
+        for (int i = 0; i < NROOT; i++)
+        {
+            qddot2[i] = -solutionX[i];
+        }
+
+        for (int i = 0; i < NDDL; i++)
+        {
+            qddot1integ[i] = Vintegrateur[i];
+            qddot1integ[i + NDDL] = qddot2[i];
+        }
+
+        qddot1integHumans = Biorbd2Humans(qddot1integ); //Reconvertit les DDL du modèle biorbd vers le modèle humans
+
+        //Desallocation des pointeurs
+        Marshal.FreeCoTaskMem(ptr_Q);
+        Marshal.FreeCoTaskMem(ptr_V);
+        Marshal.FreeCoTaskMem(ptr_qddot2);
+        Marshal.FreeCoTaskMem(ptr_massMatrix);
+        Marshal.FreeCoTaskMem(ptr_tau);
+        Marshal.FreeCoTaskMem(ptr_matA);
+        Marshal.FreeCoTaskMem(ptr_solX);
+
+        return new Vector(qddot1integHumans);
+    }*/
 
     private Vector ShortDynamics_s(double t, Vector x)
     {
@@ -478,115 +857,145 @@ public class DrawManager : MonoBehaviour
         return new Vector(xdot);
     }
 
-    private void PlayOneFrame()
+    public void PlayOneFrame()
     {
         MainParameters.StrucJoints joints = MainParameters.Instance.joints;
 
-        for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
+        /*        for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
             Delete(lineStickFigure[i]);
         Delete(lineCenterOfMass);
         for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
-            Delete(lineFilledFigure[i]);
+            Delete(lineFilledFigure[i]);*/
 
         // test0 = qf[12], q[12,51]
         // test1 = qf[12], q[12,54]
-        qf = MathFunc.MatrixGetColumnD(q, firstFrame + frameN);
-        if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
-            for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
-                qf[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = 0;
+        if(!isEditing)
+            if (q.GetUpperBound(1) >= frameN)
+            {
+                qf = MathFunc.MatrixGetColumnD(q, firstFrame + frameN);
+                if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
+                    for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
+                        qf[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = 0;
+            }
 
-        float[] tagX;
-        float[] tagY;
-        float[] tagZ;
-        EvaluateTags_s(qf, out tagX, out tagY, out tagZ);
-
-        // tagX[26]
-        // tagY[26]
-        // tagZ[26]
-
-        int newTagLength = tagX.Length;
-        if (tagXMin == 0 && tagXMax == 0 && tagYMin == 0 && tagYMax == 0 && tagZMin == 0 && tagZMax == 0)
+        ///////////////////////////////
+        ///
+        if (cntAvatar > 1)
         {
-            tagXMin = Mathf.Min(tagX);
-            tagXMax = Mathf.Max(tagX);
-            tagYMin = Mathf.Min(tagY);
-            tagYMax = Mathf.Max(tagY);
-            tagZMin = Mathf.Min(tagZ);
-            tagZMax = Mathf.Max(tagZ);
-            if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
-                AddMarginOnMinMax(0.1f);
-            else
-                AddMarginOnMinMax(0.25f);
-            EvaluateFactorTags2Screen();
+            if (q_girl2.GetUpperBound(1) >= frameN)
+            {
+                qf_girl2 = MathFunc.MatrixGetColumnD(q_girl2, firstFrame + frameN);
+                if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
+                    for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
+                        qf_girl2[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = 0;
+            }
         }
+        ///////////////////////////////
 
-        float tagHalfMaxMinZ = (tagZMax - tagZMin) * factorTags2Screen / 2;
-        for (int i = 0; i < newTagLength; i++)
-        {
-            tagX[i] = (tagX[i] - tagXMin) * factorTags2Screen - (tagXMax - tagXMin) * factorTags2Screen / 2;
-            tagY[i] = (tagY[i] - tagYMin) * factorTags2Screen - (tagYMax - tagYMin) * factorTags2Screen / 2;
-            tagZ[i] = (tagZ[i] - tagZMin) * factorTags2Screen - tagHalfMaxMinZ;
-        }
+            /*            float[] tagX;
+                        float[] tagY;
+                        float[] tagZ;
+                        EvaluateTags_s(qf, out tagX, out tagY, out tagZ);
 
-        // Vector3 tag[26]
-        Vector3[] tag = new Vector3[newTagLength];
-        for (int i = 0; i < newTagLength; i++)
-            tag[i] = new Vector3(tagX[i], tagY[i], tagZ[i]);
+                        // tagX[26]
+                        // tagY[26]
+                        // tagZ[26]
+                        int newTagLength = tagX.Length;
+                        if (tagXMin == 0 && tagXMax == 0 && tagYMin == 0 && tagYMax == 0 && tagZMin == 0 && tagZMax == 0)
+                        {
+                            tagXMin = Mathf.Min(tagX);
+                            tagXMax = Mathf.Max(tagX);
+                            tagYMin = Mathf.Min(tagY);
+                            tagYMax = Mathf.Max(tagY);
+                            tagZMin = Mathf.Min(tagZ);
+                            tagZMax = Mathf.Max(tagZ);
+                            if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
+                                AddMarginOnMinMax(0.1f);
+                            else
+                                AddMarginOnMinMax(0.25f);
+                            EvaluateFactorTags2Screen();
+                        }
 
-        for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
-            Line(lineStickFigure[i], tag[joints.lagrangianModel.stickFigure[i, 0] - 1], tag[joints.lagrangianModel.stickFigure[i, 1] - 1]);
-        Circle(lineCenterOfMass, 0.08f, tag[newTagLength - 1]);
-        for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
-            Triangle(lineFilledFigure[i], tag[joints.lagrangianModel.filledFigure[i, 0] - 1], tag[joints.lagrangianModel.filledFigure[i, 1] - 1], tag[joints.lagrangianModel.filledFigure[i, 2] - 1]);
+                        float tagHalfMaxMinZ = (tagZMax - tagZMin) * factorTags2Screen / 2;
+                        for (int i = 0; i < newTagLength; i++)
+                        {
+                            tagX[i] = (tagX[i] - tagXMin) * factorTags2Screen - (tagXMax - tagXMin) * factorTags2Screen / 2;
+                            tagY[i] = (tagY[i] - tagYMin) * factorTags2Screen - (tagYMax - tagYMin) * factorTags2Screen / 2;
+                            tagZ[i] = (tagZ[i] - tagZMin) * factorTags2Screen - tagHalfMaxMinZ;
+                        }
+
+                        //        Vector3 tag[26]
+                        Vector3[] tag = new Vector3[newTagLength];
+                        for (int i = 0; i < newTagLength; i++)
+                            tag[i] = new Vector3(tagX[i], tagY[i], tagZ[i]);*/
+
+            //        for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
+            //            Line(lineStickFigure[i], tag[joints.lagrangianModel.stickFigure[i, 0] - 1], tag[joints.lagrangianModel.stickFigure[i, 1] - 1]);
+            //        Circle(lineCenterOfMass, 0.08f, tag[newTagLength - 1]);
+            //        for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
+            //            Triangle(lineFilledFigure[i], tag[joints.lagrangianModel.filledFigure[i, 0] - 1], tag[joints.lagrangianModel.filledFigure[i, 1] - 1], tag[joints.lagrangianModel.filledFigure[i, 2] - 1]);
 
         /////////////
         ////// Hip
-        xbotLeftUp.transform.localEulerAngles = new Vector3(-(float)qf[0] * Mathf.Rad2Deg, 0f, 0f);
-        xbotRightUp.transform.localEulerAngles = new Vector3(-(float)qf[0] * Mathf.Rad2Deg, 0f, 0f);
+        girl1LeftUp.transform.localEulerAngles = new Vector3(-(float)qf[0] * Mathf.Rad2Deg + 180, 0f, 0f);
+        girl1RightUp.transform.localEulerAngles = new Vector3(-(float)qf[0] * Mathf.Rad2Deg - 180, 0f, 0f);
         // Knee
-        xbotLeftLeg.transform.localEulerAngles = new Vector3((float)qf[1] * Mathf.Rad2Deg, 0f, 0f);
-        xbotRightLeg.transform.localEulerAngles = new Vector3((float)qf[1] * Mathf.Rad2Deg, 0f, 0f);
+        girl1LeftLeg.transform.localEulerAngles = new Vector3((float)qf[1] * Mathf.Rad2Deg, 0f, 0f);
+        girl1RightLeg.transform.localEulerAngles = new Vector3((float)qf[1] * Mathf.Rad2Deg, 0f, 0f);
         // Shoulder
-        //        xbotLeftArm.transform.localEulerAngles = new Vector3(-(float)qf[2] * r2d, 0f, -(float)qf[3] * r2d + 90f);
-        //        xbotRightArm.transform.localEulerAngles = new Vector3(-(float)qf[4] * r2d, 0f, (float)qf[5] * r2d - 90f);
+        girl1LeftArm.transform.localRotation = Quaternion.AngleAxis((float)qf[2] * Mathf.Rad2Deg, Vector3.up) *
+                                            Quaternion.AngleAxis(-(float)qf[3] * Mathf.Rad2Deg + 90f, Vector3.forward);
 
-        xbotLeftArm.transform.localRotation = Quaternion.AngleAxis(-(float)qf[2] * Mathf.Rad2Deg, Vector3.right) *
-                                              Quaternion.AngleAxis(-(float)qf[3] * Mathf.Rad2Deg + 90f, Vector3.forward);
-
-        xbotRightArm.transform.localRotation = Quaternion.AngleAxis(-(float)qf[4] * Mathf.Rad2Deg, Vector3.right) *
-                                              Quaternion.AngleAxis((float)qf[5] * Mathf.Rad2Deg - 90f, Vector3.forward);
+        girl1RightArm.transform.localRotation = Quaternion.AngleAxis(-(float)qf[4] * Mathf.Rad2Deg, Vector3.up) *
+                                            Quaternion.AngleAxis((float)qf[5] * Mathf.Rad2Deg - 90f, Vector3.forward);
 
         // Root
-        xbotHip.transform.position = new Vector3((float)qf[6], (float)qf[8], (float)qf[7]);
-        //        print("6: " + (float)qf[6] + "  7: " + (float)qf[7] + "  8: " + (float)qf[8]);
-        //         xbotHips.transform.position = new Vector3(((float)(qf[6])* r2d)/8, ((float)(qf[7])* r2d)/8, ((float)(qf[8])* r2d)/8);
-        //        xbotHips.transform.position = new Vector3((float)(qf[6]) * 10, (float)(qf[7]) * 10, (float)(qf[8]) * 10);
-        //xbotHips.transform.position = tag[newTagLength - 1];
-        //        xbotHips.transform.localEulerAngles = new Vector3((float)qf[9] * r2d, (float)qf[11] * r2d, (float)qf[10] * r2d);
-        //        xbotHips.transform.position -= new Vector3(0, 0, 10f);
-
-
-        //        xbotHips.transform.eulerAngles = new Vector3((float)qf[9]*Mathf.Rad2Deg,(float)qf[11] * Mathf.Rad2Deg, (float)qf[10] * Mathf.Rad2Deg);
-
-        //        xbotCOM.transform.rotation = Quaternion.Euler((float)qf[9] * Mathf.Rad2Deg, (float)qf[11] * Mathf.Rad2Deg, (float)qf[10] * Mathf.Rad2Deg);
-        //xbotCOM.transform.localEulerAngles = new Vector3((float)qf[9] * Mathf.Rad2Deg, (float)qf[11] * Mathf.Rad2Deg, (float)qf[10] * Mathf.Rad2Deg);
+        girl1Hip.transform.position = new Vector3((float)qf[6], (float)qf[8], (float)qf[7]);
 
         // Bio Order
-        xbotHip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg, Vector3.right) *
+        girl1Hip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
                                             Quaternion.AngleAxis((float)qf[10] * Mathf.Rad2Deg, Vector3.forward) *
                                             Quaternion.AngleAxis((float)qf[11] * Mathf.Rad2Deg, Vector3.up);
 
-        // Unity Order
-//        xbotCOM.transform.localRotation = Quaternion.AngleAxis((float)qf[10] * Mathf.Rad2Deg, Vector3.forward) *
-//                                          Quaternion.AngleAxis((float)qf[11] * Mathf.Rad2Deg, Vector3.up) *
-//                                          Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg, Vector3.right);
+        if (cntAvatar > 1)
+        {
+            girl2LeftUp.transform.localEulerAngles = new Vector3(-(float)qf_girl2[0] * Mathf.Rad2Deg + 180, 0f, 0f);
+            girl2RightUp.transform.localEulerAngles = new Vector3(-(float)qf_girl2[0] * Mathf.Rad2Deg - 180, 0f, 0f);
+            girl2LeftLeg.transform.localEulerAngles = new Vector3((float)qf_girl2[1] * Mathf.Rad2Deg, 0f, 0f);
+            girl2RightLeg.transform.localEulerAngles = new Vector3((float)qf_girl2[1] * Mathf.Rad2Deg, 0f, 0f);
+            girl2LeftArm.transform.localRotation = Quaternion.AngleAxis((float)qf_girl2[2] * Mathf.Rad2Deg, Vector3.up) *
+                                                Quaternion.AngleAxis(-(float)qf_girl2[3] * Mathf.Rad2Deg + 90f, Vector3.forward);
+            girl2RightArm.transform.localRotation = Quaternion.AngleAxis(-(float)qf_girl2[4] * Mathf.Rad2Deg, Vector3.up) *
+                                                Quaternion.AngleAxis((float)qf_girl2[5] * Mathf.Rad2Deg - 90f, Vector3.forward);
+            girl2Hip.transform.localRotation = Quaternion.AngleAxis((float)qf_girl2[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
+                                                Quaternion.AngleAxis((float)qf_girl2[10] * Mathf.Rad2Deg, Vector3.forward) *
+                                                Quaternion.AngleAxis((float)qf_girl2[11] * Mathf.Rad2Deg, Vector3.up);
+            girl2Hip.transform.position = new Vector3((float)qf_girl2[6], (float)qf_girl2[8], (float)qf_girl2[7]);
+        }
 
-//        xbotCOM.transform.localEulerAngles = new Vector3((float)qf[9] * Mathf.Rad2Deg, (float)qf[11] * Mathf.Rad2Deg, (float)qf[10] * Mathf.Rad2Deg);
+        if (!isPaused) frameN++;
+    }
 
-        //        xbotHips.transform.position += new Vector3(-10f, 0, 0);
-        //////////////
+    public void PauseAvatar(bool pause)
+    {
+        girl1.transform.rotation = Quaternion.identity;
+        isPaused = pause;
+    }
 
-        frameN++;
+    void OnGUI()
+    {
+        frameN = (int)GUI.HorizontalScrollbar(new Rect(Screen.width - 200, 430, 100, 30), frameN, 1.0F, 0.0F, numberFrames);
+
+        if(transform.parent.GetComponentInChildren<AniGraphManager>().takeoffCanvas.activeSelf)
+        {
+//            print(MainParameters.Instance.joints.tc);
+//            print(MainParameters.Instance.joints.duration);
+            //            DrawingLine.DrawLine(new Vector2(frameN * 500/numberFrames + 32f, 325), new Vector2(frameN * 500 / numberFrames + 32f, 565), UnityEngine.Color.red, 4, false);
+            if(MainParameters.Instance.joints.tc > 0)
+                DrawingLine.DrawLine(new Vector2((frameN * 0.02f * 96 / MainParameters.Instance.joints.tc) + 30f, 325), new Vector2((frameN * 0.02f * 96 / MainParameters.Instance.joints.tc) + 30f, 565), UnityEngine.Color.red, 4, false);
+            else
+                DrawingLine.DrawLine(new Vector2((frameN * 0.02f * 500 / MainParameters.Instance.joints.duration) + 30f, 325), new Vector2((frameN * 0.02f * 500 / MainParameters.Instance.joints.duration) + 30f, 565), UnityEngine.Color.red, 4, false);
+        }
     }
 
     private void Line(LineRenderer lineRendererObject, Vector3 position1, Vector3 position2)

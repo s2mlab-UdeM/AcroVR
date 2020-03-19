@@ -1,0 +1,10 @@
+{
+    "Name": "1. Athlete will travel 2m in 2 seconds",
+    "goal": {
+        "Distance": 2.0,
+        "Duration": 2.0
+    },
+    "solution": {
+        "Velocity": 1.0
+    }
+}

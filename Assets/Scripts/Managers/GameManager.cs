@@ -1,10 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 using System.IO;
-using UnityEngine.UI;
 using System.Text.RegularExpressions;
-
+using Crosstales.FB;
 
 [System.Serializable]
 public struct Goal
@@ -36,7 +36,7 @@ public struct Nodes
 }
 
 [System.Serializable]
-public struct AnimationInfo
+public class AnimationInfo
 {
     public string Objective;
     public float Duration;
@@ -47,44 +47,35 @@ public struct AnimationInfo
     public float TwistSpeed;
     public float Tilt;
     public float Rotation;
-    public Nodes[] nodes;
+    public List<Nodes> nodes = new List<Nodes>();
 }
 
-public class GameManager : MonoBehaviour {
-
-    private Text missionName;
-    private Button missionButton;
-    private InputField missionInput;
-
+public class GameManager : MonoBehaviour
+{
     private MissionInfo mission;
 
-    void Awake()
+    public void MissionLoad()
     {
-        Transform temp = GameObject.Find("Canvas").transform.GetChild(0);
-        missionName = temp.GetComponent<Text>();
+        //        InitAnimationInfo();
+        //        ReadDataFromJSON(fileName);
+        //        missionName.text = mission.Name;
 
-        temp = GameObject.Find("Canvas").transform.GetChild(2);
-        missionButton = temp.GetComponent<Button>();
-        missionButton.onClick.AddListener(MissionOnClick);
+//          ReadAniFromJSON("walk.json");
 
-        temp = GameObject.Find("Canvas").transform.GetChild(1);
-        missionInput = temp.GetComponent<InputField>();
-    }
+        ExtensionFilter[] extensions = new[]
+        {
+            new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileTxtFile, "json"),
+            new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileAllFiles, "*" ),
+        };
 
-    public void MissionLoad(string fileName)
-    {
-        InitAnimationInfo();
-        ReadDataFromJSON(fileName);
-        missionName.text = mission.Name;
+        string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"\SimulationJson");
 
-//        ReadAniFromJSON("test1.json");
-//        ReadDataFiles_s("UnevenBars_BackDoubleFull.txt");
-    }
+        string fileName = FileBrowser.OpenSingleFile(MainParameters.Instance.languages.Used.movementLoadDataFileTitle, dirSimulationFiles, extensions);
+        if (fileName.Length <= 0)
+            return;
 
-    void MissionOnClick()
-    {
-        string v = missionInput.text;
-        print(v);
+//         ReadDataFiles_s(fileName);
+        ReadAniFromJSON(fileName);
     }
 
     private void ReadDataFromJSON(string fileName)
@@ -142,9 +133,9 @@ public class GameManager : MonoBehaviour {
         jointsTemp.takeOffParam.tilt = info.Tilt;
         jointsTemp.takeOffParam.rotation = info.Rotation;
 
-        jointsTemp.nodes = new MainParameters.StrucNodes[info.nodes.Length];
+        jointsTemp.nodes = new MainParameters.StrucNodes[info.nodes.Count];
 
-        for (int i = 0; i < info.nodes.Length; i++)
+        for (int i = 0; i < info.nodes.Count; i++)
         {
             jointsTemp.nodes[i].ddl = i + 1;
             jointsTemp.nodes[i].name = info.nodes[i].Name;
@@ -158,6 +149,72 @@ public class GameManager : MonoBehaviour {
 
         LagrangianModelSimple lagrangianModelSimple = new LagrangianModelSimple();
         MainParameters.Instance.joints.lagrangianModel = lagrangianModelSimple.GetParameters;
+    }
+
+    private void WriteDataToJSON(string fileName)
+    {
+        AnimationInfo info = new AnimationInfo();
+
+        info.Objective = "defalut";
+        info.Duration = MainParameters.Instance.joints.duration;
+        info.Condition = MainParameters.Instance.joints.condition;
+        info.VerticalSpeed = MainParameters.Instance.joints.takeOffParam.verticalSpeed;
+        info.AnteroposteriorSpeed = MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed;
+        info.SomersaultSpeed = MainParameters.Instance.joints.takeOffParam.somersaultSpeed;
+        info.TwistSpeed = MainParameters.Instance.joints.takeOffParam.twistSpeed;
+        info.Tilt = MainParameters.Instance.joints.takeOffParam.tilt;
+        info.Rotation = MainParameters.Instance.joints.takeOffParam.rotation;
+
+        for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
+        {
+            Nodes n = new Nodes();
+            n.Name = MainParameters.Instance.joints.nodes[i].name;
+            n.T = MainParameters.Instance.joints.nodes[i].T;
+            n.Q = MainParameters.Instance.joints.nodes[i].Q;
+
+            info.nodes.Add(n);
+        }
+
+        string jsonData = JsonUtility.ToJson(info, true);
+        File.WriteAllText(fileName, jsonData);
+    }
+
+    public void WriteDataFiles_s(string fileName)
+    {
+        string fileLines = string.Format(
+            "Duration: {0}{1}Condition: {2}{3}VerticalSpeed: {4:0.000}{5}AnteroposteriorSpeed: {6:0.000}{7}SomersaultSpeed: {8:0.000}{9}TwistSpeed: {10:0.000}{11}Tilt: {12:0.000}{13}Rotation: {14:0.000}{15}{16}",
+            MainParameters.Instance.joints.duration, System.Environment.NewLine,
+            MainParameters.Instance.joints.condition, System.Environment.NewLine,
+            MainParameters.Instance.joints.takeOffParam.verticalSpeed, System.Environment.NewLine,
+            MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed, System.Environment.NewLine,
+            MainParameters.Instance.joints.takeOffParam.somersaultSpeed, System.Environment.NewLine,
+            MainParameters.Instance.joints.takeOffParam.twistSpeed, System.Environment.NewLine,
+            MainParameters.Instance.joints.takeOffParam.tilt, System.Environment.NewLine,
+            MainParameters.Instance.joints.takeOffParam.rotation, System.Environment.NewLine, System.Environment.NewLine);
+
+        fileLines = string.Format("{0}Nodes{1}DDL, name, interpolation (type, numIntervals, slopes), T, Q{2}", fileLines, System.Environment.NewLine, System.Environment.NewLine);
+
+        for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
+        {
+            fileLines = string.Format("{0}{1}:{2}:{3},{4},{5:0.000000},{6:0.000000}:", fileLines, i + 1, MainParameters.Instance.joints.nodes[i].name, MainParameters.Instance.joints.nodes[i].interpolation.type,
+                MainParameters.Instance.joints.nodes[i].interpolation.numIntervals, MainParameters.Instance.joints.nodes[i].interpolation.slope[0], MainParameters.Instance.joints.nodes[i].interpolation.slope[1]);
+            for (int j = 0; j < MainParameters.Instance.joints.nodes[i].T.Length; j++)
+            {
+                if (j < MainParameters.Instance.joints.nodes[i].T.Length - 1)
+                    fileLines = string.Format("{0}{1:0.000000},", fileLines, MainParameters.Instance.joints.nodes[i].T[j]);
+                else
+                    fileLines = string.Format("{0}{1:0.000000}:", fileLines, MainParameters.Instance.joints.nodes[i].T[j]);
+            }
+            for (int j = 0; j < MainParameters.Instance.joints.nodes[i].Q.Length; j++)
+            {
+                if (j < MainParameters.Instance.joints.nodes[i].Q.Length - 1)
+                    fileLines = string.Format("{0}{1:0.000000},", fileLines, MainParameters.Instance.joints.nodes[i].Q[j]);
+                else
+                    fileLines = string.Format("{0}{1:0.000000}:{2}", fileLines, MainParameters.Instance.joints.nodes[i].Q[j], System.Environment.NewLine);
+            }
+        }
+
+        System.IO.File.WriteAllText(fileName, fileLines);
     }
 
     private void ReadDataFiles_s(string fileName)
@@ -267,6 +324,18 @@ public class GameManager : MonoBehaviour {
         MainParameters.Instance.joints.lagrangianModel = lagrangianModelSimple.GetParameters;
     }
 
+    public void SaveFile()
+    {
+        string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"\SimulationJson");
+
+        string fileName = FileBrowser.SaveFile(MainParameters.Instance.languages.Used.movementSaveDataFileTitle, dirSimulationFiles, "DefaultFile", "json");
+        if (fileName.Length <= 0)
+            return;
+
+        WriteDataToJSON(fileName);
+        //        WriteDataFiles_s(fileName);
+    }
+
     private float[] ExtractDataTQ(string values)
     {
         string[] subValues = Regex.Split(values, ",");
@@ -274,5 +343,30 @@ public class GameManager : MonoBehaviour {
         for (int i = 0; i < subValues.Length; i++)
             data[i] = float.Parse(subValues[i]);
         return data;
+    }
+
+    public void InterpolationDDL()
+    {
+        int n = (int)(MainParameters.Instance.joints.duration / MainParameters.Instance.joints.lagrangianModel.dt) + 1;
+        float[] t0 = new float[n];
+        float[,] q0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, n];
+
+        GenerateQ0 generateQ0 = new GenerateQ0(MainParameters.Instance.joints.lagrangianModel, MainParameters.Instance.joints.duration, 0, out t0, out q0);
+        generateQ0.ToString();
+
+        MainParameters.Instance.joints.t0 = MathFunc.MatrixCopy(t0);
+        MainParameters.Instance.joints.q0 = MathFunc.MatrixCopy(q0);
+    }
+
+    public void DisplayDDL(int ddl, bool axisRange)
+    {
+        if (ddl >= 0)
+        {
+            transform.parent.GetComponentInChildren<AniGraphManager>().DisplayCurveAndNodes(0, ddl, true);
+            if (MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide >= 0)
+            {
+                transform.parent.GetComponentInChildren<AniGraphManager>().DisplayCurveAndNodes(1, MainParameters.Instance.joints.nodes[ddl].ddlOppositeSide, true);
+            }
+        }
     }
 }

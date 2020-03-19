@@ -26,17 +26,13 @@ public class ToolBox : MonoBehaviour {
             Destroy(this);
         }
 
-        CreateManager<ScoreManager>();
+        CreateManager<AniGraphManager>();
         CreateManager<GameManager>();
         CreateManager<StatManager>();
         CreateManager<DrawManager>();
+/*        CreateManager<ScoreManager>();
         CreateManager<LoadSceneManager>();
-        CreateManager<ProfileManager>();
-        CreateManager<UIManager>();
-    }
-
-    void Start()
-    {
+        CreateManager<ProfileManager>();*/
     }
 
     private void CreateManager<T>() where T : MonoBehaviour

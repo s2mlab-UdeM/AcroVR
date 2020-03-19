@@ -1,0 +1,10 @@
+{
+    "Name": "Student1",
+    "Id": "UM0001",
+    "Score": 50.0,
+    "input": {
+        "Velocity": 0.0,
+        "Distance": 0.0,
+        "Duration": 0.0
+    }
+}
