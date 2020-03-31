@@ -6,26 +6,5 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/MenuScenes/00-MainMenu.unity
-    guid: f34262133452208408d8b648ee899e24
-  - enabled: 1
-    path: Assets/Scenes/MenuScenes/01-HallOfFame.unity
-    guid: 5059cb9a70bbc464fb00f17b00163d24
-  - enabled: 1
-    path: Assets/Scenes/MenuScenes/02-PlayerProfile.unity
-    guid: 6018684abaf41e448bc146ef47d92e6b
-  - enabled: 1
-    path: Assets/Scenes/MenuScenes/03-LastPlayerProfile-PH.unity
-    guid: 3fa4e828e302360498559da256cc7289
-  - enabled: 1
-    path: Assets/Scenes/MenuScenes/04-NewPlayerProfile-PH.unity
-    guid: b391c8e66fe632443beacb2529f32584
-  - enabled: 1
-    path: Assets/Scenes/MenuScenes/05-Training-PH.unity
-    guid: a885c53f332a2d8428e31c6b9a0590c9
-  - enabled: 1
-    path: Assets/Scenes/MenuScenes/06-Options-PH.unity
-    guid: e03f1f3a8b09f8c42a738ab996cf686b
-  - enabled: 1
-    path: Assets/Scenes/MenuScenes/ZZ-SceneTest-PH.unity
-    guid: 09e9d1f2f504c1d44b9d6322f29b7bb5
+    path: Assets/Scenes/BobbyWorkingOn/AcroVR-UI03.unity
+    guid: b4aeff5ead966eb43aea05819bc11ef4

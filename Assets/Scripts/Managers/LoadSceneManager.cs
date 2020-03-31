@@ -10,17 +10,17 @@ using UnityEngine.SceneManagement;
 
 public class LoadSceneManager : MonoBehaviour {
 
-	protected Stack<int> sceneHistoryStack;		//-- Linked to "Back" button Function
-	protected int currentSceneIndex;	//-- Linked to "Back" button Function
+	protected Stack<int> sceneHistoryStack;		///-- Linked to "Back" button Function
+	protected int currentSceneIndex;	///-- Linked to "Back" button Function
 
-	//-- Quits Build Function
+	///-- Quits Build Function
 	public void QuitBuild()
 	{
 		Application.Quit();
 	}
 
 	//**** Load Scene Section
-	//-- onClick() Load Scene Functions		//-- Add scenes from "Scenes In Build" here		//-- Please, organize scenes alphabetically
+	///-- onClick() Load Scene Functions		///-- Add scenes from "Scenes In Build" here		///-- Please, organize scenes alphabetically
 	#region <-- TOP
 	public void LoadScenePlayerProfile()
 	{
@@ -58,28 +58,28 @@ public class LoadSceneManager : MonoBehaviour {
 	}
 	#endregion <-- BOTTOM
 
-	//-- Load Scene Functions
+	///-- Load Scene Functions
 	#region <-- TOP
-	//-- Load onClick() Funtion		//-- Linked with CreateLastSceneStack
+	///-- Load onClick() Funtion		///-- Linked with CreateLastSceneStack
 	public void LoadRequestedScene(int loadRequestedScene)
 	{
 		if (sceneHistoryStack == null)
 		{
-			CreateLastSceneStack();     //-- Creates sceneHistoryStack
+			CreateLastSceneStack();     ///-- Creates sceneHistoryStack
 		}
 
-		currentSceneIndex = SceneManager.GetActiveScene().buildIndex;	//-- Save loadRequestedScene variable
-		sceneHistoryStack.Push(currentSceneIndex);	//-- Stack loadRequestedScene variable
-		SceneManager.LoadScene(loadRequestedScene);	//-- lOAD Requested Scene
+		currentSceneIndex = SceneManager.GetActiveScene().buildIndex;	///-- Save loadRequestedScene variable
+		sceneHistoryStack.Push(currentSceneIndex);	///-- Stack loadRequestedScene variable
+		SceneManager.LoadScene(loadRequestedScene);	///-- lOAD Requested Scene
 	}
 
-	//-- "Back" button Function		//-- Linked with LoadRequestedScene & CreateLastSceneStack functions
+	///-- "Back" button Function		///-- Linked with LoadRequestedScene & CreateLastSceneStack functions
 	public void LoadLastScene()
 	{
 		SceneManager.LoadScene(sceneHistoryStack.Pop());
 	}
 
-	//-- Create Stack<> button Function		//-- Linked with LoadRequestedScene
+	///-- Create Stack<> button Function		///-- Linked with LoadRequestedScene
 	void CreateLastSceneStack()
 	{
 		sceneHistoryStack = new Stack<int>();
@@ -89,8 +89,8 @@ public class LoadSceneManager : MonoBehaviour {
 
 	//**** TEST	Section
 	#region <-- Deleted TOP
-	//-- Deleted When finished
-	//-- Loads last scene found in Unity menu
+	///-- Deleted When finished
+	///-- Loads last scene found in Unity menu
 	public void LoadFinalScene()
 	{
 		LoadRequestedScene(SceneManager.sceneCountInBuildSettings-1);
