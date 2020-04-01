@@ -75,7 +75,7 @@ public class UIManager : MonoBehaviour
 	#endregion		<== BOTTOM
 
 
-	///--- Player profile logic
+	///--- Player profile check logic
 			/// line 30
 	void ProfileCheckOnStart()
 	{

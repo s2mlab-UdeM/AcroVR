@@ -171,7 +171,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 114493156527440742, guid: a55ecc365ff0e1d4a809842a72027b06,
           type: 2}
-        m_MethodName: LoadFinalScene
+        m_MethodName: TEST_LoadFinalScene
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

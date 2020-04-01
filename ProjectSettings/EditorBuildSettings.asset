@@ -4,7 +4,4 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes:
-  - enabled: 1
-    path: Assets/Scenes/BobbyWorkingOn/AcroVR-UI03.unity
-    guid: b4aeff5ead966eb43aea05819bc11ef4
+  m_Scenes: []
