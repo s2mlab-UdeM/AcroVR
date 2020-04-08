@@ -4,15 +4,15 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-///		UI In-Game menu logic
+///		In-Game menu logic
 /// </summary>
 
 public class TabGameObjects : MonoBehaviour
 {
-	// Variables
-	///===/// Dev Tools
+	///===/// Variables
+	/// Developer tool to bypass Start behavior
 	[Header("UI Developer Tool Bypass")]
-	[Tooltip("Activate to bypass UI restrictiuons or logic")]
+	[Tooltip("Activate to bypass UI behavior")]
 	public bool startBehaviour = false;
 	[Tooltip("Profile check: not linked to outside function")]
 	public bool playerProfile = false;
@@ -20,208 +20,244 @@ public class TabGameObjects : MonoBehaviour
 	public bool playerSettings = false;
 
 
-	public GameObject tabGameObjects;
+	///===/// Variables
+	/// UI GameObjects
+	[Header("Tab GameObjects")]
+	[Tooltip("Drag and Drop GameObject with Button object and Panel object")]
+	public GameObject tab0;
+	public GameObject tab1;
+	public GameObject tab2;
+	public GameObject tab3;
+	public GameObject tab4;
+	public GameObject tab5;
+
+	private List<GameObject> listTab = new List<GameObject>();
+
 
 	// Start
 	void Start()
 	{
-		tabGameObjects = GameObject.Find("TabGameObjects");
-
-		//DeveloperTool();
-		//ProfileCheckOnStart();	
+		CreateTabList();
+		DeveloperTool();
+		ProfileCheckOnStart();
 
 	}
 
-	//// Update
-	//void Update()
-	//{
+	// Update
+	void Update()
+	{
 
-	//}
+	}
 
-
-	/////===/// Developer Tool function
-	//#region		<== TOP
-
-	/////--- Launches tools on startup
-	///// If required to remove Developer Tool function, Search/Find all "Developer Tool" references
-	//void DeveloperTool()
-	//{
-
-	//	if (startBehaviour == true)
-	//	{
-	//		playerProfile = true;
-	//		playerSettings = true;
-	//	}
-
-	//	/// Print function, line 60
-	//	DevBypassPrint();
-	//}
-
-	/////--- Print active Developer Tool options
-	//void DevBypassPrint()
-	//{
-	//	/// If no DEVELOPER TOOL is active, don't print 
-	//	if (startBehaviour || playerProfile || playerSettings)
-	//	{
-	//		print("UI DEVELOPER TOOL Active" + "\n" +
-	//					/// line 84
-	//					"BYPASS Start Behaviour: " + startBehaviour.ToString() +
-	//				/// line 89
-	//				"    BYPASS Player Profile: " + playerProfile.ToString() +
-	//				/// line 89
-	//				"    BYPASS Player Settings: " + playerSettings.ToString());
-	//	}
-	//}
-
-	//#endregion		<== BOTTOM
+	public void GetManagerFunctions()
+	{
+		ToolBox.GetInstance().GetManager<StatManager>().ProfileLoad("Student1");
+	}
 
 
-	/////--- Player profile check logic
-	///// line 30
-	//void ProfileCheckOnStart()
-	//{
-
-	//	///--- Developer Tool function to bypass player profile check
-	//	if (startBehaviour == false)
-	//	{
-	//		///--- Activate GameObject children "Button", Disable GameObject "Panel" in parent in GameObject Tab, found in List<> named listTab[]. Origine: line 104
-	//		SetActiveTab();
-
-	//		if (playerProfile == false && playerSettings == false)
-	//		{
-	//			Tab0();
-	//		}
-
-	//		/// Player profile and settings is true, activate LaunchWithProfile function. If preferred, replace with Tab function, line 151  
-	//		else
-	//		{
-	//			/// Origine: line 96
-	//			LaunchWithProfile();
-	//		}
-	//	}
-
-	//}
-
-	/////--- Profile function
-	///// If not useful, errase function and change line 87 to desired Tab
-	//public void LaunchWithProfile()
-	//{
-	//	Tab1();
-
-	//}
-
-	/////--- Activate/Disable children in List listTab (GameObject Tab)
-	//void SetActiveTab()
-	//{
-
-	//}
+	public void CreateTabList()
+	{
+		listTab.Add(tab0);
+		listTab.Add(tab1);
+		listTab.Add(tab2);
+		listTab.Add(tab3);
+		listTab.Add(tab4);
+		listTab.Add(tab5);
+	}
 
 
-	/////===/// Tab switching function
-	//#region		<== TOP
+	///--- Player profile check logic
+	public void ProfileCheckOnStart()
+	{
 
-	/////--- Welcome Tab
-	//public void Tab0()
-	//{
-	//	/// All comments apply to remaining Tab functions
+		///--- Developer Tool function to bypass player profile check
+		if (startBehaviour == false)
+		{
+			///--- Activate GameObject children "ButtonTab", Disable GameObject "Panel" in parent in GameObject Tab, found in List<> named listTab[]
+			SetActiveTab();
 
-	//	/// Activate "Button" & Disable "Panel" children in List listTab (GameObject Tab), line 113
-	//	SetActiveTab();
+			if (playerProfile == false && playerSettings == false)
+			{
+				Tab0();
+			}
 
-	//	/// Activate Element0 (parent), line 116
-	//	listTab[0].transform.gameObject.SetActive(true);
+			/// Player profile and settings is true, activate LaunchWithProfile function. If preferred, replace with Tab function
+			else
+			{
+				/// Origine: line 96
+				LaunchWithProfile();
+			}
+		}
 
-	//	/// Activate Element0's Panel (child), line 125
-	//	listTab[0].transform.Find("Panels").transform.gameObject.SetActive(true);
+	}
 
-	//	///	ARCHIVE: Optimized version
-	//	///	listTab[0].transform.GetComponentInChildren<GameObject>(true);
-	//}
+	///--- Profile function
+	/// If not useful, errase function and change line 87 to desired Tab
+	public void LaunchWithProfile()
+	{
+		Tab1();
 
-	/////--- Movement Tab
-	//public void Tab1()
-	//{
-	//	SetActiveTab();
+	}
 
-	//	/// Activate Element0 (parent)
-	//	listTab[1].transform.gameObject.SetActive(true);
+	///--- Activate/Disable children in List listTab (GameObject Tab)
+	public void SetActiveTab()
+	{
+		/// listTab Start behaviour
+		foreach (GameObject tab in listTab)
+		{
+			/// Activate parent on start
+			if (tab.transform != null)
+			{
+				tab.gameObject.SetActive(true);
+			}
 
-	//	/// Activate Element0's Panel (child)
-	//	listTab[1].transform.Find("Panels").transform.gameObject.SetActive(true);
+			/// Disable child's "Panels" on start
+			if (tab.transform.Find("Panels") != null)
+			{
+				tab.transform.Find("Panels").gameObject.SetActive(false);
 
-	//}
+			}
 
-	/////--- Take Off Tab
-	//public void Tab2()
-	//{
-	//	SetActiveTab();
+			/// Activate child's "ButtonTab" on start
+			if (tab.transform.Find("ButtonTab") != null)
+			{
+				tab.transform.Find("ButtonTab").gameObject.SetActive(true);
 
-	//	/// Activate Element0 (parent)
-	//	listTab[2].transform.gameObject.SetActive(true);
+			}
 
-	//	/// Activate Element0's Panel (child)
-	//	listTab[2].transform.Find("Panels").transform.gameObject.SetActive(true);
-
-	//}
-
-	/////--- Replay Tab
-	//public void Tab3()
-	//{
-	//	SetActiveTab();
-
-	//	/// Activate Element0 (parent)
-	//	listTab[3].transform.gameObject.SetActive(true);
-
-	//	/// Activate Element0's Panel (child)
-	//	listTab[3].transform.Find("Panels").transform.gameObject.SetActive(true);
-
-	//}
-
-	/////--- Results Tab
-	//public void Tab4()
-	//{
-	//	SetActiveTab();
-
-	//	///--- Activate Element0 (parent)
-	//	listTab[4].transform.gameObject.SetActive(true);
-
-	//	///--- Activate Element0's Panel (child)
-	//	listTab[4].transform.Find("Panels").transform.gameObject.SetActive(true);
-
-	//}
-
-	/////--- Settings Tab
-	//public void Tab5()
-	//{
-	//	SetActiveTab();
-
-	//	/// Activate Element0 (parent)
-	//	listTab[5].transform.gameObject.SetActive(true);
-
-	//	/// Activate Element0's Panel (child)
-	//	listTab[5].transform.Find("Panels").transform.gameObject.SetActive(true);
-
-	//}
-
-	//#endregion		<== BOTTOM
+			///	ARCHIVE: Optimized version
+			///	if (tab.transform.GetChild(0).gameObject != null)
+			///	{
+			///		tab.transform.GetChild(0).gameObject.SetActive(false);
+			///	}
+		}
+	}
 
 
-	/////===/// Buttons for Tab0
-	//#region		<== TOP
+	///===/// Tab switching function
+	#region		<== TOP
 
-	/////--- OnClick() load mission file
-	///// <summary>
-	/////		UI In-Game menu logic
-	///// </summary>
-	//public void ButtonLoadMission()
-	//{
-	//	ToolBox.GetInstance().GetManager<GameManager>().MissionLoad();
+	///--- Welcome Tab
+	public void Tab0()
+	{
+		/// All comments apply to remaining Tab functions
 
-	//	ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(1);
-	//}
+		/// Activate "ButtonTab" & Disable "Panel" children in List listTab (GameObject Tab)
+		SetActiveTab();
+
+		/// Activate Element0 (parent)
+		listTab[0].gameObject.SetActive(true);
+
+		/// Activate Element0's Panel (child)
+		listTab[0].transform.Find("Panels").gameObject.SetActive(true);
+
+		///	ARCHIVE: Optimized version
+		///	listTab[0].transform.GetComponentInChildren<GameObject>(true);
+	}
+
+	///--- Movement Tab
+	public void Tab1()
+	{
+		SetActiveTab();
+
+		///--- Activate Element0 (parent)
+		listTab[1].gameObject.SetActive(true);
+
+		///--- Activate Element0's Panel (child)
+		listTab[1].transform.Find("Panels").gameObject.SetActive(true);
+
+	}
+
+	///--- Take Off Tab
+	public void Tab2()
+	{
+		SetActiveTab();
+
+		///--- Activate Element0 (parent)
+		listTab[2].gameObject.SetActive(true);
+
+		///--- Activate Element0's Panel (child)
+		listTab[2].transform.Find("Panels").gameObject.SetActive(true);
+
+	}
+
+	///--- Replay Tab
+	public void Tab3()
+	{
+		SetActiveTab();
+
+		///--- Activate Element0 (parent)
+		listTab[3].gameObject.SetActive(true);
+
+		///--- Activate Element0's Panel (child)
+		listTab[3].transform.Find("Panels").gameObject.SetActive(true);
+
+	}
+
+	///--- Results Tab
+	public void Tab4()
+	{
+		SetActiveTab();
+
+		///--- Activate Element0 (parent)
+		listTab[4].gameObject.SetActive(true);
+
+		///--- Activate Element0's Panel (child)
+		listTab[4].transform.Find("Panels").gameObject.SetActive(true);
+
+	}
+
+	///--- Settings Tab
+	public void Tab5()
+	{
+		SetActiveTab();
+
+		///--- Activate Element0 (parent)
+		listTab[5].gameObject.SetActive(true);
+
+		///--- Activate Element0's Panel (child)
+		listTab[5].transform.Find("Panels").gameObject.SetActive(true);
+
+	}
+
+	#endregion		<== BOTTOM
 
 
-	//#endregion		<== BOTTOM
+	///===/// Developer Tool function
+	#region		<== TOP
+
+	///--- Launches tools on startup
+	/// If required to remove Developer Tool function, Search/Find all "Developer Tool" references
+	void DeveloperTool()
+	{
+		/// Found in ProfileCheckOnStart()
+		if (startBehaviour == true)
+		{
+			playerProfile = true;
+			playerSettings = true;
+		}
+
+		/// Print function
+		DevBypassPrint();
+	}
+
+	///--- Print active Developer Tool options
+	void DevBypassPrint()
+	{
+		/// If no DEVELOPER TOOL is active, don't print 
+		if (startBehaviour || playerProfile || playerSettings)
+		{
+			print("UI DEVELOPER TOOL Active" + "\n" +
+						/// Found in ProfileCheckOnStart()
+						"BYPASS Start Behaviour: " + startBehaviour.ToString() +
+						/// Found in SetActiveTab()
+					"    BYPASS Player Profile: " + playerProfile.ToString() +
+						/// Found in SetActiveTab()
+					"    BYPASS Player Settings: " + playerSettings.ToString());
+		}
+	}
+
+	#endregion		<== BOTTOM
 
 
 }

@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 2
   tags:
   - Button
+  - UI
+  - UIElements
+  - AvatarSpawnpoint
   layers:
   - Default
   - TransparentFX
@@ -16,7 +19,7 @@ TagManager:
   - 
   - Animation
   - 
-  - 
+  - SecondCamera
   - 
   - 
   - 

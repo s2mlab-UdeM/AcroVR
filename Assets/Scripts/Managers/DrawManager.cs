@@ -17,6 +17,8 @@ public class DrawManager : MonoBehaviour
         [DllImport(dllpath)] static extern void c_solveLinearSystem(IntPtr matA, int nbCol, int nbLigne, IntPtr matB, IntPtr solX);*/
 
     ////////////////
+    public GameObject avatarSpawnpoint;
+    Vector3 avatarVector3;
     public GameObject girl1;
     public GameObject girl2;
     GameObject girl1Prefab;
@@ -112,12 +114,15 @@ public class DrawManager : MonoBehaviour
         // Root
         girl1Hip = girl1.transform.Find("Petra.002/hips").gameObject;
         ///////////////////////////
-
         //        stickMan = GameObject.Find("StickMan");
 
         ThetaScale = 0.01f;
         girl1.SetActive(false);
         cntAvatar = 1;
+
+        avatarSpawnpoint = GameObject.FindGameObjectWithTag("AvatarSpawnpoint");
+        avatarVector3 = avatarSpawnpoint.transform.position;
+        //girl1 = Instantiate(girl1Prefab);
     }
 
     void Update()
@@ -951,6 +956,7 @@ public class DrawManager : MonoBehaviour
 
         // Root
         girl1Hip.transform.position = new Vector3((float)qf[6], (float)qf[8], (float)qf[7]);
+        girl1Hip.transform.position += new Vector3(avatarVector3.x, avatarVector3.y, avatarVector3.z);    ///--  Search reference: Avatar spawnpoint, Vector3 spawnpoint 
 
         // Bio Order
         girl1Hip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg + 90f, Vector3.right) *

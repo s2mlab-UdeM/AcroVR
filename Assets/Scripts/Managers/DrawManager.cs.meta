@@ -3,7 +3,11 @@ guid: 31789c2db57f8c141afb9131f968f9f9
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - avatarSpawnpoint: {fileID: 1961413411826026, guid: bc15ba16d4eba1d45803d4bca467da8a,
+      type: 2}
+  - girl1: {instanceID: 0}
+  - girl2: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
