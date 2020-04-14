@@ -57,8 +57,8 @@ public class AniGraphManager : MonoBehaviour
     private CurveEditor m_CurveEditor2;
     private CurveEditor m_CurveEditor3;
     private CurveEditor m_CurveEditor4;
-//    public Rect windowRect1 = new Rect(0, 0, 270, 150);
-    public Rect windowRect1 = new Rect(0, 0, 550, 330);
+    public Rect windowRect1 = new Rect(0, 0, 270, 150);
+//    public Rect windowRect1 = new Rect(0, 0, 550, 330);
     public Rect windowRect2 = new Rect(270, 0, 270, 150);
     public Rect windowRect3 = new Rect(0, 150, 270, 150);
     public Rect windowRect4 = new Rect(270, 150, 270, 150);
@@ -94,12 +94,13 @@ public class AniGraphManager : MonoBehaviour
     public float speed = 0.3f;
     Dictionary<int, List<Texture2D>> gifFiles = new Dictionary<int, List<Texture2D>>();
 
-    void Start () {
-/*        GameObject graphCanvas = GameObject.Find("TakeOffGraph");
-        graph = graphCanvas.GetComponent<GraphChart>();
+    void Start()
+    {
+        /*        GameObject graphCanvas = GameObject.Find("TakeOffGraph");
+                graph = graphCanvas.GetComponent<GraphChart>();
 
-        graphCanvas = GameObject.Find("ResultGraph");
-        resultGraph = graphCanvas.GetComponent<GraphChart>();*/
+                graphCanvas = GameObject.Find("ResultGraph");
+                resultGraph = graphCanvas.GetComponent<GraphChart>();*/
 
         resultPrefab = (GameObject)Resources.Load("ResultPrefab", typeof(GameObject));
         data1GraphLine = (Material)Resources.Load("Data1GraphLine", typeof(Material));
@@ -107,7 +108,7 @@ public class AniGraphManager : MonoBehaviour
         takeoffPrefab = (GameObject)Resources.Load("TakeOffParamPrefab", typeof(GameObject));
 
         dataCategories = new string[2] { "Data1", "Data2" };
-//        dataCategories = new string[2] { "Player1", "Player2" };
+        //        dataCategories = new string[2] { "Player1", "Player2" };
         nodesCategories = new string[2] { "Nodes1", "Nodes2" };
         nodesTemp1Category = "NodesTemp1";
         nodesTemp2Category = "NodesTemp2";
@@ -144,44 +145,44 @@ public class AniGraphManager : MonoBehaviour
                 LoadGif(2, "Assets/Art/3.gif");*/
     }
 
-/*    void LoadGif(int num, string fileName)
-    {
-        List<Texture2D> gifFrames = new List<Texture2D>();
-        var gifImage = Image.FromFile(fileName);
-        var dimension = new FrameDimension(gifImage.FrameDimensionsList[0]);
-        int frameCount = gifImage.GetFrameCount(dimension);
-        for (int i = 0; i < frameCount; i++)
+    /*    void LoadGif(int num, string fileName)
         {
-            gifImage.SelectActiveFrame(dimension, i);
-            var frame = new Bitmap(gifImage.Width, gifImage.Height);
-            System.Drawing.Graphics.FromImage(frame).DrawImage(gifImage, Point.Empty);
-            var frameTexture = new Texture2D(frame.Width, frame.Height);
-            for (int x = 0; x < frame.Width; x++)
-                for (int y = 0; y < frame.Height; y++)
-                {
-                    System.Drawing.Color sourceColor = frame.GetPixel(x, y);
-                    //                    frameTexture.SetPixel(frame.Width - 1 - x, y, new Color32(sourceColor.R, sourceColor.G, sourceColor.B, sourceColor.A)); // for some reason, x is flipped
-                    frameTexture.SetPixel(x, -y, new Color32(sourceColor.R, sourceColor.G, sourceColor.B, sourceColor.A)); // for some reason, x is flipped
-                }
-            frameTexture.Apply();
-            gifFrames.Add(frameTexture);
-        }
-        gifFiles.Add(num, gifFrames);
-    }*/
+            List<Texture2D> gifFrames = new List<Texture2D>();
+            var gifImage = Image.FromFile(fileName);
+            var dimension = new FrameDimension(gifImage.FrameDimensionsList[0]);
+            int frameCount = gifImage.GetFrameCount(dimension);
+            for (int i = 0; i < frameCount; i++)
+            {
+                gifImage.SelectActiveFrame(dimension, i);
+                var frame = new Bitmap(gifImage.Width, gifImage.Height);
+                System.Drawing.Graphics.FromImage(frame).DrawImage(gifImage, Point.Empty);
+                var frameTexture = new Texture2D(frame.Width, frame.Height);
+                for (int x = 0; x < frame.Width; x++)
+                    for (int y = 0; y < frame.Height; y++)
+                    {
+                        System.Drawing.Color sourceColor = frame.GetPixel(x, y);
+                        //                    frameTexture.SetPixel(frame.Width - 1 - x, y, new Color32(sourceColor.R, sourceColor.G, sourceColor.B, sourceColor.A)); // for some reason, x is flipped
+                        frameTexture.SetPixel(x, -y, new Color32(sourceColor.R, sourceColor.G, sourceColor.B, sourceColor.A)); // for some reason, x is flipped
+                    }
+                frameTexture.Apply();
+                gifFrames.Add(frameTexture);
+            }
+            gifFiles.Add(num, gifFrames);
+        }*/
 
     void Update()
     {
-        if (MainParameters.Instance.joints.nodes==null) return;
+        if (MainParameters.Instance.joints.nodes == null) return;
 
         if (Input.GetMouseButtonDown(0))
         {
-/*            graph.DataSource.StartBatch();
-                        graph.DataSource.ClearCategory("Player1");
-                        for (int i = 0; i < 30; i++)
-                        {
-                            graph.DataSource.AddPointToCategory("Player1", Random.value * 10f, Random.value * 10f);
-                        }
-                        graph.DataSource.EndBatch();*/
+            /*            graph.DataSource.StartBatch();
+                                    graph.DataSource.ClearCategory("Player1");
+                                    for (int i = 0; i < 30; i++)
+                                    {
+                                        graph.DataSource.AddPointToCategory("Player1", Random.value * 10f, Random.value * 10f);
+                                    }
+                                    graph.DataSource.EndBatch();*/
         }
 
         if (graph && takeoffCanvas.activeSelf)
@@ -230,8 +231,12 @@ public class AniGraphManager : MonoBehaviour
                 MainParameters.Instance.joints.nodes[ddlUsed].Q[nodeUsed] = (float)mousePosY / Mathf.Rad2Deg;
                 transform.parent.GetComponentInChildren<GameManager>().InterpolationDDL();
                 transform.parent.GetComponentInChildren<GameManager>().DisplayDDL(ddlUsed, true);
-//                transform.parent.GetComponentInChildren<GameManager>().DisplayDDL(0, true);
+                //                transform.parent.GetComponentInChildren<GameManager>().DisplayDDL(0, true);
                 //            MovementF.Instance.InterpolationAndDisplayDDL(ddlUsed, ddlUsed, (int)Mathf.Round(MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed] / MainParameters.Instance.joints.lagrangianModel.dt), false);
+
+                int temp = transform.parent.GetComponentInChildren<DrawManager>().frameN;
+                transform.parent.GetComponentInChildren<DrawManager>().ShowAvatar(1);
+                transform.parent.GetComponentInChildren<DrawManager>().frameN = temp;
             }
         }
     }
@@ -280,7 +285,7 @@ public class AniGraphManager : MonoBehaviour
                 value = axisYmax;
             if (axisRange || MainParameters.Instance.joints.t0[i] <= axisXmax)
                 graph.DataSource.AddPointToCategory(dataCategories[curve], MainParameters.Instance.joints.t0[i], value);
-//            graph.DataSource.AddPointToCategory("Player1", MainParameters.Instance.joints.t0[i], value);
+            //            graph.DataSource.AddPointToCategory("Player1", MainParameters.Instance.joints.t0[i], value);
             if (value < q0Min) q0Min = value;
             if (value > q0Max) q0Max = value;
         }
@@ -290,7 +295,7 @@ public class AniGraphManager : MonoBehaviour
             value = MainParameters.Instance.joints.nodes[ddl].Q[i] * Mathf.Rad2Deg;
             if (axisRange || (MainParameters.Instance.joints.nodes[ddl].T[i] <= axisXmax && value >= axisYmin && value <= axisYmax))
                 graph.DataSource.AddPointToCategory(nodesCategories[curve], MainParameters.Instance.joints.nodes[ddl].T[i], value);
-//                graph.DataSource.AddPointToCategory("Player2", MainParameters.Instance.joints.nodes[ddl].T[i], value);
+            //                graph.DataSource.AddPointToCategory("Player2", MainParameters.Instance.joints.nodes[ddl].T[i], value);
         }
 
         MaterialTiling tiling = new MaterialTiling(false, 45.5f);
@@ -335,7 +340,7 @@ public class AniGraphManager : MonoBehaviour
         }
         graph.DataSource.EndBatch();
 
-//        bDraw = true;
+        //        bDraw = true;
     }
 
     /*    private Material lineMaterial;
@@ -465,7 +470,7 @@ public class AniGraphManager : MonoBehaviour
 
     public void DisplayCurves(GraphChart graphCurves, float[] t, float[,] data)
     {
-        if (data==null) return;
+        if (data == null) return;
 
         if (graphCurves == null) return;
         graphCurves.DataSource.StartBatch();
@@ -512,17 +517,17 @@ public class AniGraphManager : MonoBehaviour
     float x = 50, y = 50;
     public void OnGUI()
     {
-        if (Event.current.type != EventType.Repaint)
-            return;
+//        if (Event.current.type != EventType.Repaint)
+//            return;
 
         //        windowRect1 = GUI.Window(0, windowRect1, Graph1, "Preview");
 
-//        DrawingLine.DrawLine(new Vector2(8, 100), new Vector2(12, 100), UnityEngine.Color.green, 4, false);
-//        DrawingLine.DrawLine(new Vector2(10, 100), new Vector2(200, 20), UnityEngine.Color.green, 2, false);
+        //        DrawingLine.DrawLine(new Vector2(8, 100), new Vector2(12, 100), UnityEngine.Color.green, 4, false);
+        //        DrawingLine.DrawLine(new Vector2(10, 100), new Vector2(200, 20), UnityEngine.Color.green, 2, false);
         //        DrawingLine.DrawLine(new Vector2(200, 20), new Vector2(300, 100), UnityEngine.Color.green, 3, false);
-//                DrawingLine.BezierLine(new Vector2(8, 100), new Vector2(8, 100), new Vector2(12, 100), new Vector2(12, 100), UnityEngine.Color.green, 4, false, 50);
-//                DrawingLine.BezierLine(new Vector2(10, 100), new Vector2(10, 100), new Vector2(200, 20), new Vector2(200, 20), UnityEngine.Color.green, 2, false, 50);
-//                DrawingLine.BezierLine(new Vector2(200, 20), new Vector2(205, 20), new Vector2(300, 100), new Vector2(295, 100), UnityEngine.Color.green, 5, false, 50);
+        //                DrawingLine.BezierLine(new Vector2(8, 100), new Vector2(8, 100), new Vector2(12, 100), new Vector2(12, 100), UnityEngine.Color.green, 4, false, 50);
+        //                DrawingLine.BezierLine(new Vector2(10, 100), new Vector2(10, 100), new Vector2(200, 20), new Vector2(200, 20), UnityEngine.Color.green, 2, false, 50);
+        //                DrawingLine.BezierLine(new Vector2(200, 20), new Vector2(205, 20), new Vector2(300, 100), new Vector2(295, 100), UnityEngine.Color.green, 5, false, 50);
 
         Event evt = Event.current;
         switch (evt.type)
@@ -548,13 +553,20 @@ public class AniGraphManager : MonoBehaviour
                                             DrawNodeCurve(new Vector3(MainParameters.Instance.joints.t0[i], MainParameters.Instance.joints.q0[0, i] * Mathf.Rad2Deg/50, 0)/3, new Vector3(MainParameters.Instance.joints.t0[i+1], MainParameters.Instance.joints.q0[0, i+1] * Mathf.Rad2Deg/50, 0)/3);
                                     }*/
 
-
-
-            //            windowRect1 = GUI.Window(0, windowRect1, Graph1, "Graph1");
-            //            windowRect2 = GUI.Window(1, windowRect2, Graph2, "Graph2");
+                        windowRect1 = GUI.Window(0, windowRect1, Graph1, "Graph1");
+                        windowRect2 = GUI.Window(1, windowRect2, Graph2, "Graph2");
             //            windowRect3 = GUI.Window(2, windowRect3, Graph3, "Graph3");
             //            windowRect4 = GUI.Window(3, windowRect4, Graph4, "Graph4");
+
         }
+
+        /*        if(takeoffCanvas.activeSelf)
+                {
+                    float value = MainParameters.Instance.joints.q0[0, 10] * Mathf.Rad2Deg;
+                    //            graph.DataSource.AddPointToCategory(nodesCategories[0], MainParameters.Instance.joints.t0[10], value, 5);
+                    DoubleVector3 point = graph.DataSource.GetPoint(nodesCategories[0], 10);
+                   DrawingLine.DrawLine(point.ToVector2(), point.ToVector2() + new Vector2(0,10f), UnityEngine.Color.green, 4, false);
+                }*/
     }
 
     public void TaskOffGraphOn()
@@ -570,7 +582,7 @@ public class AniGraphManager : MonoBehaviour
 
     public void ResultGraphOn()
     {
-//        bDraw = true;
+        //        bDraw = true;
         resultCanvas.SetActive(true);
     }
 
@@ -582,8 +594,8 @@ public class AniGraphManager : MonoBehaviour
     void Graph1(int windowID)
     {
         //        m_DopeSheetEditor.OnGUI(windowRect);
-        //        m_CurveEditor1.OnGUI(1);
-        MakeDropDownMenu();
+                m_CurveEditor1.OnGUI(1);
+//        MakeDropDownMenu();
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
 
@@ -645,8 +657,8 @@ public class AniGraphManager : MonoBehaviour
 
     void DrawNodeCurve(Vector3 start, Vector3 end)
     {
-//        Vector3 startTan = start + Vector3.right;
-//        Vector3 endTan = end + Vector3.left;
+        //        Vector3 startTan = start + Vector3.right;
+        //        Vector3 endTan = end + Vector3.left;
         Vector3 startTan = start;
         Vector3 endTan = end;
 

@@ -22,7 +22,7 @@ GameObject:
   - component: {fileID: 114486999451974208}
   - component: {fileID: 114725379345649590}
   m_Layer: 0
-  m_Name: Toolbox
+  m_Name: ToolBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -202,6 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31789c2db57f8c141afb9131f968f9f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  avatarSpawnpoint: {fileID: 0}
   girl1: {fileID: 0}
   girl2: {fileID: 0}
   qf: []

@@ -9,16 +9,14 @@ using System.Collections.Generic;
 
 public class DrawManager : MonoBehaviour
 {
-    /*    const string dllpath = "biorbd_c.dll";
-        [DllImport(dllpath)] static extern IntPtr c_biorbdModel(StringBuilder pathToModel);
-        [DllImport(dllpath)] static extern int c_nQ(IntPtr model);
-        [DllImport(dllpath)] static extern void c_massMatrix(IntPtr model, IntPtr q, IntPtr massMatrix);
-        [DllImport(dllpath)] static extern void c_inverseDynamics(IntPtr model, IntPtr q, IntPtr qdot, IntPtr qddot, IntPtr tau);
-        [DllImport(dllpath)] static extern void c_solveLinearSystem(IntPtr matA, int nbCol, int nbLigne, IntPtr matB, IntPtr solX);*/
+    const string dllpath = "biorbd_c.dll";
+    [DllImport(dllpath)] static extern IntPtr c_biorbdModel(StringBuilder pathToModel);
+    [DllImport(dllpath)] static extern int c_nQ(IntPtr model);
+    [DllImport(dllpath)] static extern void c_massMatrix(IntPtr model, IntPtr q, IntPtr massMatrix);
+    [DllImport(dllpath)] static extern void c_inverseDynamics(IntPtr model, IntPtr q, IntPtr qdot, IntPtr qddot, IntPtr tau);
+    [DllImport(dllpath)] static extern void c_solveLinearSystem(IntPtr matA, int nbCol, int nbLigne, IntPtr matB, IntPtr solX);
 
     ////////////////
-    public GameObject avatarSpawnpoint;
-    Vector3 avatarVector3;
     public GameObject girl1;
     public GameObject girl2;
     GameObject girl1Prefab;
@@ -94,7 +92,7 @@ public class DrawManager : MonoBehaviour
     bool isPaused = false;
     public bool isEditing = false;
 
-    //    IntPtr ptr_model;
+    IntPtr ptr_model;
 
     void Awake()
     {
@@ -114,15 +112,12 @@ public class DrawManager : MonoBehaviour
         // Root
         girl1Hip = girl1.transform.Find("Petra.002/hips").gameObject;
         ///////////////////////////
+
         //        stickMan = GameObject.Find("StickMan");
 
         ThetaScale = 0.01f;
         girl1.SetActive(false);
         cntAvatar = 1;
-
-        avatarSpawnpoint = GameObject.FindGameObjectWithTag("AvatarSpawnpoint");
-        avatarVector3 = avatarSpawnpoint.transform.position;
-        //girl1 = Instantiate(girl1Prefab);
     }
 
     void Update()
@@ -430,8 +425,9 @@ public class DrawManager : MonoBehaviour
 //        ptr_model = c_biorbdModel(new StringBuilder("Modele_HuManS_somersault.s2mMod"));
 //        var sol = Ode.RK45(0, new Vector(x0), ShortDynamicsBiorbd_s, options); //FD avec Biorbd
         ///////
-
+       
         var points = sol.SolveFromToStep(0, joints.duration + joints.lagrangianModel.dt, joints.lagrangianModel.dt).ToArray();
+
 
         // test0 = point[51]
         // test1 = point[251]
@@ -674,7 +670,7 @@ public class DrawManager : MonoBehaviour
         return nouveauVecteur;
     }
 
-/*    private Vector ShortDynamicsBiorbd_s(double t, Vector x)
+    private Vector ShortDynamicsBiorbd_s(double t, Vector x)
     {
         //Declaration des pointeurs
         IntPtr ptr_massMatrix;
@@ -791,7 +787,7 @@ public class DrawManager : MonoBehaviour
         Marshal.FreeCoTaskMem(ptr_solX);
 
         return new Vector(qddot1integHumans);
-    }*/
+    }
 
     private Vector ShortDynamics_s(double t, Vector x)
     {
@@ -956,12 +952,13 @@ public class DrawManager : MonoBehaviour
 
         // Root
         girl1Hip.transform.position = new Vector3((float)qf[6], (float)qf[8], (float)qf[7]);
-        girl1Hip.transform.position += new Vector3(avatarVector3.x, avatarVector3.y, avatarVector3.z);    ///--  Search reference: Avatar spawnpoint, Vector3 spawnpoint 
 
         // Bio Order
         girl1Hip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
                                             Quaternion.AngleAxis((float)qf[10] * Mathf.Rad2Deg, Vector3.forward) *
                                             Quaternion.AngleAxis((float)qf[11] * Mathf.Rad2Deg, Vector3.up);
+
+//        girl1Hip.transform.position += new Vector3(1.5f, 0, 0);
 
         if (cntAvatar > 1)
         {
@@ -994,13 +991,13 @@ public class DrawManager : MonoBehaviour
 
         if(transform.parent.GetComponentInChildren<AniGraphManager>().takeoffCanvas.activeSelf)
         {
-//            print(MainParameters.Instance.joints.tc);
-//            print(MainParameters.Instance.joints.duration);
             //            DrawingLine.DrawLine(new Vector2(frameN * 500/numberFrames + 32f, 325), new Vector2(frameN * 500 / numberFrames + 32f, 565), UnityEngine.Color.red, 4, false);
+
             if(MainParameters.Instance.joints.tc > 0)
                 DrawingLine.DrawLine(new Vector2((frameN * 0.02f * 96 / MainParameters.Instance.joints.tc) + 30f, 325), new Vector2((frameN * 0.02f * 96 / MainParameters.Instance.joints.tc) + 30f, 565), UnityEngine.Color.red, 4, false);
             else
                 DrawingLine.DrawLine(new Vector2((frameN * 0.02f * 500 / MainParameters.Instance.joints.duration) + 30f, 325), new Vector2((frameN * 0.02f * 500 / MainParameters.Instance.joints.duration) + 30f, 565), UnityEngine.Color.red, 4, false);
+
         }
     }
 
