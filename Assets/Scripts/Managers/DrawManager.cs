@@ -120,6 +120,9 @@ public class DrawManager : MonoBehaviour
         ThetaScale = 0.01f;
         girl1.SetActive(false);
         cntAvatar = 1;
+
+        avatarSpawnpoint = GameObject.FindGameObjectWithTag("AnchorAvatarToWorld");
+        avatarVector3 = avatarSpawnpoint.transform.position;
     }
 
     void Update()

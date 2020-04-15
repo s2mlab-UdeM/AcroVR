@@ -11,6 +11,7 @@ public class PlayController : MonoBehaviour
 {
 	// Variables
 	public bool isStopFixed = true;
+	public GameObject avatar3D;
 
 	bool isPaused = false;
 	bool isTakeOff = false;

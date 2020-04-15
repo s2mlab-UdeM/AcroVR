@@ -26,6 +26,8 @@ public class _ButtonTest : MonoBehaviour
 		//sliderBar.maxValue = 1;
 		//sliderBar.wholeNumbers = false;
 		//sliderBar.value = 0;
+		feetAvatar.transform.gameObject.SetActive(false);
+		feetAvatarActive = false;
 	}
 
 	public void OnValueChanged(float value)
