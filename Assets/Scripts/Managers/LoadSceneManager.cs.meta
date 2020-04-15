@@ -4,7 +4,15 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - loadTestScene: {fileID: 102900000, guid: b4aeff5ead966eb43aea05819bc11ef4, type: 3}
+  - mainMenu: {fileID: 102900000, guid: f34262133452208408d8b648ee899e24, type: 3}
+  - playerHighscore: {fileID: 102900000, guid: 5059cb9a70bbc464fb00f17b00163d24, type: 3}
+  - newPlayerProfile: {fileID: 102900000, guid: b391c8e66fe632443beacb2529f32584,
+      type: 3}
+  - playerProfile: {fileID: 102900000, guid: 6018684abaf41e448bc146ef47d92e6b, type: 3}
+  - training: {fileID: 102900000, guid: a885c53f332a2d8428e31c6b9a0590c9, type: 3}
+  - gameOptions: {fileID: 102900000, guid: e03f1f3a8b09f8c42a738ab996cf686b, type: 3}
+  - nullCheck: {fileID: 102900000, guid: a4272fba7be421049915c88b9883ee5c, type: 3}
+  - loadTestScene: {fileID: 102900000, guid: a4272fba7be421049915c88b9883ee5c, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

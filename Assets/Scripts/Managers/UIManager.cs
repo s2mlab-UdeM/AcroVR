@@ -9,6 +9,24 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
+    [SerializeField]
+    private GameObject uiGO;
 
 
+    void Start()
+    {
+        FindGameObjectsWithTag();
+
+
+    }
+
+    public void FindGameObjectsWithTag()
+    {
+        if (uiGO == null)
+        {
+            uiGO = GameObject.FindGameObjectWithTag("UI");
+
+        }
+
+    }
 }

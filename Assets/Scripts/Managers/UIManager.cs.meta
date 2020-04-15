@@ -3,7 +3,11 @@ guid: 9c5e7a85323efda45b76e4b4f5701088
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - tabPrefab: {fileID: 114440750636107500, guid: 9ffb8bb5ccb905b4a8ac9d29567dcd67,
+      type: 2}
+  - loadScenePrefab: {fileID: 114240050502157804, guid: 18404edc6f145914c87abfd9d98c3c61,
+      type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

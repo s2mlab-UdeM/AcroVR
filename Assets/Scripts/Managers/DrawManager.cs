@@ -17,6 +17,8 @@ public class DrawManager : MonoBehaviour
     [DllImport(dllpath)] static extern void c_solveLinearSystem(IntPtr matA, int nbCol, int nbLigne, IntPtr matB, IntPtr solX);
 
     ////////////////
+    public GameObject avatarSpawnpoint;
+    public Vector3 avatarVector3; 
     public GameObject girl1;
     public GameObject girl2;
     GameObject girl1Prefab;
@@ -56,7 +58,7 @@ public class DrawManager : MonoBehaviour
     double[] qf_girl2;
     public int frameN = 0;
     int firstFrame = 0;
-    int numberFrames = 0;
+    internal int numberFrames = 0;
     float timeElapsed = 0;
     float timeFrame = 0;
     float timeStarted = 0;
@@ -952,6 +954,7 @@ public class DrawManager : MonoBehaviour
 
         // Root
         girl1Hip.transform.position = new Vector3((float)qf[6], (float)qf[8], (float)qf[7]);
+        girl1Hip.transform.position += new Vector3(avatarVector3.x, avatarVector3.y, avatarVector3.z);    ///Search reference: Avatar spawnpoint, Vector3 spawnpoint 
 
         // Bio Order
         girl1Hip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
@@ -987,7 +990,8 @@ public class DrawManager : MonoBehaviour
 
     void OnGUI()
     {
-        frameN = (int)GUI.HorizontalScrollbar(new Rect(Screen.width - 200, 430, 100, 30), frameN, 1.0F, 0.0F, numberFrames);
+        // Need to remove OnGui function
+        //frameN = (int)GUI.HorizontalScrollbar(new Rect(Screen.width - 200, 430, 100, 30), frameN, 1.0F, 0.0F, numberFrames);
 
         if(transform.parent.GetComponentInChildren<AniGraphManager>().takeoffCanvas.activeSelf)
         {

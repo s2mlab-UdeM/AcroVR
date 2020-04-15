@@ -87,9 +87,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 114493156527440742, guid: a55ecc365ff0e1d4a809842a72027b06,
+      - m_Target: {fileID: 114240050502157804, guid: 18404edc6f145914c87abfd9d98c3c61,
           type: 2}
-        m_MethodName: LoadLastScene
+        m_MethodName: LoadPreviousSceneStack
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

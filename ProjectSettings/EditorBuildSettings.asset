@@ -4,4 +4,31 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/00-MainMenu.unity
+    guid: f34262133452208408d8b648ee899e24
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/HallOfFame.unity
+    guid: 5059cb9a70bbc464fb00f17b00163d24
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/PlayerProfile.unity
+    guid: 6018684abaf41e448bc146ef47d92e6b
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/LastPlayerProfile-PH.unity
+    guid: 3fa4e828e302360498559da256cc7289
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/NewPlayerProfile-PH.unity
+    guid: b391c8e66fe632443beacb2529f32584
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/Training-PH.unity
+    guid: a885c53f332a2d8428e31c6b9a0590c9
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/Options-PH.unity
+    guid: e03f1f3a8b09f8c42a738ab996cf686b
+  - enabled: 1
+    path: Assets/Scenes/GameScenes/AcroVR-UI04.unity
+    guid: 5e3d4d838ff9ef44b85af242907c9029
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/SceneNullCheck.unity
+    guid: a4272fba7be421049915c88b9883ee5c

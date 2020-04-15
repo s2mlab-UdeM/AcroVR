@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 ///	 
@@ -9,8 +10,11 @@ using UnityEngine;
 public class PlayController : MonoBehaviour
 {
 	// Variables
+	public bool isStopFixed = true;
+
 	bool isPaused = false;
 	bool isTakeOff = false;
+
 
 	///===///  OnClick() play control buttons
 	#region		<-- TOP
