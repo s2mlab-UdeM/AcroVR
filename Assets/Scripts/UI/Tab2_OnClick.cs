@@ -9,6 +9,7 @@ using UnityEngine;
 public class Tab2_OnClick : MonoBehaviour
 {
 	// Variables
+	// [Header("SectionTitle")]	[Tooltip("HighlightInfo")]
 	bool isTakeOff = false;
 
 	///===///  OnClick() functions

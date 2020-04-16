@@ -14,6 +14,7 @@ public class _ButtonTest : MonoBehaviour
 	public Slider sliderBar;
 	public bool feetAvatarActive = false;
 	public GameObject feetAvatar;
+	public GameObject cloneAvatar;
 
 
 	void Start()
@@ -28,6 +29,14 @@ public class _ButtonTest : MonoBehaviour
 		//sliderBar.value = 0;
 		feetAvatar.transform.gameObject.SetActive(false);
 		feetAvatarActive = false;
+
+	}
+
+	void Update()
+	{
+		if (cloneAvatar == null)
+		cloneAvatar = GameObject.Find("girl1(Clone)");
+
 	}
 
 	public void OnValueChanged(float value)
@@ -50,11 +59,36 @@ public class _ButtonTest : MonoBehaviour
 
 	public void AvatarFeetTest()
 	{
+
 		feetAvatarActive = !feetAvatarActive;
 		if (feetAvatarActive == false)
+		{
+			if (cloneAvatar != null)
+			{
+				if (cloneAvatar.activeInHierarchy == false)
+				{
+					cloneAvatar.SetActive(true);
+
+				}
+			}
 			feetAvatar.transform.gameObject.SetActive(false);
+/*			feetAvatar.transform.position = new Vector3(0, 1, 0)*/;
+		}
+
 		if (feetAvatarActive == true)
+		{
+			if (cloneAvatar != null)
+			{
+				if (cloneAvatar.activeInHierarchy == true)
+				{
+				cloneAvatar.SetActive(false);
+
+				}
+			}
+
 			feetAvatar.transform.gameObject.SetActive(true);
+		}
 
 	}
+
 }

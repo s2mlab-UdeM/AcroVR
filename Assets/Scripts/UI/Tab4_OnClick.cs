@@ -9,6 +9,8 @@ using UnityEngine;
 public class Tab4_OnClick : MonoBehaviour
 {
 	// Variables
+	// [Header("SectionTitle")]	[Tooltip("HighlightInfo")]
+
 	bool isTakeOff = false;
 	bool isResultGraphOff = false;
 

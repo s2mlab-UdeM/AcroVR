@@ -9,6 +9,7 @@ using UnityEngine;
 public class Tab3_OnClick : MonoBehaviour
 {
 	// Variables
+	// [Header("SectionTitle")]	[Tooltip("HighlightInfo")]
 
 
 	/// Compare 2 avatar play sequenceses

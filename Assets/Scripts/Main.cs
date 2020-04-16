@@ -11,10 +11,14 @@ public class Main : MonoBehaviour
 	public static Main Instance;
 	public GameObject textVersionFR;
 	public GameObject textVersionEN;
+
+	[Header("Tooltip Panel")]
 	public Button buttonToolTips;
 	public Image buttonToolTipsImage;
 	public GameObject buttonNoToolTips;
 	public Image buttonNoToolTipsImage;
+
+	[Header("Language Panel")]
 	public Button buttonLanguage;
 	public Text textButtonLanguage;
 	public GameObject buttonQuit;

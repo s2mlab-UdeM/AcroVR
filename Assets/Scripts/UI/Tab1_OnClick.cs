@@ -9,9 +9,7 @@ using UnityEngine;
 public class Tab1_OnClick : MonoBehaviour
 {
 	// Variables
-
-	///===///  OnClick() functions
-
+	// [Header("SectionTitle")]	[Tooltip("HighlightInfo")]
 
 	///===///  Panel
 	#region		<-- TOP
