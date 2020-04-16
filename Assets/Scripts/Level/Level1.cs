@@ -10,6 +10,8 @@ public class Level1 : MonoBehaviour
     void Start ()
     {
         ToolBox.GetInstance().GetManager<StatManager>().ProfileLoad("Student1");
+
+        ToolBox.GetInstance().GetManager<DrawManager>().SetAnimationSpeed(1);  // 1(fast) ~ 5(slow)
     }
 
     void OnGUI()

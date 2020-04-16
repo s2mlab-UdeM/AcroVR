@@ -191,6 +191,11 @@ public class DrawManager : MonoBehaviour
         }
     }
 
+    public void SetAnimationSpeed(float speed)
+    {
+        factorPlaySpeed = speed;
+    }
+
     public GameObject GetFirstViewTransform()
     {
         return firstView;
