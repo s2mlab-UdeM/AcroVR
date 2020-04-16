@@ -7,14 +7,16 @@ public class CameraMovement : MonoBehaviour {
     GameObject player;
     public float dragSpeed = 2;
     private Vector3 dragOrigin;
+    private Vector3 pos;
 
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player");
+//        player = GameObject.FindGameObjectWithTag("Player");
+//        pos = player.transform.Find("FirstViewPoint").transform.position;
     }
 
     void Update () {
-        if(player!=null) transform.LookAt(player.transform);
+/*        if(player!=null) transform.LookAt(player.transform);
 
         if (Input.GetMouseButtonDown(2))
         {
@@ -27,6 +29,6 @@ public class CameraMovement : MonoBehaviour {
         Vector3 pos = Camera.main.ScreenToViewportPoint(Input.mousePosition - dragOrigin);
         Vector3 move = new Vector3(pos.x * dragSpeed, 0, pos.y * dragSpeed);
 
-        transform.Translate(move, Space.World);
+        transform.Translate(move, Space.World);*/
     }
 }

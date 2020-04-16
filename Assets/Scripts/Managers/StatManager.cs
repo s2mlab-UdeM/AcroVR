@@ -20,6 +20,13 @@ public struct PlayerInfo
     public InputData input;
 }
 
+[System.Serializable]
+public struct PlayerReplayInfo
+{
+    public PlayerInfo player;
+    public AnimationInfo replay;
+}
+
 public class StatManager : MonoBehaviour
 {
     public PlayerInfo info;
@@ -50,6 +57,73 @@ public class StatManager : MonoBehaviour
         {
             WriteDataToJSON(info.Name);
         }
+    }
+
+    private void ProfileReplayLoad(string fileName)
+    {
+        string dataAsJson = File.ReadAllText(fileName);
+        PlayerReplayInfo replayInfo = JsonUtility.FromJson<PlayerReplayInfo>(dataAsJson);
+
+        info = replayInfo.player;
+
+        MainParameters.StrucJoints jointsTemp = new MainParameters.StrucJoints();
+        jointsTemp.fileName = fileName;
+        jointsTemp.nodes = null;
+        jointsTemp.duration = replayInfo.replay.Duration;
+        jointsTemp.condition = replayInfo.replay.Condition;
+        jointsTemp.takeOffParam.verticalSpeed = replayInfo.replay.VerticalSpeed;
+        jointsTemp.takeOffParam.anteroposteriorSpeed = replayInfo.replay.AnteroposteriorSpeed;
+        jointsTemp.takeOffParam.somersaultSpeed = replayInfo.replay.SomersaultSpeed;
+        jointsTemp.takeOffParam.twistSpeed = replayInfo.replay.TwistSpeed;
+        jointsTemp.takeOffParam.tilt = replayInfo.replay.Tilt;
+        jointsTemp.takeOffParam.rotation = replayInfo.replay.Rotation;
+
+        jointsTemp.nodes = new MainParameters.StrucNodes[replayInfo.replay.nodes.Count];
+
+        for (int i = 0; i < replayInfo.replay.nodes.Count; i++)
+        {
+            jointsTemp.nodes[i].ddl = i + 1;
+            jointsTemp.nodes[i].name = replayInfo.replay.nodes[i].Name;
+            jointsTemp.nodes[i].interpolation = MainParameters.Instance.interpolationDefault;
+            jointsTemp.nodes[i].T = replayInfo.replay.nodes[i].T;
+            jointsTemp.nodes[i].Q = replayInfo.replay.nodes[i].Q;
+            jointsTemp.nodes[i].ddlOppositeSide = -1;
+        }
+
+        MainParameters.Instance.joints = jointsTemp;
+
+        LagrangianModelSimple lagrangianModelSimple = new LagrangianModelSimple();
+        MainParameters.Instance.joints.lagrangianModel = lagrangianModelSimple.GetParameters;
+    }
+
+    public void ProfileReplaySave(string fileName)
+    {
+        PlayerReplayInfo replayInfo = new PlayerReplayInfo();
+
+        replayInfo.player = info;
+
+        replayInfo.replay.Objective = "defalut";
+        replayInfo.replay.Duration = MainParameters.Instance.joints.duration;
+        replayInfo.replay.Condition = MainParameters.Instance.joints.condition;
+        replayInfo.replay.VerticalSpeed = MainParameters.Instance.joints.takeOffParam.verticalSpeed;
+        replayInfo.replay.AnteroposteriorSpeed = MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed;
+        replayInfo.replay.SomersaultSpeed = MainParameters.Instance.joints.takeOffParam.somersaultSpeed;
+        replayInfo.replay.TwistSpeed = MainParameters.Instance.joints.takeOffParam.twistSpeed;
+        replayInfo.replay.Tilt = MainParameters.Instance.joints.takeOffParam.tilt;
+        replayInfo.replay.Rotation = MainParameters.Instance.joints.takeOffParam.rotation;
+
+        for (int i = 0; i < MainParameters.Instance.joints.nodes.Length; i++)
+        {
+            Nodes n = new Nodes();
+            n.Name = MainParameters.Instance.joints.nodes[i].name;
+            n.T = MainParameters.Instance.joints.nodes[i].T;
+            n.Q = MainParameters.Instance.joints.nodes[i].Q;
+
+            replayInfo.replay.nodes.Add(n);
+        }
+
+        string jsonData = JsonUtility.ToJson(replayInfo, true);
+        File.WriteAllText(fileName, jsonData);
     }
 
     private void WriteDataToJSON(string fileName)

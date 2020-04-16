@@ -5,6 +5,8 @@ public class Level1 : MonoBehaviour
     bool isPaused = false;
     bool isTakeOff = false;
 
+    bool bFirstView = false;
+
     void Start ()
     {
         ToolBox.GetInstance().GetManager<StatManager>().ProfileLoad("Student1");
@@ -74,14 +76,24 @@ public class Level1 : MonoBehaviour
     }
 
     void Update () {
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            bFirstView = !bFirstView;
+        }
+        if(bFirstView)
+        {
+            Camera.main.transform.position = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.position;
+            Camera.main.transform.rotation = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.rotation;
+        }
+
         //        transform.Rotate(new Vector3(0,0,1), 20.0f * Time.deltaTime);
 
-//        if (MainParameters.Instance.joints.nodes == null) return;
+        //        if (MainParameters.Instance.joints.nodes == null) return;
 
-//        if (!ToolBox.GetInstance().GetManager<DrawManager>().animateON)
-//        {
-//            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOn();
-//        }
+        //        if (!ToolBox.GetInstance().GetManager<DrawManager>().animateON)
+        //        {
+        //            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOn();
+        //        }
 
         /*        if (Input.GetKeyDown(KeyCode.A)) ToolBox.GetInstance().GetManager<DrawManager>().PlayAvatar();
                 if (Input.GetKeyDown(KeyCode.S))

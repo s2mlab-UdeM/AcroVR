@@ -18,7 +18,7 @@ public class DrawManager : MonoBehaviour
 
     ////////////////
     public GameObject avatarSpawnpoint;
-    public Vector3 avatarVector3; 
+    public Vector3 avatarVector3;
     public GameObject girl1;
     public GameObject girl2;
     GameObject girl1Prefab;
@@ -51,6 +51,8 @@ public class DrawManager : MonoBehaviour
     // Root
     private GameObject girl2Hip;
     /// </summary>
+
+    private GameObject firstView;
 
     float[,] q;
     float[,] q_girl2;
@@ -115,6 +117,7 @@ public class DrawManager : MonoBehaviour
         girl1Hip = girl1.transform.Find("Petra.002/hips").gameObject;
         ///////////////////////////
 
+        firstView = girl1.transform.Find("Petra.002/hips/FirstViewPoint").gameObject;
         //        stickMan = GameObject.Find("StickMan");
 
         ThetaScale = 0.01f;
@@ -186,6 +189,11 @@ public class DrawManager : MonoBehaviour
             q1_girl2 = MakeSimulation();
             q_girl2 = MathFunc.MatrixCopy(q1_girl2);
         }
+    }
+
+    public GameObject GetFirstViewTransform()
+    {
+        return firstView;
     }
 
     public void PlayAvatar()
@@ -957,14 +965,12 @@ public class DrawManager : MonoBehaviour
 
         // Root
         girl1Hip.transform.position = new Vector3((float)qf[6], (float)qf[8], (float)qf[7]);
-        girl1Hip.transform.position += new Vector3(avatarVector3.x, avatarVector3.y, avatarVector3.z);    ///Search reference: Avatar spawnpoint, Vector3 spawnpoint 
+//        girl1Hip.transform.position += new Vector3(avatarVector3.x, avatarVector3.y, avatarVector3.z);    ///Search reference: Avatar spawnpoint, Vector3 spawnpoint 
 
         // Bio Order
         girl1Hip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
                                             Quaternion.AngleAxis((float)qf[10] * Mathf.Rad2Deg, Vector3.forward) *
                                             Quaternion.AngleAxis((float)qf[11] * Mathf.Rad2Deg, Vector3.up);
-
-//        girl1Hip.transform.position += new Vector3(1.5f, 0, 0);
 
         if (cntAvatar > 1)
         {
