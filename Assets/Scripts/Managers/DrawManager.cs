@@ -59,6 +59,7 @@ public class DrawManager : MonoBehaviour
     public double[] qf;
     double[] qf_girl2;
     public int frameN = 0;
+    public int secondFrameN = 0;
     int firstFrame = 0;
     internal int numberFrames = 0;
     float timeElapsed = 0;
@@ -81,6 +82,8 @@ public class DrawManager : MonoBehaviour
     string playMode = MainParameters.Instance.languages.Used.animatorPlayModeSimulation;
 
     float ThetaScale;
+
+    int secondPlaySpeed = 3;
 
     /*    LineRenderer[] lineStickFigure;
         LineRenderer lineCenterOfMass;
@@ -142,18 +145,23 @@ public class DrawManager : MonoBehaviour
             else
                 PlayEnd();
         }
+
+        if (secondFrameN < numberFrames && cntAvatar > 1)
+        {
+            PlayOneFrameForSecond();
+        }
     }
 
-/*    void FixedUpdate()
-    {
-        if (!animateON) return;
+    /*    void FixedUpdate()
+        {
+            if (!animateON) return;
 
-        if (frameN < numberFrames)
-            PlayOneFrame();
-        else
-            PlayEnd();
-    }*/
-  
+            if (frameN < numberFrames)
+                PlayOneFrame();
+            else
+                PlayEnd();
+        }*/
+
     public void ShowAvatar(int num)
     {
         cntAvatar = num;
@@ -172,7 +180,8 @@ public class DrawManager : MonoBehaviour
         {
             ///////////////////////////
             // Hip
-            girl2Prefab = (GameObject)Resources.Load("girl2", typeof(GameObject));
+//            girl2Prefab = (GameObject)Resources.Load("girl2", typeof(GameObject));
+            girl2Prefab = (GameObject)Resources.Load("girl1", typeof(GameObject));
             girl2 = Instantiate(girl2Prefab);
             girl2LeftUp = girl2.transform.Find("Petra.002/hips/thigh.L").gameObject;
             girl2RightUp = girl2.transform.Find("Petra.002/hips/thigh.R").gameObject;
@@ -876,6 +885,36 @@ public class DrawManager : MonoBehaviour
         return new Vector(xdot);
     }
 
+    public void PlayOneFrameForSecond()
+    {
+        MainParameters.StrucJoints joints = MainParameters.Instance.joints;
+
+        if (!isEditing)
+            if (q_girl2.GetUpperBound(1) >= secondFrameN)
+            {
+                qf_girl2 = MathFunc.MatrixGetColumnD(q_girl2, firstFrame + secondFrameN);
+                if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
+                    for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
+                        qf_girl2[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = 0;
+            }
+
+        girl2LeftUp.transform.localEulerAngles = new Vector3(-(float)qf_girl2[0] * Mathf.Rad2Deg + 180, 0f, 0f);
+        girl2RightUp.transform.localEulerAngles = new Vector3(-(float)qf_girl2[0] * Mathf.Rad2Deg - 180, 0f, 0f);
+        girl2LeftLeg.transform.localEulerAngles = new Vector3((float)qf_girl2[1] * Mathf.Rad2Deg, 0f, 0f);
+        girl2RightLeg.transform.localEulerAngles = new Vector3((float)qf_girl2[1] * Mathf.Rad2Deg, 0f, 0f);
+        girl2LeftArm.transform.localRotation = Quaternion.AngleAxis((float)qf_girl2[2] * Mathf.Rad2Deg, Vector3.up) *
+                                            Quaternion.AngleAxis(-(float)qf_girl2[3] * Mathf.Rad2Deg + 90f, Vector3.forward);
+        girl2RightArm.transform.localRotation = Quaternion.AngleAxis(-(float)qf_girl2[4] * Mathf.Rad2Deg, Vector3.up) *
+                                            Quaternion.AngleAxis((float)qf_girl2[5] * Mathf.Rad2Deg - 90f, Vector3.forward);
+        girl2Hip.transform.localRotation = Quaternion.AngleAxis((float)qf_girl2[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
+                                            Quaternion.AngleAxis((float)qf_girl2[10] * Mathf.Rad2Deg, Vector3.forward) *
+                                            Quaternion.AngleAxis((float)qf_girl2[11] * Mathf.Rad2Deg, Vector3.up);
+        girl2Hip.transform.position = new Vector3((float)qf_girl2[6], (float)qf_girl2[8], (float)qf_girl2[7]);
+        girl2Hip.transform.position += new Vector3(2f, 0, 0);
+
+        if (!isPaused) secondFrameN++;
+    }
+
     public void PlayOneFrame()
     {
         MainParameters.StrucJoints joints = MainParameters.Instance.joints;
@@ -897,18 +936,6 @@ public class DrawManager : MonoBehaviour
                         qf[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = 0;
             }
 
-        ///////////////////////////////
-        ///
-        if (cntAvatar > 1)
-        {
-            if (q_girl2.GetUpperBound(1) >= frameN)
-            {
-                qf_girl2 = MathFunc.MatrixGetColumnD(q_girl2, firstFrame + frameN);
-                if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
-                    for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
-                        qf_girl2[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = 0;
-            }
-        }
         ///////////////////////////////
 
             /*            float[] tagX;
@@ -976,22 +1003,6 @@ public class DrawManager : MonoBehaviour
         girl1Hip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
                                             Quaternion.AngleAxis((float)qf[10] * Mathf.Rad2Deg, Vector3.forward) *
                                             Quaternion.AngleAxis((float)qf[11] * Mathf.Rad2Deg, Vector3.up);
-
-        if (cntAvatar > 1)
-        {
-            girl2LeftUp.transform.localEulerAngles = new Vector3(-(float)qf_girl2[0] * Mathf.Rad2Deg + 180, 0f, 0f);
-            girl2RightUp.transform.localEulerAngles = new Vector3(-(float)qf_girl2[0] * Mathf.Rad2Deg - 180, 0f, 0f);
-            girl2LeftLeg.transform.localEulerAngles = new Vector3((float)qf_girl2[1] * Mathf.Rad2Deg, 0f, 0f);
-            girl2RightLeg.transform.localEulerAngles = new Vector3((float)qf_girl2[1] * Mathf.Rad2Deg, 0f, 0f);
-            girl2LeftArm.transform.localRotation = Quaternion.AngleAxis((float)qf_girl2[2] * Mathf.Rad2Deg, Vector3.up) *
-                                                Quaternion.AngleAxis(-(float)qf_girl2[3] * Mathf.Rad2Deg + 90f, Vector3.forward);
-            girl2RightArm.transform.localRotation = Quaternion.AngleAxis(-(float)qf_girl2[4] * Mathf.Rad2Deg, Vector3.up) *
-                                                Quaternion.AngleAxis((float)qf_girl2[5] * Mathf.Rad2Deg - 90f, Vector3.forward);
-            girl2Hip.transform.localRotation = Quaternion.AngleAxis((float)qf_girl2[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
-                                                Quaternion.AngleAxis((float)qf_girl2[10] * Mathf.Rad2Deg, Vector3.forward) *
-                                                Quaternion.AngleAxis((float)qf_girl2[11] * Mathf.Rad2Deg, Vector3.up);
-            girl2Hip.transform.position = new Vector3((float)qf_girl2[6], (float)qf_girl2[8], (float)qf_girl2[7]);
-        }
 
         if (!isPaused) frameN++;
     }
