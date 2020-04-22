@@ -10,6 +10,8 @@ using UnityEngine.UI;
 public class PlayController : MonoBehaviour
 {
 	// Variables
+	[Range(1,5)]
+	public int playSpeed = 3; /// 3 is the average / normal speed
 	public bool isStopFixed = true;
 	public GameObject avatar3D;
 
@@ -23,6 +25,7 @@ public class PlayController : MonoBehaviour
 	/// Play avatar #1 sequence
 	public void PlayAvatar1_DrawManager()
 	{
+		ToolBox.GetInstance().GetManager<DrawManager>().SetAnimationSpeed(playSpeed);
 		ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(1);
 
 	}
@@ -32,6 +35,7 @@ public class PlayController : MonoBehaviour
 	{
 		isPaused = !isPaused;
 		ToolBox.GetInstance().GetManager<DrawManager>().PauseAvatar(isPaused);
+		
 	}
 
 	/// Stop avatar play sequence

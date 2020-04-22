@@ -12,38 +12,61 @@ public class Main : MonoBehaviour
 	public GameObject textVersionFR;
 	public GameObject textVersionEN;
 
-	[Header("Tooltip Panel")]
+	[Header("Settings, Language Panel")]
+	public Button buttonLanguage;
+	public Text textButtonLanguage;
+	public GameObject buttonQuit;
+
+	[Header("Settings, Tooltip Panel")]
+	public bool toolTipsON;
 	public Button buttonToolTips;
 	public Image buttonToolTipsImage;
 	public GameObject buttonNoToolTips;
 	public Image buttonNoToolTipsImage;
 
-	[Header("Language Panel")]
-	public Button buttonLanguage;
-	public Text textButtonLanguage;
-	public GameObject buttonQuit;
+	[Header("Settings 2D window with graph Rework")]
+	[Tooltip("Settings window")]
+	public GameObject panelAnimator;				// settings views and graphs
 
-	public Text textTakeOffTitle;
-	public Text textTakeOffSpeed;
-	public Dropdown dropDownTakeOffCondition;
-	public Text textTakeOffInitialPosture;
-	public Text textTakeOffSomersaultPosition;
-	public Text textTakeOffTilt;
+	[Space]
+
+	[Header("Results, Panel")]
+	public GameObject panelMessages;				// Result Window
+	
+	[Header("Results, Mission Objective Panel")]
+	public Text textMessagesResultTitle;
+
+	[Space]
+
+	[Header("TakeOff, Parameters Panel")]
+	public Dropdown dropDownTakeOffCondition; /// To replace by buttons
+
+	[Header("TakeOff, Initial Position Panel")] 
+	public Text textTakeOffTitle; 
+	/// Currently empty
+
+	[Header("TakeOff, Setup Panel")]
+	[Tooltip("TakeOff window")]
+	public GameObject panelTakeoffParameters;		// TakeOff Window
 	public Text textTakeOffHorizontalSpeed;
 	public Text textTakeOffVerticalSpeed;
+	public Text textTakeOffSetupTitle;
+	public Text textTakeOffSomersaultPosition;
+	public Text textTakeOffInitialPosture;			// To replace by buttons
 	public Text textTakeOffSomersaultSpeed;
+	public Text textTakeOffTilt;
 	public Text textTakeOffTwistSpeed;
 
-	public Text textMessagesTextTitle;
+	[Space]
 
-	public GameObject panelMovement;				// Utilisées pour désactiver automatiquement le logiciel après une date spécifiée
-	public GameObject panelTakeoffParameters;
-	public GameObject panelMessages;
-	public GameObject panelAnimator;
+	[Header("Movement, Graph Panel")]
+	[Tooltip("Movement window")]
+	public GameObject panelMovement;                // Graph window // Utilisées pour désactiver automatiquement le logiciel après une date spécifiée
+
+	[Space]
 	public GameObject panelTopButtons;
 	public GameObject panelOutOfDate;
 
-	public bool toolTipsON;
 
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
@@ -102,7 +125,7 @@ public class Main : MonoBehaviour
 	public void ButtonToolTips()
 	{
 		toolTipsON = false;
-		buttonToolTips.gameObject.SetActive(false);
+		//buttonToolTips.gameObject.SetActive(false);
 		buttonNoToolTips.SetActive(true);
 	}
 
@@ -113,7 +136,9 @@ public class Main : MonoBehaviour
 	{
 		toolTipsON = true;
 		buttonToolTips.gameObject.SetActive(true);
-		buttonNoToolTips.SetActive(false);
+		//buttonNoToolTips.SetActive(false);
+		buttonToolTips.enabled = true;
+
 	}
 
 	// =================================================================================================================================================================

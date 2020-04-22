@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
@@ -12,10 +10,21 @@ public class SliderPlayAnimation : MonoBehaviour
 	// Variables
 	DrawManager drawManager;
 	public Slider slider;
+	public PlayController playController;
+
+	void Awake()
+	{
+
+	}
 
 	void Start()
 	{
+
 		drawManager = ToolBox.GetInstance().GetManager<DrawManager>();
+		//slider.onValueChanged.AddListener(delegate { ValueChangeCheck(); });
+
+		//isPaused = !isPaused;
+		//ToolBox.GetInstance().GetManager<DrawManager>().PauseAvatar(isPaused);
 	}
 
 	void Update()
