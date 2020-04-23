@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -71,6 +72,7 @@ public class AnimationF : MonoBehaviour
 	void Start()
 	{
 		Instance = this;
+
 		lineStickFigure = null;
 		lineCenterOfMass = null;
 		lineFilledFigure = null;
@@ -94,6 +96,18 @@ public class AnimationF : MonoBehaviour
 			animationMaxDimOnScreen = 20;
 		else
 			animationMaxDimOnScreen = 18;
+
+		// Initialisation du modèle BioRBD utilisé
+
+#if UNITY_STANDALONE_OSX
+		//string pathToM_Model = string.Format("{0}/Modele_HuManS_somersault.s2mMod", Application.streamingAssetsPath); //Recupération du modèle biorbd
+		string pathToM_Model = @"AcroVR/Contents/Resources/Data/StreamingAssets/Modele_HuManS_somersault.s2mMod";
+		//System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("{0}{1}", pathToM_Model, System.Environment.NewLine));
+		//System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("{0}{1}", dllpath, System.Environment.NewLine));
+#else
+		string pathToM_Model = string.Format("{0}/Modele_HuManS_somersault.s2mMod", Application.streamingAssetsPath); //Recupération du modèle biorbd
+#endif
+		MainParameters.Instance.ptr_model = MainParameters.c_biorbdModel(new StringBuilder(pathToM_Model));
 	}
 
 	// =================================================================================================================================================================

@@ -258,4 +258,42 @@ public class MathFunc
 
 		return pp;
 	}
+
+	// =================================================================================================================================================================
+	/// <summary> Rétrécir une matrice carré en une nouvelle matrice carré de dimension réduite (Nouvelle dimension doit être égale ou inférieure à la dimension de la matrice originale). </summary>
+
+	public static double[,] ShrinkSquareMatrix(double[,] matrice, int nouvelleTaille)
+	{
+		double[,] nouvelleMatrice = new double[nouvelleTaille, nouvelleTaille];
+		for (int i = 0; i < nouvelleTaille; i++)
+			for (int j = 0; j < nouvelleTaille; j++)
+				nouvelleMatrice[i, j] = matrice[i, j];
+		return nouvelleMatrice;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Convertir un vecteur en une matrice carré. </summary>
+
+	public static double[,] ConvertVectorInSquareMatrix(double[] vecteur)
+	{
+		double nouvelleDimension = System.Math.Sqrt(vecteur.Length);
+		int dim = (int)nouvelleDimension;
+		double[,] nouvelleMatrice = new double[dim, dim];
+		for (int i = 0; i < nouvelleMatrice.GetLength(0); i++)
+			for (int j = 0; j < nouvelleMatrice.GetLength(1); j++)
+				nouvelleMatrice[j, i] = vecteur[j + nouvelleMatrice.GetLength(0) * i];		// On change le vecteur en matrice carrée
+		return nouvelleMatrice;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Convertir une matrice carré en un vecteur. </summary>
+
+	public static double[] ConvertSquareMatrixInVector(double[,] matrice)
+	{
+		double[] nouveauVecteur = new double[matrice.GetLength(0) * matrice.GetLength(1)];
+		for (int i = 0; i < matrice.GetLength(0); i++)
+			for (int j = 0; j < matrice.GetLength(1); j++)
+				nouveauVecteur[j + i * matrice.GetLength(0)] = matrice[j, i];				// On change la matriceA carré en vecteur n fois plus grand
+		return nouveauVecteur;
+	}
 }

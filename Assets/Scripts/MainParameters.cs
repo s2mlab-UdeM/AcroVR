@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Text;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 // =================================================================================================================================================================
 /// <summary>
@@ -264,8 +266,35 @@ public class MainParameters
 	public StrucLanguages languages;
 	#endregion
 
+	#region BioRBD
+	//Librairie et fonctions biorbd
+#if UNITY_EDITOR
+	const string dllpath = @"Assets\StreamingAssets\biorbd_c.dll";
+#else
+#if UNITY_STANDALONE_OSX
+	const string dllpath = @"AcroVR/Contents/Resources/Data/StreamingAssets/libbiorbd.dylib";	// Fonctionne pas
+	//static System.IO.DirectoryInfo info = new System.IO.DirectoryInfo(dllpath);
+	//string fileInfo = info.FullName;
+#else
+	const string dllpath = @"..\StreamingAssets\biorbd_c.dll";
+#endif
+#endif
+	[DllImport(dllpath)] public static extern IntPtr c_biorbdModel(StringBuilder pathToModel);
+	[DllImport(dllpath)] public static extern int c_nQ(IntPtr model);
+	[DllImport(dllpath)] public static extern int c_nQDot(IntPtr model);
+	[DllImport(dllpath)] public static extern void c_inverseDynamics(IntPtr model, IntPtr q, IntPtr qdot, IntPtr qddot, IntPtr tau);
+	[DllImport(dllpath)] public static extern void c_massMatrix(IntPtr model, IntPtr q, IntPtr massMatrix);
+	[DllImport(dllpath)] public static extern void c_markers(IntPtr model, IntPtr q, IntPtr markPos, bool removeAxis, bool updateKin);
+	[DllImport(dllpath)] public static extern int c_nMarkers(IntPtr model);
+	[DllImport(dllpath)] public static extern void c_solveLinearSystem(IntPtr matA, int nbCol, int nbLigne, IntPtr matB, IntPtr solX);
+
+	/// <summary> Pointeur qui désigne le modèle BioRBD utilisé. </summary>
+	public IntPtr ptr_model;
+	#endregion
+
 	/// <summary> Numéros des types de graphique des résultats qui seront affiché dans le panneau des graphiques des résultats. </summary>
 	public int[] resultsGraphicsUsed;
+	public bool testDataFileDone = false;
 
 	#region singleton 
 	// modèle singleton tiré du site : https://msdn.microsoft.com/en-us/library/ff650316.aspx
@@ -275,6 +304,7 @@ public class MainParameters
 
 	private MainParameters()
 	{
+		#region InitParameters
 		// Initialisation des paramètres à leurs valeurs de défaut.
 
 		interpolationDefault.type = InterpolationType.Quintic;
@@ -313,7 +343,9 @@ public class MainParameters
 		// Initialisation des numéros des types de graphique des résultats qui seront affiché
 
 		resultsGraphicsUsed = new int[2] { 0, 5 };
+		#endregion
 
+		#region InitLanguages
 		// Initialisation de la liste des messages en français et en anglais.
 
 		languages.french.leftSide = "Gauche";
@@ -494,7 +526,9 @@ public class MainParameters
 		languages.english.displayMsgSimulationDuration = "Simulation real duration";
 		languages.french.displayMsgEndSimulation = "Simulation terminée";
 		languages.english.displayMsgEndSimulation = "Simulation completed";
+		#endregion
 
+		#region InitLanguagesToolTips
 		// Aide contextuelle
 
 		languages.french.toolTipButtonToolTips = "Afficher une aide contextuelle, selon le mouvement de la souris";
@@ -583,6 +617,7 @@ public class MainParameters
 		languages.english.toolTipButtonGraph = "Display result graphics";
 
 		languages.Used = languages.french;
+		#endregion
 	}
 
 	// =================================================================================================================================================================

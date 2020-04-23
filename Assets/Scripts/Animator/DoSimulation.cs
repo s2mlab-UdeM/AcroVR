@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Research.Oslo;
+using System.Runtime.InteropServices;
 
 // =================================================================================================================================================================
 /// <summary> Exécution des calculs de simulation. </summary>
@@ -42,7 +43,7 @@ public class DoSimulation
 			tilt = 90.001f;
 		else if (tilt == -90)
 			tilt = -90.01f;
-		q0[Math.Abs(joints.lagrangianModel.root_tilt) - 1] = tilt * (float)Math.PI / 180;											// en radians
+		q0[Math.Abs(joints.lagrangianModel.root_tilt) - 1] = tilt * (float)Math.PI / 180;                                           // en radians
 		q0[Math.Abs(joints.lagrangianModel.root_somersault) - 1] = rotRadians;                                                      // en radians
 		q0dot[Math.Abs(joints.lagrangianModel.root_foreward) - 1] = joints.takeOffParam.anteroposteriorSpeed;                       // en m/s
 		q0dot[Math.Abs(joints.lagrangianModel.root_upward) - 1] = joints.takeOffParam.verticalSpeed;                                // en m/s
@@ -181,91 +182,211 @@ public class DoSimulation
 	// =================================================================================================================================================================
 	/// <summary> Routine qui sera exécuter par le ODE (Ordinary Differential Equation). </summary>
 
-	Vector ShortDynamics(double t, Vector x)
+	public Vector ShortDynamics(double t, Vector x)
 	{
-		//		q1 = ws.q1;% simulation
-		//q2 = ws.q2;% driven
-		int nDDL = MainParameters.Instance.joints.lagrangianModel.nDDL;
+		//Declaration des pointeurs
+		IntPtr ptr_massMatrix;
+		IntPtr ptr_tau;
+		IntPtr ptr_Q;
+		IntPtr ptr_V;
+		IntPtr ptr_qddot2;
+		IntPtr ptr_matA;
+		IntPtr ptr_solX;
 
-		double[] q = new double[nDDL];
-		double[] qdot = new double[nDDL];
-		for (int i = 0; i < nDDL; i++)
+		int NDDL = MainParameters.c_nQ(MainParameters.Instance.ptr_model);		// Récupère le nombre de DDL du modèle biorbd
+		int NROOT = 6;															// On admet que la racine possède 6 ddl
+		int NDDLhumans = 12;
+		double[] xBiorbd = new double[NDDL * 2];
+
+		double[] Qintegrateur = new double[NDDL];
+		double[] Vintegrateur = new double[NDDL];
+		double[] m_taud = new double[NDDL];
+		double[] massMatrix = new double[NDDL * NDDL];
+
+		float[] qd = new float[NDDLhumans];
+		float[] qdotd = new float[NDDLhumans];
+		float[] qddotd = new float[NDDLhumans];
+		float[] qdBiorbd = new float[NDDL];
+		float[] qdotdBiorbd = new float[NDDL];
+		float[] qddotdBiorbd = new float[NDDL];
+
+		double[] qddot2 = new double[NDDL];
+		double[] qddot1integ = new double[NDDL * 2];
+		double[] qddot1integHumans = new double[NDDLhumans];
+
+		//Allocations des pointeurs, sinon génère erreurs de segmentation
+		ptr_Q = Marshal.AllocCoTaskMem(sizeof(double) * Qintegrateur.Length);
+		ptr_V = Marshal.AllocCoTaskMem(sizeof(double) * Vintegrateur.Length);
+		ptr_qddot2 = Marshal.AllocCoTaskMem(sizeof(double) * qddot2.Length);
+		ptr_massMatrix = Marshal.AllocCoTaskMem(sizeof(double) * massMatrix.Length);
+		ptr_tau = Marshal.AllocCoTaskMem(sizeof(double) * m_taud.Length);
+
+		xBiorbd = ConvertHumansBioRBD.Humans2Biorbd(x); //On convertit les DDL du modèle humans pour le modèle biorbd
+
+		for (int i = 0; i < NDDL; i++)
 		{
-			q[i] = x[i];
-			qdot[i] = x[nDDL + i];
+			Qintegrateur[i] = xBiorbd[i];
+			Vintegrateur[i] = xBiorbd[i + NDDL];
 		}
 
-		double[,] m12;
-		double[] n1;
-		Inertia11Simple inertia11Simple = new Inertia11Simple();
-		double[,] m11 = inertia11Simple.Inertia11(q);
-		if (MainParameters.Instance.joints.lagrangianModelName == MainParameters.LagrangianModelNames.Sasha23ddl)
-		{
-			n1 = new double[12];
-			m12 = new double[6,6];
-		}
-		else
-		{
-			Inertia12Simple inertia12Simple = new Inertia12Simple();
-			m12 = inertia12Simple.Inertia12(q);
-			NLEffects1Simple nlEffects1Simple = new NLEffects1Simple();
-			n1 = nlEffects1Simple.NLEffects1(q, qdot);
-			if (MainParameters.Instance.joints.condition <= 0)
-			{
-				double[] n1zero;
-				n1zero = nlEffects1Simple.NLEffects1(q, new double[12] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-				for (int i = 0; i < 6; i++)
-					n1[i] = n1[i] - n1zero[i];
-			}
-		}
-
-		float kp = 10;
-		float kv = 3;
-		float[] qd = new float[nDDL];
-		float[] qdotd = new float[nDDL];
-		float[] qddotd = new float[nDDL];
 		Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, (float)t, MainParameters.Instance.joints.lagrangianModel.q2, out qd, out qdotd, out qddotd);
 		trajectory.ToString();                  // Pour enlever un warning lors de la compilation
 
-		float[] qddot = new float[nDDL];
-		for (int i = 0; i < nDDL; i++)
-			qddot[i] = qddotd[i] + kp * (qd[i] - (float)q[i]) + kv * (qdotd[i] - (float)qdot[i]);
+		qdBiorbd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qd);
+		qdotdBiorbd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qdotd);
+		qddotdBiorbd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qddotd);
 
-		if (MainParameters.Instance.joints.lagrangianModelName == MainParameters.LagrangianModelNames.Sasha23ddl)
+		for (int i = 0; i < qddot2.Length; i++)
 		{
-			//M12qddotN1 = ForceVector(q, qdot, qddot);
-			//qddot(q1) = -M11 \ M12qddotN1; 
-		}
-		else
-		{
-			// Calcul "Matrix Left division" suivante: qddot(q1) = M11\(-N1-M12*qddot(q2));
-			// On peut faire ce calcul en utilisant le calcul "Matrix inverse": qddot(q1) = inv(M11)*(-N1-M12*qddot(q2));
-
-			double[,] mA = MatrixInverse.MtrxInverse(m11);
-
-			double[] q2qddot = new double[MainParameters.Instance.joints.lagrangianModel.q2.Length];
-			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q2.Length; i++)
-				q2qddot[i] = qddot[MainParameters.Instance.joints.lagrangianModel.q2[i] - 1];
-			double[,] mB = MatrixInverse.MtrxProduct(m12, q2qddot);
-
-			double[,] n1mB = new double[mB.GetUpperBound(0) + 1, mB.GetUpperBound(1) + 1];
-			for (int i = 0; i <= mB.GetUpperBound(0); i++)			// Rangée
-				for (int j = 0; j <= mB.GetUpperBound(1); j++)      // Colonne
-					n1mB[i, j] = -n1[i] - mB[i, j];
-
-			double[,] mC = MatrixInverse.MtrxProduct(mA, n1mB);
-
-			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
-				qddot[MainParameters.Instance.joints.lagrangianModel.q1[i] -1] = (float)mC[i,0];
+			qddot2[i] = qddotdBiorbd[i] + 10 * (qdBiorbd[i] - Qintegrateur[i]) + 3 * (qdotdBiorbd[i] - Vintegrateur[i]);
 		}
 
-		double[] xdot = new double[MainParameters.Instance.joints.lagrangianModel.nDDL * 2];
-		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
+		for (int i = 0; i < NROOT; i++)
 		{
-			xdot[i] = qdot[i];
-			xdot[MainParameters.Instance.joints.lagrangianModel.nDDL + i] = qddot[i];
+			qddot2[i] = 0;
 		}
 
-		return new Vector(xdot);
+		Marshal.Copy(Qintegrateur, 0, ptr_Q, Qintegrateur.Length);
+		Marshal.Copy(Vintegrateur, 0, ptr_V, Vintegrateur.Length);
+		Marshal.Copy(qddot2, 0, ptr_qddot2, qddot2.Length);
+
+		MainParameters.c_massMatrix(MainParameters.Instance.ptr_model, ptr_Q, ptr_massMatrix); //Génère la matrice de masse
+
+		Marshal.Copy(ptr_massMatrix, massMatrix, 0, massMatrix.Length);
+
+		MainParameters.c_inverseDynamics(MainParameters.Instance.ptr_model, ptr_Q, ptr_V, ptr_qddot2, ptr_tau);
+
+		Marshal.Copy(ptr_tau, m_taud, 0, m_taud.Length);
+
+		double[,] squareMassMatrix = new double[NDDL, NDDL];
+		squareMassMatrix = MathFunc.ConvertVectorInSquareMatrix(massMatrix); //La matrice de masse générée est sous forme d'un vecteur de taille NDDL*NDDL
+
+		double[,] matriceA = new double[NROOT, NROOT];
+		matriceA = MathFunc.ShrinkSquareMatrix(squareMassMatrix, NROOT); //On réduit la matrice de masse
+
+		double[] matAGrandVecteur = new double[NROOT * NROOT];
+		matAGrandVecteur = MathFunc.ConvertSquareMatrixInVector(matriceA); //La nouvelle matrice doit être convertie en vecteur pour qu'elle puisse être utilisée dans biorbd
+
+		ptr_matA = Marshal.AllocCoTaskMem(sizeof(double) * matAGrandVecteur.Length);
+		ptr_solX = Marshal.AllocCoTaskMem(sizeof(double) * NROOT);
+
+		Marshal.Copy(matAGrandVecteur, 0, ptr_matA, matAGrandVecteur.Length);
+
+		MainParameters.c_solveLinearSystem(ptr_matA, NROOT, NROOT, ptr_tau, ptr_solX); //Résouds l'équation Ax=b
+
+		double[] solutionX = new double[NROOT];
+		Marshal.Copy(ptr_solX, solutionX, 0, solutionX.Length);
+
+		for (int i = 0; i < NROOT; i++)
+		{
+			qddot2[i] = -solutionX[i];
+		}
+
+		for (int i = 0; i < NDDL; i++)
+		{
+			qddot1integ[i] = Vintegrateur[i];
+			qddot1integ[i + NDDL] = qddot2[i];
+		}
+
+		qddot1integHumans = ConvertHumansBioRBD.Biorbd2Humans(qddot1integ); //Reconvertit les DDL du modèle biorbd vers le modèle humans
+
+		//Desallocation des pointeurs
+		Marshal.FreeCoTaskMem(ptr_Q);
+		Marshal.FreeCoTaskMem(ptr_V);
+		Marshal.FreeCoTaskMem(ptr_qddot2);
+		Marshal.FreeCoTaskMem(ptr_massMatrix);
+		Marshal.FreeCoTaskMem(ptr_tau);
+		Marshal.FreeCoTaskMem(ptr_matA);
+		Marshal.FreeCoTaskMem(ptr_solX);
+
+		return new Vector(qddot1integHumans);
 	}
+
+	//Vector ShortDynamics(double t, Vector x)
+	//{
+	//	//		q1 = ws.q1;% simulation
+	//	//q2 = ws.q2;% driven
+	//	int nDDL = MainParameters.Instance.joints.lagrangianModel.nDDL;
+
+	//	double[] q = new double[nDDL];
+	//	double[] qdot = new double[nDDL];
+	//	for (int i = 0; i < nDDL; i++)
+	//	{
+	//		q[i] = x[i];
+	//		qdot[i] = x[nDDL + i];
+	//	}
+
+	//	double[,] m12;
+	//	double[] n1;
+	//	Inertia11Simple inertia11Simple = new Inertia11Simple();
+	//	double[,] m11 = inertia11Simple.Inertia11(q);
+	//	if (MainParameters.Instance.joints.lagrangianModelName == MainParameters.LagrangianModelNames.Sasha23ddl)
+	//	{
+	//		n1 = new double[12];
+	//		m12 = new double[6,6];
+	//	}
+	//	else
+	//	{
+	//		Inertia12Simple inertia12Simple = new Inertia12Simple();
+	//		m12 = inertia12Simple.Inertia12(q);
+	//		NLEffects1Simple nlEffects1Simple = new NLEffects1Simple();
+	//		n1 = nlEffects1Simple.NLEffects1(q, qdot);
+	//		if (MainParameters.Instance.joints.condition <= 0)
+	//		{
+	//			double[] n1zero;
+	//			n1zero = nlEffects1Simple.NLEffects1(q, new double[12] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+	//			for (int i = 0; i < 6; i++)
+	//				n1[i] = n1[i] - n1zero[i];
+	//		}
+	//	}
+
+	//	float kp = 10;
+	//	float kv = 3;
+	//	float[] qd = new float[nDDL];
+	//	float[] qdotd = new float[nDDL];
+	//	float[] qddotd = new float[nDDL];
+	//	Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, (float)t, MainParameters.Instance.joints.lagrangianModel.q2, out qd, out qdotd, out qddotd);
+	//	trajectory.ToString();                  // Pour enlever un warning lors de la compilation
+
+	//	float[] qddot = new float[nDDL];
+	//	for (int i = 0; i < nDDL; i++)
+	//		qddot[i] = qddotd[i] + kp * (qd[i] - (float)q[i]) + kv * (qdotd[i] - (float)qdot[i]);
+
+	//	if (MainParameters.Instance.joints.lagrangianModelName == MainParameters.LagrangianModelNames.Sasha23ddl)
+	//	{
+	//		//M12qddotN1 = ForceVector(q, qdot, qddot);
+	//		//qddot(q1) = -M11 \ M12qddotN1; 
+	//	}
+	//	else
+	//	{
+	//		// Calcul "Matrix Left division" suivante: qddot(q1) = M11\(-N1-M12*qddot(q2));
+	//		// On peut faire ce calcul en utilisant le calcul "Matrix inverse": qddot(q1) = inv(M11)*(-N1-M12*qddot(q2));
+
+	//		double[,] mA = MatrixInverse.MtrxInverse(m11);
+
+	//		double[] q2qddot = new double[MainParameters.Instance.joints.lagrangianModel.q2.Length];
+	//		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q2.Length; i++)
+	//			q2qddot[i] = qddot[MainParameters.Instance.joints.lagrangianModel.q2[i] - 1];
+	//		double[,] mB = MatrixInverse.MtrxProduct(m12, q2qddot);
+
+	//		double[,] n1mB = new double[mB.GetUpperBound(0) + 1, mB.GetUpperBound(1) + 1];
+	//		for (int i = 0; i <= mB.GetUpperBound(0); i++)			// Rangée
+	//			for (int j = 0; j <= mB.GetUpperBound(1); j++)      // Colonne
+	//				n1mB[i, j] = -n1[i] - mB[i, j];
+
+	//		double[,] mC = MatrixInverse.MtrxProduct(mA, n1mB);
+
+	//		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
+	//			qddot[MainParameters.Instance.joints.lagrangianModel.q1[i] -1] = (float)mC[i,0];
+	//	}
+
+	//	double[] xdot = new double[MainParameters.Instance.joints.lagrangianModel.nDDL * 2];
+	//	for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
+	//	{
+	//		xdot[i] = qdot[i];
+	//		xdot[MainParameters.Instance.joints.lagrangianModel.nDDL + i] = qddot[i];
+	//	}
+
+	//	return new Vector(xdot);
+	//}
 }

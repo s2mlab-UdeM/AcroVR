@@ -288,12 +288,10 @@ public class MovementF : MonoBehaviour
 		{
 			try
 			{
-				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("OK #1{0}", System.Environment.NewLine));
 				System.IO.Directory.CreateDirectory(dirSimulationFiles);
 			}
 			catch
 			{
-				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("OK #2{0}", System.Environment.NewLine));
 				dirSimulationFiles = "";
 			}
 		}
