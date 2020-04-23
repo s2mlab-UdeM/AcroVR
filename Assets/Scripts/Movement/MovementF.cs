@@ -137,8 +137,6 @@ public class MovementF : MonoBehaviour
 
 	public void ButtonLoad()
 	{
-		//		System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("ButtonLoad #0{0}", System.Environment.NewLine));
-
 		// Sélection d'un fichier de données dans le répertoire des fichiers de simulation, par défaut
 
 		ExtensionFilter[] extensions = new[]
@@ -262,6 +260,7 @@ public class MovementF : MonoBehaviour
 		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
 
 		InterpolationAndDisplayDDL(-1, 0, 0, true);
+		Main.Instance.EnableDisableControls(true, true);
 
 		// Initialisation de la liste des items que contiendra la liste déroulante Nom de l'articulation
 
@@ -561,13 +560,14 @@ public class MovementF : MonoBehaviour
 
 		AnimationF.Instance.PlayReset();
 		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
-		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
-	}
+        GraphManager.Instance.mouseTracking = true;
+        //AnimationF.Instance.Play(frame, 1);
+    }
 
-	// =================================================================================================================================================================
-	/// <summary> Afficher la courbe des positions des angles pour l'articulation sélectionné, ainsi que les noeuds. </summary>
+    // =================================================================================================================================================================
+    /// <summary> Afficher la courbe des positions des angles pour l'articulation sélectionné, ainsi que les noeuds. </summary>
 
-	public void DisplayDDL(int ddl, bool axisRange)
+    public void DisplayDDL(int ddl, bool axisRange)
 	{
 		if (ddl >= 0)
 		{

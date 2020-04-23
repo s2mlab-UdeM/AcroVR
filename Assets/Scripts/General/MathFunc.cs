@@ -85,7 +85,6 @@ public class MathFunc
 		return vectS;
 	}
 
-
 	// =================================================================================================================================================================
 	/// <summary> Copié le contenu d'une matrice dans une nouvelle matrice. </summary>
 
@@ -120,6 +119,22 @@ public class MathFunc
 		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
 			for (int j = 0; j <= matrix.GetUpperBound(1); j++)
 				newMatrix[i, j] = (float)matrix[i, j];
+		return newMatrix;
+	}
+
+	public static float[,] MatrixCopyRow(float[,] matrix, float[] vector, int row)
+	{
+		float[,] newMatrix = new float[matrix.GetUpperBound(0) + 1, matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(1); i++)
+			newMatrix[row, i] = vector[i];
+		return newMatrix;
+	}
+
+	public static float[,] MatrixCopyColumn(float[,] matrix, float[] vector, int column)
+	{
+		float[,] newMatrix = new float[matrix.GetUpperBound(0) + 1, matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			newMatrix[i, column] = vector[i];
 		return newMatrix;
 	}
 
@@ -274,26 +289,25 @@ public class MathFunc
 	// =================================================================================================================================================================
 	/// <summary> Convertir un vecteur en une matrice carré. </summary>
 
-	public static double[,] ConvertVectorInSquareMatrix(double[] vecteur)
+	public static double[,] ConvertVectorInSquareMatrix(double[] vector)
 	{
-		double nouvelleDimension = System.Math.Sqrt(vecteur.Length);
-		int dim = (int)nouvelleDimension;
-		double[,] nouvelleMatrice = new double[dim, dim];
-		for (int i = 0; i < nouvelleMatrice.GetLength(0); i++)
-			for (int j = 0; j < nouvelleMatrice.GetLength(1); j++)
-				nouvelleMatrice[j, i] = vecteur[j + nouvelleMatrice.GetLength(0) * i];		// On change le vecteur en matrice carrée
-		return nouvelleMatrice;
+		int dim = (int)System.Math.Sqrt(vector.Length);
+		double[,] newMatrix = new double[dim, dim];
+		for (int i = 0; i < newMatrix.GetLength(0); i++)
+			for (int j = 0; j < newMatrix.GetLength(1); j++)
+				newMatrix[j, i] = vector[j + newMatrix.GetLength(0) * i];
+		return newMatrix;
 	}
 
 	// =================================================================================================================================================================
 	/// <summary> Convertir une matrice carré en un vecteur. </summary>
 
-	public static double[] ConvertSquareMatrixInVector(double[,] matrice)
+	public static double[] ConvertSquareMatrixInVector(double[,] matrix)
 	{
-		double[] nouveauVecteur = new double[matrice.GetLength(0) * matrice.GetLength(1)];
-		for (int i = 0; i < matrice.GetLength(0); i++)
-			for (int j = 0; j < matrice.GetLength(1); j++)
-				nouveauVecteur[j + i * matrice.GetLength(0)] = matrice[j, i];				// On change la matriceA carré en vecteur n fois plus grand
-		return nouveauVecteur;
+		double[] newVector = new double[matrix.GetLength(0) * matrix.GetLength(1)];
+		for (int i = 0; i < matrix.GetLength(0); i++)
+			for (int j = 0; j < matrix.GetLength(1); j++)
+				newVector[j + i * matrix.GetLength(0)] = matrix[j, i];
+		return newVector;
 	}
 }
