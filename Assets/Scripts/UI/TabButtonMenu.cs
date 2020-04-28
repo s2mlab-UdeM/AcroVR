@@ -57,7 +57,6 @@ public class TabButtonMenu : MonoBehaviour
 
 	public void CreateTabList()
 	{
-		/// Tab0 is obsolete, replace all references to Tab5
 		listTab.Add(tab0);
 		listTab.Add(tab1);
 		listTab.Add(tab2);
@@ -79,7 +78,7 @@ public class TabButtonMenu : MonoBehaviour
 
 			if (playerProfile == false && playerSettings == false)
 			{
-				Tab5();
+				Tab0();
 			}
 
 			/// Player profile and settings is true, activate LaunchWithProfile function. If preferred, replace with Tab function

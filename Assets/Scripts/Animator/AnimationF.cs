@@ -344,8 +344,9 @@ public class AnimationF : MonoBehaviour
 		{
 			GameObject lineObject = new GameObject();
 			LineRenderer lineRenderer = lineObject.AddComponent<LineRenderer>();
-			lineRenderer.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
-			lineRenderer.startWidth = 0.04f;
+//			lineRenderer.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
+            lineRenderer.material = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended"));
+            lineRenderer.startWidth = 0.04f;
 			lineRenderer.endWidth = 0.04f;
 			lineRenderer.gameObject.layer = 8;
 

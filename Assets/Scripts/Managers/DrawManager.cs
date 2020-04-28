@@ -1018,7 +1018,7 @@ public class DrawManager : MonoBehaviour
         // Need to remove OnGui function
         //frameN = (int)GUI.HorizontalScrollbar(new Rect(Screen.width - 200, 430, 100, 30), frameN, 1.0F, 0.0F, numberFrames);
 
-        if(transform.parent.GetComponentInChildren<AniGraphManager>().takeoffCanvas.activeSelf)
+/*        if(transform.parent.GetComponentInChildren<AniGraphManager>().takeoffCanvas.activeSelf)
         {
             //            DrawingLine.DrawLine(new Vector2(frameN * 500/numberFrames + 32f, 325), new Vector2(frameN * 500 / numberFrames + 32f, 565), UnityEngine.Color.red, 4, false);
 
@@ -1027,7 +1027,7 @@ public class DrawManager : MonoBehaviour
             else
                 DrawingLine.DrawLine(new Vector2((frameN * 0.02f * 500 / MainParameters.Instance.joints.duration) + 30f, 325), new Vector2((frameN * 0.02f * 500 / MainParameters.Instance.joints.duration) + 30f, 565), UnityEngine.Color.red, 4, false);
 
-        }
+        }*/
     }
 
     private void Line(LineRenderer lineRendererObject, Vector3 position1, Vector3 position2)

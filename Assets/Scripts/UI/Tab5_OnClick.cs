@@ -3,236 +3,203 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-
 /// <summary>
 ///		OnClick() functions for Tab5 / Settings
 /// </summary>
 
 public class Tab5_OnClick : MonoBehaviour
 {
-    /// Handler reference
-    private Main mainClassHandler = null;
-
-
-    [Header("Language Panel")]
-    public LanguageSwitch.LanguageAvailable currentLanguageEnum;
-    [Space]
-    public bool isLanguageActive = true;
-    /// Add new languages in Inspector
+    //[Header("Language Panel")]
     public List<Button> languageButton;
 
-
     [Header("Point of View")]
-    public PointOfView currentPOV;
-    public enum PointOfView
-    {
-        POV1,
-        POV3,
-        POVSideView,
-        None
-    };
-    [Space]
-    public bool activatePOV1 = false;
-    public Toggle togglePOV1 = null;
-    public Text textPOV1 = null;
+    public bool activateFirstPOV = false;
+    public Button buttonFirstPOV = null;
     public GameObject anchorFirstPOV = null;
-    [Space]
-    public bool activatePOV3 = false;
-    public Toggle togglePOV3 = null;
-    public Text textPOV3 = null;
-    public GameObject anchorPOV3 = null;
-    [Space]
-    public bool activatePOVSideView = false;
-    public Toggle togglePOVSideView = null;
-    public Text textPOVSideView = null;
-    public GameObject anchorPOVSideView = null;
 
+    [Space]
+    public bool activateThirdPOV = true;
+    public Button buttonThirdPOV = null;
+    public GameObject anchorThirdPOV = null;
+    
+    [Space]
+    public bool activateSidePOV = false;
+    public Button buttonSidePOV = null;
+    public GameObject anchorSidePOV = null;
 
     [Header("Tooltip Panel")]
-    public bool toolOn = false;
-    public Toggle tooltipOn = null;
+    public bool toolOn = true;
+    public Button tooltipOn = null;
     public Text tooltipOnText = null;
-    public Toggle tooltipOff = null;
+    public Button tooltipOff = null;
     public Text tooltipOffText = null;
 
-
     [Header("Peripherals Panel")]
-    public Toggle togglePeripherals1;
-    public Text textPeripherals1 = null;
-    public Toggle togglePeripherals2;
-    public Text textPeripherals2 = null;
+    public Button peripherals1;
+    public Button peripherals2;
     public bool peripheralsOn = true;
 
-
     [Header("Collapse Panel")]
-    public Toggle toggleCollapse1;
-    public Text textCollapse1;
-    public Toggle toggleCollapse2;
-    public Text textCollapse2;
+    public Button collapse1;
+    public Button collapse2;
     public bool collapseOn = true;
 
-
     [Header("Avatar Positioning Panel")]
-    public Toggle toggleAvatarPos1;
-    public Text textAvatarPos1;
-    public Toggle toggleAvatarPos2;
-    public Text textAvatarPos2;
+    public Button avatarPos1;
+    public Button avatarPos2;
 
-
-    /// Decrarations of Handlers
-    void Awake()
-    {
-        Main mainClass = GetComponent<Main>();
-        //currentLanguageEnum = GetComponent<LanguageSwitch>().currentLanguage;
-
-
-    }
 
     void Start()
     {
 
+        //pOVAnchor2.transform.position = 
     }
 
     void Update()
     {
-        POVFollow();
-        //POVCamera1();
-        //POVCamera3();
-        //POVCameraSideView();
-    }
-
-
-    ///***  Language Panel
-    #region		<-- TOP
-    // Switch + enum created in LanguageSwitch.cs
-    // no logic/function yet
-
-    #endregion		<-- BOTTOM
-
-
-
-    ///***  Tooltips Panel
-    #region		<-- TOP
-    public void ToggleTooltips()
-    {
-        if (toolOn == false && tooltipOn.isOn == true)
-        {
-            //mainClassHandler.ButtonToolTips();
-            print("It is on");
-            toolOn = true;
-        }
-
-        if (toolOn == true && tooltipOff.isOn == true)
-        {
-            //mainClassHandler.ButtonNoToolTips();
-            print("It is off");
-            toolOn = false;
-
-        }
+        FirstPOVCamera();
+        ThirdPOVCamera();
+        SidePOVCamera();
 
     }
 
-    //public void ToggleTooltipsOff(Toggle toggle)
+
+    ///===///  Language Panel
+
+    #region		<-- TOP
+    //public bool boolcheck = false;
+    //enum LanguageCheck { English, French, Other};
+    //public int languageCheck = 3;
+
+    //public void LanguageToggle()
     //{
-    //    toolOn = false;
+    //	switch (languageCheck)
+    //	{
+    //		case 1:
+    //		{
+    //			print("");
+    //		}
+    //		break;
+    //		case 2:
+    //		{
 
-    //    if (toolOn == false && toggle.isOn == true)
-    //    {
-    //        //mainClass.ButtonNoToolTips();
-    //        print("It is off");
-
-    //    }
-
-
+    //		}
+    //		break;
+    //	}
     //}
+
     #endregion		<-- BOTTOM
 
-
-
-    ///***  Point of View Panel
+    ///===///  Tooltips Panel
     #region		<-- TOP
 
-    /// Linked to enum PointOfView
-    public void POVCamera1()
+    //public Main toolTipsON;
+    //public void ToggleTooltips()
+    //{
+    //	switch (languageCheck)
+    //	{
+    //		case 1:
+    //		{
+    //			print("");
+    //		}
+    //		break;
+    //		case 2:
+    //		{
+
+    //		}
+    //		break;
+    //	}
+    //}
+
+    #endregion		<-- BOTTOM
+
+    ///===///  Point of View Panel
+    #region		<-- TOP
+
+    public void FirstPOVActicate()
     {
+        activateFirstPOV = !activateFirstPOV;
+        activateThirdPOV = false;
+        activateSidePOV = false;
 
-        print("before 1");
-
-        if (currentPOV != PointOfView.POV1)
-        {
-            currentPOV = PointOfView.POV1;
-            activatePOV1 = true;
-
-        }
     }
 
-    public void POVFollow()
+    public void FirstPOVCamera()
     {
-        if(activatePOV1 == true)
+        if (activateFirstPOV == true)
         {
             Camera.main.transform.position = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.position;
             Camera.main.transform.rotation = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.rotation;
+
+            //anchorFirstPOV.transform.position = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.position;
+            //anchorFirstPOV.transform.rotation = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.rotation;
+
+            //Camera.main.transform.position = anchorFirstPOV.transform.position;
+            //Camera.main.transform.rotation = anchorFirstPOV.transform.rotation;
         }
     }
 
-    public void POVCamera3()
+    public void ThirdPOVActicate()
     {
-        if (currentPOV != PointOfView.POV3)
-        {
-            currentPOV = PointOfView.POV3;
-            activatePOV1 = false;
+        activateThirdPOV = !activateThirdPOV;
+        activateFirstPOV = false;
+        activateSidePOV = false;
 
-            Camera.main.transform.position = anchorPOV3.transform.position;
-            Camera.main.transform.rotation = anchorPOV3.transform.rotation;
-            print("3");
-
-        }
     }
 
-    public void POVCameraSideView()
+    public void ThirdPOVCamera()
     {
-        if (currentPOV != PointOfView.POVSideView)
+        if (activateThirdPOV == true)
         {
-            currentPOV = PointOfView.POVSideView;
-            activatePOV1 = false;
+            Camera.main.transform.position = anchorThirdPOV.transform.position;
+            Camera.main.transform.rotation = anchorThirdPOV.transform.rotation;
 
-            Camera.main.transform.position = anchorPOVSideView.transform.position;
-            Camera.main.transform.rotation = anchorPOVSideView.transform.rotation;
-            print("Side");
+            //anchorFirstPOV.transform.position = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.position;
+            //anchorFirstPOV.transform.rotation = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.rotation;
+        }
+    }
+    public void SidePOVActicate()
+    {
+        activateSidePOV = !activateSidePOV;
+        activateFirstPOV = false;
+        activateThirdPOV = false;
 
+    }
+
+    public void SidePOVCamera()
+    {
+        if (activateSidePOV == true)
+        {
+
+            Camera.main.transform.position = anchorSidePOV.transform.position;
+            Camera.main.transform.rotation = anchorSidePOV.transform.rotation;
+
+            //anchorFirstPOV.transform.position = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.position;
+            //anchorFirstPOV.transform.rotation = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.rotation;
         }
     }
 
-
     #endregion		<-- BOTTOM
 
-
-
-    ///***  Peripherals Panel
+    ///===///  Peripherals Panel
     #region		<-- TOP
 
 
     #endregion		<-- BOTTOM
 
-
-
-    ///***  Collapse Panel
+    ///===///  Collapse Panel
     #region		<-- TOP
 
 
     #endregion		<-- BOTTOM
 
-
-
-    ///***  Avatar Positioning Panel
+    ///===///  Avatar Positioning Panel
     #region		<-- TOP
 
 
     #endregion		<-- BOTTOM
 
-
-
-    ///***  Settings Panel
+    ///===///  Settings Panel
     #region		<-- TOP
     /// Functions linked to Tab0_OnClick.cs
 

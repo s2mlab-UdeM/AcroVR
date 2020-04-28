@@ -99,15 +99,9 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  activateFirstPOV: 0
-  buttonFirstPOV: {fileID: 0}
-  anchorFirstPOV: {fileID: 0}
-  activateThirdPOV: 1
-  buttonThirdPOV: {fileID: 0}
-  anchorThirdPOV: {fileID: 0}
-  activateSidePOV: 0
-  buttonSidePOV: {fileID: 0}
-  anchorSidePOV: {fileID: 0}
+  CameraPOV1: {fileID: 0}
+  CameraPOV3: {fileID: 0}
+  CameraPOVOther: {fileID: 0}
   toolOn: 1
   tooltipOn: {fileID: 0}
   tooltipOnText: {fileID: 0}
@@ -163,6 +157,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9baddb62e3d0ab488c0491352244f72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  moveToLayer: 1
+  ParentGO: {fileID: 0}
+  shiftToLayer: 10
 --- !u!114 &114925411086570610
 MonoBehaviour:
   m_ObjectHideFlags: 1
