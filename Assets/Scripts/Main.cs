@@ -32,11 +32,22 @@ public class Main : MonoBehaviour
 	public Text textTakeOffHorizontalSpeed;
 	public Text textTakeOffVerticalSpeed;
 	public Text textTakeOffSomersaultSpeed;
+//<<<<<<< Updated upstream
 	public Text textTakeOffTwistSpeed;
 
 	public Text textMessagesTextTitle;
+//=======
+//	public Text textTakeOffTilt;
+//	public Text textTakeOffTwistSpeed;
 
-	public GameObject panelMovement;				// Utilisées pour désactiver automatiquement le logiciel après une date spécifiée
+    [Space]
+
+	[Header("Movement, Graph Panel")]
+	[Tooltip("Movement window")]
+	public GameObject panelMovement;                // Graph window // Utilisées pour désactiver automatiquement le logiciel après une date spécifiée
+//>>>>>>> Stashed changes
+
+//	public GameObject panelMovement;				// Utilisées pour désactiver automatiquement le logiciel après une date spécifiée
 	public GameObject panelTakeoffParameters;
 	public GameObject panelMessages;
 	public GameObject panelAnimator;
@@ -164,7 +175,7 @@ public class Main : MonoBehaviour
 		// Section paramètres de décollage
 
 		textTakeOffTitle.text = languagesUsed.takeOffTitle;
-		textTakeOffSpeed.text = languagesUsed.takeOffTitleSpeed;
+//		textTakeOffSpeed.text = languagesUsed.takeOffTitleSpeed;
 		List<string> dropDownOptions = new List<string>();
 		dropDownOptions.Add(languagesUsed.takeOffConditionNoGravity);
 		dropDownOptions.Add(languagesUsed.takeOffConditionTrampolining);
@@ -188,7 +199,7 @@ public class Main : MonoBehaviour
 
 		// Section Résultats
 
-		textMessagesTextTitle.text = languagesUsed.displayMsgTitle;
+//		textMessagesTextTitle.text = languagesUsed.displayMsgTitle;
 
 		// Section Animation
 
