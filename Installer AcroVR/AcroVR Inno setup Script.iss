@@ -2,8 +2,8 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyCompany "Tekphy"
-#define MyAppName "AcroVR"
-#define MyAppVersion "04.03.2020"
+#define MyAppName "AcroVR TestDataFileOnline"
+#define MyAppVersion "27.03.2020"
 #define MyAppPublisher "Tekphy lab"
 #define MyAppExeName "AcroVR.exe"
 
