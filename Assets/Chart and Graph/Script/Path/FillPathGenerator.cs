@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using UnityEngine;
 
 namespace ChartAndGraph
 {
-    public class FillPathGenerator : SmoothPathGenerator
+    public partial class FillPathGenerator : SmoothPathGenerator
     {
         public bool WithTop = true;
         public bool MatchLine = true;

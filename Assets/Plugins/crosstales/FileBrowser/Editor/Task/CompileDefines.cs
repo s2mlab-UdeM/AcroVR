@@ -1,20 +1,19 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 
 namespace Crosstales.FB.EditorTask
 {
-    /// <summary>Adds the given define symbols to PlayerSettings define symbols.</summary>
-    [InitializeOnLoad]
-    public class CompileDefines : Common.EditorTask.BaseCompileDefines
-    {
+   /// <summary>Adds the given define symbols to PlayerSettings define symbols.</summary>
+   [InitializeOnLoad]
+   public class CompileDefines : Common.EditorTask.BaseCompileDefines
+   {
+      private static readonly string[] symbols = {"CT_FB", "CT_FB_PRO"};
 
-        private static readonly string[] symbols = new string[] {
-            "CT_FB",
-        };
-
-        static CompileDefines()
-        {
-            setCompileDefines(symbols);
-        }
-    }
+      static CompileDefines()
+      {
+         addSymbolsToAllTargets(symbols);
+      }
+   }
 }
-// © 2017-2019 crosstales LLC (https://www.crosstales.com)
+#endif
+// © 2017-2020 crosstales LLC (https://www.crosstales.com)

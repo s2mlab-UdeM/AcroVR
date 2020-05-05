@@ -1,4 +1,5 @@
-﻿
+#define Graph_And_Chart_PRO
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,8 +20,6 @@ namespace ChartAndGraph
         private GraphicRaycaster mCaster;
         protected Dictionary<string, Dictionary<int, BillboardText>> mTexts = new Dictionary<string, Dictionary<int, BillboardText>>();
         protected HashSet<BillboardText> mActiveTexts = new HashSet<BillboardText>();
-
-
 
         public ScrollableChartData ScrollableData
         {
@@ -72,9 +71,18 @@ namespace ChartAndGraph
                 //float dMin = (float)((IInternalGraphData)Data).GetMinValue(axis, true);
                 double scrolling = dMax - sMax;
                 if (axis == 1)
+                {
+                    if (ScrollableData.VerticalViewSize < 0)
+                        scrolling += ScrollableData.VerticalViewSize;
+
                     verticalScrolling = scrolling;
+                }
                 else if (axis == 0)
+                {
+                    if (ScrollableData.HorizontalViewSize < 0)
+                        scrolling += ScrollableData.HorizontalViewSize;
                     horizontalScrolling = scrolling;
+                }
                 return scrolling;
             }
             if (axis == 1)
@@ -87,7 +95,7 @@ namespace ChartAndGraph
         protected void AddBillboardText(string cat, int index, BillboardText text)
         {
             if (text.UIText != null)
-                text.UIText.maskable = false;
+                ChartCommon.MakeMaskable(text.UIText, false);
             Dictionary<int, BillboardText> addTo;
             if (mTexts.TryGetValue(cat, out addTo) == false)
             {
@@ -108,7 +116,7 @@ namespace ChartAndGraph
                 d.Clear();
         }
         [HideInInspector]
-        [SerializeField]
+     //   [SerializeField]
         protected bool scrollable = true;
 
         public bool Scrollable
@@ -116,7 +124,7 @@ namespace ChartAndGraph
             get { return scrollable; }
             set
             {
-                scrollable = value;
+                scrollable = true;// value;
                 Invalidate();
             }
         }
@@ -160,6 +168,20 @@ namespace ChartAndGraph
             {
                 verticalScrolling = value;
                 InvalidateRealtime();
+            }
+        }
+
+
+        [SerializeField]
+        private bool raycastTarget = true;
+
+        public bool RaycastTarget
+        {
+            get { return raycastTarget; ; }
+            set
+            {
+                raycastTarget = value;
+                Invalidate();
             }
         }
 
@@ -238,14 +260,6 @@ namespace ChartAndGraph
         /// </summary>
         internal abstract void SetAsMixedSeries();
 
-        /// <summary>
-        /// internal method used by the mixed series chart to get the default category filter for this chart. This is used to convert generic data to data specific for this chart type
-        /// </summary>
-        /// <returns></returns>
-        internal virtual MixedSeriesData.CategoryFilter GetDefaultFilter()
-        {
-            return new IdentityCategoryFilter();
-        }
 
         private DoubleVector3 PointToNormalized(double x, double y)
         {
@@ -267,9 +281,13 @@ namespace ChartAndGraph
 
         private Vector3 PointShift
         {
-            get { return Vector3.zero; } // return CanvasFitOffset; }
+            get {
+                if(IsCanvas)
+                    return CanvasFitOffset;
+                return new Vector3();
+            }
         }
-
+        protected override Vector3 CanvasFitOffset { get { return new Vector3(0.5f, 0.5f, 0f); } }
         /// <summary>
         /// transform a point from axis units into world space. returns true on success and false on failure (failure should never happen for this implementation)
         /// </summary>
@@ -283,6 +301,7 @@ namespace ChartAndGraph
             Vector3 fit = PointShift;
             double minX, minY, maxX, maxY, xScroll, yScroll, xSize, ySize, xOut;
             GetScrollParams(out minX, out minY, out maxX, out maxY, out xScroll, out yScroll, out xSize, out ySize, out xOut);
+
             double resX = (((x - xScroll) / xSize)- fit.x) * ((IInternalUse)this).InternalTotalWidth;
             double resY = (((y-yScroll) / ySize) - fit.y) * ((IInternalUse)this).InternalTotalHeight;
             double resZ = 0.0;
@@ -335,18 +354,19 @@ namespace ChartAndGraph
         /// </summary>
         /// <param name="worldPoint"></param>
         /// <param name="x"></param>
-        /// <param name="y"></param>
+        /// <param name="y"></param> 
         /// <returns></returns>
         public bool PointToClient(Vector3 worldPoint, out double x, out double y)
         {
+            Vector3 fit = PointShift;
             double minX, minY, maxX, maxY, xScroll, yScroll, xSize, ySize, xOut;
             GetScrollParams(out minX, out minY, out maxX, out maxY, out xScroll, out yScroll, out xSize, out ySize, out xOut);
             Transform t = transform;
             if (FixPosition != null)
                 t = FixPosition.transform;
             worldPoint = t.InverseTransformPoint(worldPoint);
-            x = xScroll + xSize * (((double)worldPoint.x) / ((IInternalUse)this).InternalTotalWidth);
-            y = yScroll + ySize * (((double)worldPoint.y) / ((IInternalUse)this).InternalTotalHeight);
+            x = xScroll + xSize * ((((double)worldPoint.x) / ((IInternalUse)this).InternalTotalWidth) + fit.x);
+            y = yScroll + ySize * ((((double)worldPoint.y) / ((IInternalUse)this).InternalTotalHeight) + fit.y);
             return true;
         }
 
@@ -485,6 +505,10 @@ namespace ChartAndGraph
             Mask m = obj.GetComponent<Mask>();
             if (m != null)
                 m.enabled = Scrollable;
+            Image im = obj.GetComponent<Image>();
+            im.raycastTarget = raycastTarget;
+            if (im != null)
+                im.enabled = Scrollable;
             mMask = obj;
             return obj;
         }
@@ -499,25 +523,40 @@ namespace ChartAndGraph
             }
         }
 
-        protected string StringFromAxisFormat(double val, AxisBase axis)
+        protected string StringFromAxisFormat(DoubleVector3 val, AxisBase axis,bool isX)
         {
+            double itemVal = isX ? val.x : val.y;
             if (axis == null)
-                return ChartAdancedSettings.Instance.FormatFractionDigits(2, val);
-            return StringFromAxisFormat(val, axis, axis.MainDivisions.FractionDigits);
+                return ChartAdancedSettings.Instance.FormatFractionDigits(2, itemVal);
+            return StringFromAxisFormat(val, axis, axis.MainDivisions.FractionDigits, isX);
         }
         
-        protected string StringFromAxisFormat(double val, AxisBase axis, int fractionDigits)
+        protected string StringFromAxisFormat(DoubleVector3 val, AxisBase axis, int fractionDigits,bool isX)
         {
+            val.z = 0;
+            double itemVal = isX ? val.x : val.y;
+            var dic = VectorValueToStringMap;
+
+            KeyValuePair<string,string> res;
+       //     Debug.Log("try get " + val + " count is " + dic.Count);
+            if (dic.TryGetValue(val, out res))
+            {
+                if (isX && res.Key != null)
+                    return res.Key;
+                if (isX == false && res.Value != null)
+                    return res.Value;
+            }
             if (axis == null)
-                return ChartAdancedSettings.Instance.FormatFractionDigits(fractionDigits, val);
+                return ChartAdancedSettings.Instance.FormatFractionDigits(fractionDigits, itemVal);
+            
             string toSet = "";
             if (axis.Format == AxisFormat.Number)
-                toSet = ChartAdancedSettings.Instance.FormatFractionDigits(fractionDigits, val);
+                toSet = ChartAdancedSettings.Instance.FormatFractionDigits(fractionDigits, itemVal);
             else
             {
-                DateTime date = ChartDateUtility.ValueToDate(val);
+                DateTime date = ChartDateUtility.ValueToDate(itemVal);
                 if (axis.Format == AxisFormat.DateTime)
-                    toSet = ChartDateUtility.DateToDateTimeString(date);
+                    toSet = ChartDateUtility.DateToDateTimeString(date,CustomDateTimeFormat);
                 else
                 {
                     if (axis.Format == AxisFormat.Date)
@@ -545,7 +584,6 @@ namespace ChartAndGraph
         private void MouseDraged(Vector2 delta)
         {
             bool drag = false;
-
             if (VerticalPanning)
             {                
                 float range = GetScrollingRange(1);
@@ -569,6 +607,7 @@ namespace ChartAndGraph
                     MousePan.Invoke();
             }
         }
+
         private void HandleMouseDrag()
         {
             if (verticalPanning == false && horizontalPanning == false)
@@ -577,10 +616,15 @@ namespace ChartAndGraph
             if (mCaster == null)
                 return;
             Vector2 mousePos;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(transform as RectTransform, Input.mousePosition, mCaster.eventCamera, out mousePos);
+            Vector2 checkMousePos = Input.mousePosition;
+            var pointer = GetComponentInParent<CustomChartPointer>();
+            if (pointer != null)
+                checkMousePos = pointer.ScreenPosition;
 
-            bool mouseIn = RectTransformUtility.RectangleContainsScreenPoint(transform as RectTransform, Input.mousePosition);
-            if (Input.GetMouseButton(0) && mouseIn)
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(transform as RectTransform, checkMousePos, mCaster.eventCamera, out mousePos);
+            var cam = mCaster.eventCamera;
+            bool mouseIn = RectTransformUtility.RectangleContainsScreenPoint(transform as RectTransform, checkMousePos, cam);
+            if (((pointer == null && Input.GetMouseButton(0)) || (pointer!=null && pointer.IsMouseDown)) && mouseIn)
             {
                 if (mLastPosition.HasValue)
                 {
@@ -618,7 +662,7 @@ namespace ChartAndGraph
         protected void SelectActiveText(BillboardText b)
         {
             TriggerActiveTextsOut();
-            Text tx = b.UIText;
+            GameObject tx = b.UIText;
             if (tx != null)
             {
                 ChartItemEvents e = tx.GetComponent<ChartItemEvents>();

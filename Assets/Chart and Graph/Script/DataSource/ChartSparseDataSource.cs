@@ -1,4 +1,5 @@
-﻿using ChartAndGraph.DataSource;
+#define Graph_And_Chart_PRO
+using ChartAndGraph.DataSource;
 using ChartAndGraph.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -71,9 +72,21 @@ namespace ChartAndGraph
             mColumns.NameChanged += MColumns_NameChanged;
             mRows.NameChanged += MRows_NameChanged;
             mColumns.OrderChanged += OrderChanged;
+            mColumns.ItemsReplaced += MColumns_ItemsReplaced; ;
             mRows.OrderChanged += OrderChanged;
             mColumns.ItemRemoved += Columns_ItemRemoved;
             mRows.ItemRemoved += Rows_ItemRemoved;
+        }
+
+        private void MColumns_ItemsReplaced(string first, int firstIndex, string second, int secondIndex)
+        {
+            mRawData = null;    // data is invalidated.
+            mChartDataToIndex.Clear();  // clear the index dictionary
+            if (mSuspendEvents == false)
+                OnItemsReplaced(first, firstIndex, second, secondIndex);
+            else
+                mFireEvent = true;
+
         }
 
         private void MRows_NameChanged(string arg1, IDataItem arg2)
@@ -87,6 +100,7 @@ namespace ChartAndGraph
         Dictionary<KeyElement, double> mData = new Dictionary<KeyElement, double>();
         Dictionary<ChartDataItemBase, int> mChartDataToIndex = new Dictionary<ChartDataItemBase, int>();
         KeyValuePair<KeyElement, double>? mMaxValue = null, mMinValue = null;
+
         bool mFireEvent = false;
         bool mSuspendEvents = false;
         public bool SuspendEvents

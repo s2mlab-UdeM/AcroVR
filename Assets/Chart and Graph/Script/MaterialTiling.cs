@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,7 @@ namespace ChartAndGraph
         {
             EnableTiling = enable;
             TileFactor = value;
+            
         }
         public override bool Equals(object obj)
         {

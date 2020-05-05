@@ -63,7 +63,8 @@ public class MovementF : MonoBehaviour
 
 		calledFromScript = false;
 		enableSymetricLeftRight = false;
-		Main.Instance.EnableDisableControls(false, false);
+		if (!MainParameters.Instance.testXSensUsed)
+			Main.Instance.EnableDisableControls(false, false);
 	}
 
 	// =================================================================================================================================================================
@@ -151,8 +152,29 @@ public class MovementF : MonoBehaviour
 			dirSimulationFiles = string.Format("{0}/SimulationFiles", Application.dataPath.Substring(0, n));
 		else
 			dirSimulationFiles = string.Format("{0}/Documents", Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+		Debug.Log(string.Format("Mac: dirSimulationFiles = {0}", dirSimulationFiles));
+#elif UNITY_EDITOR
+		string dirSimulationFiles = string.Format(@"{0}/../Installer/SimulationFiles", UnityEngine.Application.dataPath);
+		if (!System.IO.Directory.Exists(dirSimulationFiles))
+		{
+			dirSimulationFiles = string.Format(@"{0}\Tekphy\AcroVR\SimulationFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
+			if (!System.IO.Directory.Exists(dirSimulationFiles))
+			{
+				dirSimulationFiles = string.Format(@"{0}\Tekphy\AcroVR\SimulationFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86));
+				if (!System.IO.Directory.Exists(dirSimulationFiles))
+					dirSimulationFiles = "";
+			}
+
+		}
 #else
-		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Tekphy\AcroVR\SimulationFiles");
+		string dirSimulationFiles = string.Format(@"{0}\Tekphy\AcroVR\SimulationFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
+		if (!System.IO.Directory.Exists(dirSimulationFiles))
+		{
+			dirSimulationFiles = string.Format(@"{0}\Tekphy\AcroVR\SimulationFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86));
+			if (!System.IO.Directory.Exists(dirSimulationFiles))
+				dirSimulationFiles = "";
+		}
+
 #endif
 		string fileName = FileBrowser.OpenSingleFile(MainParameters.Instance.languages.Used.movementLoadDataFileTitle, dirSimulationFiles, extensions);
 		if (fileName.Length <= 0)

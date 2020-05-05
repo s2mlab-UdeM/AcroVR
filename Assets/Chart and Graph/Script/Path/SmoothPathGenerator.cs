@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using UnityEngine;
 
 namespace ChartAndGraph
 {
-    public abstract class SmoothPathGenerator : PathGenerator
+    public abstract partial class SmoothPathGenerator : PathGenerator
     {
         public int JointSmoothing = 2;
         public float JointSize = 0.1f;

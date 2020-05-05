@@ -5,86 +5,107 @@ using System;
 
 namespace Crosstales.FB.Wrapper
 {
-    public class FileBrowserEditor : FileBrowserBase
-    {
+   public class FileBrowserEditor : FileBrowserBase
+   {
+      #region Implemented methods
 
-        #region Implemented methods
+      public override bool canOpenMultipleFiles
+      {
+         get { return false; }
+      }
 
-        public override string[] OpenFiles(string title, string directory, ExtensionFilter[] extensions, bool multiselect)
-        {
-            if (multiselect)
-                Debug.LogWarning("'multiselect' for files is not supported in the Editor.");
-            
-            string path = string.Empty;
+      public override bool canOpenMultipleFolders
+      {
+         get { return false; }
+      }
 
-            if (extensions == null)
-            {
-                path = EditorUtility.OpenFilePanel(title, directory, string.Empty);
-            }
-            else
-            {
-                path = EditorUtility.OpenFilePanelWithFilters(title, directory, getFilterFromFileExtensionList(extensions));
-            }
+      public override bool isPlatformSupported
+      {
+         get { return Util.Helper.isWindowsPlatform || Util.Helper.isMacOSPlatform || Util.Helper.isLinuxPlatform || Util.Helper.isWSABasedPlatform; }
+      }
 
-            return string.IsNullOrEmpty(path) ? new string[0] : new[] { path };
-        }
+      public override string[] OpenFiles(string title, string directory, ExtensionFilter[] extensions, bool multiselect)
+      {
+         if (Util.Helper.isMacOSEditor && extensions != null && extensions.Length > 1)
+            Debug.LogWarning("Multiple 'extensions' are not supported in the Editor.");
 
-        public override string[] OpenFolders(string title, string directory, bool multiselect)
-        {
-            if (multiselect)
-                Debug.LogWarning("'multiselect' for folders is not supported in the Editor.");
+         if (multiselect)
+            Debug.LogWarning("'multiselect' for files is not supported in the Editor.");
 
-            string path = EditorUtility.OpenFolderPanel(title, directory, string.Empty);
+         string path = string.Empty;
 
-            return string.IsNullOrEmpty(path) ? new string[0] : new[] { path };
-        }
+         path = extensions == null ? EditorUtility.OpenFilePanel(title, directory, string.Empty) : EditorUtility.OpenFilePanelWithFilters(title, directory, getFilterFromFileExtensionList(extensions));
 
-        public override string SaveFile(string title, string directory, string defaultName, ExtensionFilter[] extensions)
-        {
-            if (extensions.Length > 1)
-                Debug.LogWarning("Multiple 'extensions' are not supported in the Editor.");
-            
-            string ext = extensions != null ? extensions[0].Extensions[0] : string.Empty;
-            string name = string.IsNullOrEmpty(ext) ? defaultName : defaultName + "." + ext;
+         return string.IsNullOrEmpty(path) ? new string[0] : new[] {path};
+      }
 
-            return EditorUtility.SaveFilePanel(title, directory, name, ext);
-        }
+      public override string[] OpenFolders(string title, string directory, bool multiselect)
+      {
+         if (multiselect)
+            Debug.LogWarning("'multiselect' for folders is not supported in the Editor.");
 
-        public override void OpenFilesAsync(string title, string directory, ExtensionFilter[] extensions, bool multiselect, Action<string[]> cb)
-        {
-            cb.Invoke(OpenFiles(title, directory, extensions, multiselect));
-        }
+         string path = EditorUtility.OpenFolderPanel(title, directory, string.Empty);
 
-        public override void OpenFoldersAsync(string title, string directory, bool multiselect, Action<string[]> cb)
-        {
-            cb.Invoke(OpenFolders(title, directory, multiselect));
-        }
+         return string.IsNullOrEmpty(path) ? new string[0] : new[] {path};
+      }
 
-        public override void SaveFileAsync(string title, string directory, string defaultName, ExtensionFilter[] extensions, Action<string> cb)
-        {
-            cb.Invoke(SaveFile(title, directory, defaultName, extensions));
-        }
+      public override string SaveFile(string title, string directory, string defaultName, ExtensionFilter[] extensions)
+      {
+         if (extensions != null && extensions.Length > 1)
+            Debug.LogWarning("Multiple 'extensions' are not supported in the Editor.");
 
-        #endregion
+         string ext = extensions != null && extensions.Length > 0 ? extensions[0].Extensions[0].Equals("*") ? string.Empty : extensions[0].Extensions[0] : string.Empty;
+         string name = string.IsNullOrEmpty(ext) ? defaultName : defaultName + "." + ext;
+
+         return EditorUtility.SaveFilePanel(title, directory, name, ext);
+      }
+
+      public override void OpenFilesAsync(string title, string directory, ExtensionFilter[] extensions, bool multiselect, Action<string[]> cb)
+      {
+         Debug.LogWarning("'OpenFilesAsync' is running synchronously in the Editor.");
+         cb.Invoke(OpenFiles(title, directory, extensions, multiselect));
+      }
+
+      public override void OpenFoldersAsync(string title, string directory, bool multiselect, Action<string[]> cb)
+      {
+         Debug.LogWarning("'OpenFoldersAsync' is running synchronously in the Editor.");
+         cb.Invoke(OpenFolders(title, directory, multiselect));
+      }
+
+      public override void SaveFileAsync(string title, string directory, string defaultName, ExtensionFilter[] extensions, Action<string> cb)
+      {
+         Debug.LogWarning("'SaveFileAsync' is running synchronously in the Editor.");
+         cb.Invoke(SaveFile(title, directory, defaultName, extensions));
+      }
+
+      #endregion
 
 
-        #region Private methods
+      #region Private methods
 
-        private static string[] getFilterFromFileExtensionList(ExtensionFilter[] extensions)
-        {
+      private static string[] getFilterFromFileExtensionList(ExtensionFilter[] extensions)
+      {
+         if (extensions != null && extensions.Length > 0)
+         {
             string[] filters = new string[extensions.Length * 2];
 
-            for (int i = 0; i < extensions.Length; i++)
+            for (int ii = 0; ii < extensions.Length; ii++)
             {
-                filters[(i * 2)] = extensions[i].Name;
-                filters[(i * 2) + 1] = string.Join(",", extensions[i].Extensions);
+               filters[ii * 2] = extensions[ii].Name;
+               filters[ii * 2 + 1] = string.Join(",", extensions[ii].Extensions);
             }
 
-            return filters;
-        }
+            if (Util.Config.DEBUG)
+               Debug.Log("getFilterFromFileExtensionList: " + filters.CTDump());
 
-        #endregion
-    }
+            return filters;
+         }
+
+         return new string[0];
+      }
+
+      #endregion
+   }
 }
 #endif
-// © 2017-2019 crosstales LLC (https://www.crosstales.com)
+// © 2017-2020 crosstales LLC (https://www.crosstales.com)

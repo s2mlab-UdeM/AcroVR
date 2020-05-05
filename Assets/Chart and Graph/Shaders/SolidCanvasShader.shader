@@ -59,7 +59,7 @@ Shader "Chart/Canvas/Solid"
 	{
 		vertexData res;
 		res.pos = UnityObjectToClipPos(v.vertex);
-		res.color = _Color;
+		res.color = _Color;		
 		res.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
 		return res;
 	}
@@ -67,7 +67,7 @@ Shader "Chart/Canvas/Solid"
 
 	float4 sampleFragment(vertexData v) : COLOR
 	{
-		fixed4 texData = tex2D(_MainTex, v.uv) * _Color;
+		fixed4 texData = tex2D(_MainTex, v.uv) * v.color;
 	return texData;
 	}
 		ENDCG

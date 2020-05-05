@@ -1,9 +1,22 @@
-﻿# crosstales LLC - Common package 2019.1.0
+﻿# crosstales LLC - Common package 2020.1.3
 
 ## Description
 This folder and its content is needed for all assets from "crosstales LLC".
 
-Please DON'T DELETE it or the assets won't work anymore!
+Please DON'T DELETE anything except "Prefabs" and "UI" or the assets won't work anymore!
+
+
+
+## Notes:
+
+### macOS (notarization and Mac App Store)
+To get your app through the Apples signing process, do one of the following things:
+
+1) Add the following key to the entitlement-file:
+<key>com.apple.security.cs.disable-library-validation</key><true/>
+
+2) Sign the libraries after building:
+codesign --deep --force --verify --verbose --timestamp --sign "Developer ID Application : YourCompanyName (0123456789)" "YourApp.app/Contents/Plugins/libProcessStart.bundle"
 
 
 
@@ -20,13 +33,12 @@ CH-8002 Zürich
 * [Facebook](https://www.facebook.com/crosstales/)
 * [Twitter](https://twitter.com/crosstales)
 * [LinkedIN](https://www.linkedin.com/company/crosstales)
-* [Xing](https://www.xing.com/companies/crosstales)
 
 
 
 ## More information
-* [AssetStore](https://goo.gl/qwtXyb)
+* [AssetStore](https://assetstore.unity.com/lists/crosstales-42213?aid=1011lNGT)
 * [Youtube-channel](https://www.youtube.com/c/Crosstales)
 
 
-`Version: 14.01.2019`
+`Version: 14.04.2020`

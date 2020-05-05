@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -90,7 +91,7 @@ namespace ChartAndGraph.Axis
                     {
                         DateTime date = ChartDateUtility.ValueToDate(newVal);
                         if (mAxis.Format == AxisFormat.DateTime)
-                            toSet = ChartDateUtility.DateToDateTimeString(date);
+                            toSet = ChartDateUtility.DateToDateTimeString(date,parent.CustomDateTimeFormat);
                         else
                         {
                             if (mAxis.Format == AxisFormat.Date)
@@ -101,7 +102,7 @@ namespace ChartAndGraph.Axis
 
                     }
                     toSet = data.info.TextPrefix + toSet + data.info.TextSuffix;
-                    text.UIText.text = toSet;
+                    ChartCommon.UpdateTextParams(text.UIText, toSet);
                 }
             }
         }
@@ -151,7 +152,7 @@ namespace ChartAndGraph.Axis
             }
             mMesh.Clear();
 
-            if (mIsSubDivisions)
+            if (isSubDivisions)
                 mAxis.AddMainDivisionToChartMesh(mScrollOffset,mParent, transform, mMesh, mOrientation);
             else
                 mAxis.AddSubdivisionToChartMesh(mScrollOffset,mParent, transform, mMesh, mOrientation);
@@ -170,11 +171,12 @@ namespace ChartAndGraph.Axis
                 ChartCommon.SafeDestroy(mDispose);
 
             float tiling = 1f;
-            if (isSubDivisions)
+            if (!isSubDivisions)
             {
                 if (axis.SubDivisions.Material != null)
-                {
-                    mDispose = new Material(mMaterial = axis.SubDivisions.Material);
+                {              
+                    mMaterial = axis.SubDivisions.Material;
+                    mDispose = new Material(mMaterial);
                     mDispose.hideFlags = HideFlags.DontSave;
                     material = mDispose;
                     tiling = GetTiling(axis.SubDivisions.MaterialTiling);
@@ -184,7 +186,8 @@ namespace ChartAndGraph.Axis
             {
                 if (axis.MainDivisions.Material != null)
                 {
-                    mDispose = new Material(mMaterial = axis.MainDivisions.Material);
+                    mMaterial = axis.MainDivisions.Material;
+                    mDispose = new Material(mMaterial);
                     mDispose.hideFlags = HideFlags.DontSave;
                     material = mDispose;
                     tiling = GetTiling(axis.MainDivisions.MaterialTiling);

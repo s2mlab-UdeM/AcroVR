@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +23,25 @@ namespace ChartAndGraph
             {
                 fitToContainer = value;
                 OnPropertyUpdated();
+            }
+        }
+
+        [SerializeField]
+        private ChartMagin fitMargin;
+        public ChartMagin FitMargin
+        {
+            get { return fitMargin; }
+            set
+            {
+                fitMargin = value;
+                OnPropertyUpdated();
+            }
+        }
+        protected override ChartMagin MarginLink
+        {
+            get
+            {
+                return fitMargin;
             }
         }
 
@@ -182,8 +202,15 @@ namespace ChartAndGraph
 
             if (rect != null)
             {
-                rect.pivot = new Vector2(0.5f, 0f);
-                rect.sizeDelta = new Vector2(size.x, size.y);
+                float ySize = size.y;
+                float yAnchor = 0f;
+                if (ySize < 0)
+                {
+                    ySize = -ySize;
+                    yAnchor = 1;
+                }
+                rect.pivot = new Vector2(0.5f, yAnchor);
+                rect.sizeDelta = new Vector2(size.x, ySize);
                 Vector2 v = rect.localPosition;
                 v.y = elevation;
                 rect.localPosition = v;
@@ -196,17 +223,60 @@ namespace ChartAndGraph
         {
             base.Update();
         }
-        protected override Vector3 CanvasFitOffset
+        //protected override Vector3 CanvasFitOffset
+        //{
+        //    get
+        //    {
+        //        return new Vector3();
+        //    }
+        //}
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [SerializeField]
+        [Tooltip("")]
+        private FitType barFitType = FitType.Aspect;
+
+        /// <summary>
+        /// the width of each bar in the chart
+        /// </summary
+        public FitType BarFitType
         {
-            get
+            get { return barFitType; }
+            set
             {
-                return new Vector3();
+                barFitType = value;
+                OnPropertyUpdated();
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [SerializeField]
+        [Tooltip("")]
+        private FitAlign barFitAlign = FitAlign.CenterXCenterY;
+
+        /// <summary>
+        /// the width of each bar in the chart
+        /// </summary
+        public FitAlign BarFitAlign
+        {
+            get { return barFitAlign; }
+            set
+            {
+                barFitAlign = value;
+                OnPropertyUpdated();
+            }
+        }
+
+
+        protected override FitType FitAspectCanvas { get { return BarFitType; } }
+        protected override FitAlign FitAlignCanvas { get { return BarFitAlign; } }
         [ContextMenu("Refresh chart")]
         public override void InternalGenerateChart()
         {
-
             RectTransform trans = GetComponent<RectTransform>();
 
             if (FitToContainer)
@@ -216,21 +286,21 @@ namespace ChartAndGraph
             }
 
             base.InternalGenerateChart();
-            if (TextController != null && TextController.gameObject)
-                TextController.gameObject.transform.SetAsLastSibling();
-            float widthScale = trans.rect.size.x / TotalWidth;
-            float heightScale = trans.rect.size.y / HeightRatio;
-            GameObject fixPosition = new GameObject();
-            ChartCommon.HideObject(fixPosition, hideHierarchy);
-            fixPosition.AddComponent<ChartItem>();
-            fixPosition.transform.position = transform.position;
-            while (gameObject.transform.childCount > 0)
-                transform.GetChild(0).SetParent(fixPosition.transform, false);
-            fixPosition.transform.SetParent(transform, false);
-            fixPosition.transform.localScale = new Vector3(1f, 1f, 1f);
-            float uniformScale = Math.Min(widthScale, heightScale);
-            fixPosition.transform.localScale = new Vector3(uniformScale, uniformScale, uniformScale);
-            fixPosition.transform.localPosition = new Vector3(-TotalWidth * uniformScale * 0.5f, -HeightRatio * uniformScale * 0.5f, 0f);
+            //if (TextController != null && TextController.gameObject)
+            //    TextController.gameObject.transform.SetAsLastSibling();
+            //float widthScale = trans.rect.size.x / TotalWidth;
+            //float heightScale = trans.rect.size.y / HeightRatio;
+            //GameObject fixPosition = new GameObject();
+            //ChartCommon.HideObject(fixPosition, hideHierarchy);
+            //fixPosition.AddComponent<ChartItem>();
+            //fixPosition.transform.position = transform.position;
+            //while (gameObject.transform.childCount > 0)
+            //    transform.GetChild(0).SetParent(fixPosition.transform, false);
+            //fixPosition.transform.SetParent(transform, false);
+            //fixPosition.transform.localScale = new Vector3(1f, 1f, 1f);
+            //float uniformScale = Math.Min(widthScale, heightScale);
+            //fixPosition.transform.localScale = new Vector3(uniformScale, uniformScale, uniformScale);
+            //fixPosition.transform.localPosition = new Vector3(-TotalWidth * uniformScale * 0.5f, -HeightRatio * uniformScale * 0.5f, 0f);
         }
 
         protected override GameObject BarPrefabLink

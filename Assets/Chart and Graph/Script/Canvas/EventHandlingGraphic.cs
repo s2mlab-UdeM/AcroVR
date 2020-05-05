@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -162,8 +163,8 @@ namespace ChartAndGraph
 
         protected virtual void Update()
         {
-            HandleMouseMove(mForceMouseMove); // handle mouse move
-            mForceMouseMove = false; // mouse events are already handled in the above line, so we set this to false
+            if(HandleMouseMove(mForceMouseMove)) // handle mouse move
+                mForceMouseMove = false; // mouse events are already handled in the above line, so we set this to false
         }
 
 
@@ -189,7 +190,7 @@ namespace ChartAndGraph
         /// <summary>
         /// This method is called during update if RefreshInputs has been called in the preivous frame. When the canvas graph mesh updates , all active hover effects are repositioned to match their new position.
         /// </summary>
-        void SetUpAllHoverObjects()
+        protected void SetUpAllHoverObjects()
         {
             if (mHoverObjectes == null)
                 return;
@@ -355,13 +356,29 @@ namespace ChartAndGraph
         /// Handles a mouse move event.
         /// </summary>
         /// <param name="force"></param>
-        public void HandleMouseMove(bool force)
+        public bool HandleMouseMove(bool force)
         {
             mCaster = GetComponentInParent<GraphicRaycaster>();
             if (mCaster == null)
-                return;
+                return false;
             Vector2 mousePos;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(transform as RectTransform, Input.mousePosition, mCaster.eventCamera, out mousePos);
+
+
+            // on some machines and settings , it seems that Input.mousePosition returns invalid coordinates, the following checks make sure that the mouse position is valid
+            Vector3 checkMousePos = Input.mousePosition;
+
+            var pointer = GetComponentInParent<CustomChartPointer>();
+            if (pointer != null)
+                checkMousePos = pointer.ScreenPosition;
+            Camera checkCamera = mCaster.eventCamera;
+            if (checkCamera == null)
+                checkCamera = Camera.main;
+            if (checkCamera == null)
+                return false;
+            if (checkCamera.pixelRect.Contains(checkMousePos) == false)
+                return false;
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(transform as RectTransform, checkMousePos, mCaster.eventCamera, out mousePos);
             //DoMouse(mousePos, false);
             float thresh = MouseInThreshold;
             if (force)
@@ -378,7 +395,7 @@ namespace ChartAndGraph
                     mIsMouseIn = false;
                     DoMouse(mousePos, true, force);
                 }
-                return;
+                return true;
             }
             else
             {
@@ -398,10 +415,11 @@ namespace ChartAndGraph
                 }
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if ((pointer== null && Input.GetMouseButtonDown(0)) || (pointer !=null && pointer.Click))
             {
                 HandleMouseDown();
             }
+            return true;
         }
 
         /// <summary>
@@ -416,12 +434,18 @@ namespace ChartAndGraph
                     mCaster = GetComponentInParent<GraphicRaycaster>();
                     if (mCaster == null)
                         return;
+                    Vector3 checkMousePos = Input.mousePosition;
+
+                    var pointer = GetComponentInParent<CustomChartPointer>();
+                    if (pointer != null)
+                        checkMousePos = pointer.ScreenPosition;
                     Vector2 mousePos;
-                    RectTransformUtility.ScreenPointToLocalPointInRectangle(transform as RectTransform, Input.mousePosition, mCaster.eventCamera, out mousePos);
+                    RectTransformUtility.ScreenPointToLocalPointInRectangle(transform as RectTransform, checkMousePos, mCaster.eventCamera, out mousePos);
                     Vector3 pos = transform.InverseTransformPoint(mousePos);
                     Click(mPickedIndex,mPickedType, mPickedData, pos);
                 }
             }
         }
+
     }
 }

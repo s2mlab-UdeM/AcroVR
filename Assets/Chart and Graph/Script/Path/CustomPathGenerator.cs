@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace ChartAndGraph
 {
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))]
-    class CustomPathGenerator : SmoothPathGenerator, IPieGenerator , IBarGenerator
+    partial class CustomPathGenerator : SmoothPathGenerator, IPieGenerator , IBarGenerator
     {
        // List<Vector2> mTmpPath = new List<Vector2>();
       //  List<Vector2> mOfPathTringles = new List<Vector2>();

@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,9 +26,11 @@ namespace ChartAndGraph
         /// event arguments for a bar chart event
         /// </summary>
         public class GraphEventArgs
-        {   
+        { 
+            
             public GraphEventArgs(int index,Vector3 position, DoubleVector2 value,float magnitude, string category,string xString,string yString)
             {
+
                 Position = position;
                 Value = value;
                 Category = category;
@@ -108,6 +111,8 @@ namespace ChartAndGraph
             }
         }
 
+        protected bool mRealtimeUpdateIndex = false;
+        protected Dictionary<string, int> mMinimumUpdateIndex = new Dictionary<string, int>();
         /// <summary>
         /// the graph data
         /// </summary>
@@ -151,19 +156,56 @@ namespace ChartAndGraph
             }
         }
 
+        public abstract void ClearCache();
+
         private void HookEvents()
         {
             ((IInternalGraphData)Data).InternalDataChanged -= GraphChart_InternalDataChanged;
             ((IInternalGraphData)Data).InternalRealTimeDataChanged -= GraphChartBase_InternalRealTimeDataChanged; ;
+            ((IInternalGraphData)Data).InternalViewPortionChanged -= GraphChartBase_InternalViewPortionChanged;
+
+            ((IInternalGraphData)Data).InternalViewPortionChanged += GraphChartBase_InternalViewPortionChanged;
             ((IInternalGraphData)Data).InternalDataChanged += GraphChart_InternalDataChanged;
             ((IInternalGraphData)Data).InternalRealTimeDataChanged += GraphChartBase_InternalRealTimeDataChanged; ;
         }
 
-        private void GraphChartBase_InternalRealTimeDataChanged(object sender, EventArgs e)
+        private void GraphChartBase_InternalViewPortionChanged(object sender, EventArgs e)
         {
+            ViewPortionChanged();
+        }
+
+        protected abstract void ViewPortionChanged();
+
+        private void GraphChartBase_InternalRealTimeDataChanged(int index,string category)
+        {
+            if (category == null) // full invalidtion
+            {
+                mRealtimeUpdateIndex = false;
+            }
+            if (mRealtimeUpdateIndex)
+            {
+                mRealtimeUpdateIndex = true;
+                int minIndex;
+                if (mMinimumUpdateIndex.TryGetValue(category, out minIndex) == false)
+                    minIndex = int.MaxValue;
+                if (minIndex > index)
+                    minIndex = index;
+                mMinimumUpdateIndex[category] = minIndex;
+            }
             InvalidateRealtime();
         }
 
+        protected void ClearRealtimeIndexdata()
+        {
+            mMinimumUpdateIndex.Clear();
+            mRealtimeUpdateIndex = true;
+        }
+        public override void Invalidate()
+        {
+            base.Invalidate();
+            mRealtimeUpdateIndex = false;   // trigger a full invalidation
+            mMinimumUpdateIndex.Clear();
+        }
         private void GraphChart_InternalDataChanged(object sender, EventArgs e)
         {
             Invalidate();
@@ -254,6 +296,9 @@ namespace ChartAndGraph
             double minX, minY, maxX, maxY, xScroll, yScroll, xSize, ySize, xOut;
             GetScrollParams(out minX, out minY, out maxX, out maxY, out xScroll, out yScroll, out xSize, out ySize, out xOut);
 
+            double direction = 1.0;
+            if (minX > maxX)
+                direction = -1.0;
             bool prevOut = false;
             bool prevIn = false;
 
@@ -273,7 +318,7 @@ namespace ChartAndGraph
                 DoubleVector3 point = points[i];
                 UpdateMinMax(points[i], ref minX, ref minY, ref maxX, ref maxY);
 
-                if (point.x < xScroll || point.x > xOut) // || point.y < yScroll || point.y > yOut)
+                if (point.x* direction < xScroll* direction || point.x* direction > xOut* direction) // || point.y < yScroll || point.y > yOut)
                 {
                     prevOut = true;
                     if (pIn)
@@ -284,7 +329,7 @@ namespace ChartAndGraph
                     }
                     if(pOut)
                     {
-                        if(point.x > xOut && points[i-1].x < xScroll)
+                        if(point.x* direction > xOut* direction && points[i-1].x* direction < xScroll* direction)
                         {
                             UpdateMinMax(points[i - 1], ref minXLocal, ref minYLocal, ref maxXLocal, ref maxYLocal);
                             UpdateMinMax(point, ref minXLocal, ref minYLocal, ref maxXLocal, ref maxYLocal);
@@ -321,9 +366,9 @@ namespace ChartAndGraph
         protected void TransformPoints(IList<DoubleVector3> points, Rect viewRect, DoubleVector3 min, DoubleVector3 max)
         {
             DoubleVector3 range = max - min;
-            if (range.x <= 0.0001f || range.y < 0.0001f)
+            if (Math.Abs(range.x) <= 0.0001f || Math.Abs(range.y) < 0.0001f)
                 return;
-            double radiusMultiplier = Math.Min(viewRect.width / range.x, viewRect.height / range.y);
+            double radiusMultiplier = Math.Min(viewRect.width / Math.Abs(range.x), viewRect.height / Math.Abs(range.y));
             for (int i = 0; i < points.Count; i++)
             {
                 DoubleVector3 point = points[i];
@@ -337,9 +382,9 @@ namespace ChartAndGraph
         {
             output.Clear();
             DoubleVector3 range = max - min;
-            if (range.x <= 0.0001f || range.y < 0.0001f)
+            if (Math.Abs(range.x) <= 0.0001f || Math.Abs(range.y) < 0.0001f)
                 return;
-            double radiusMultiplier = Math.Min(viewRect.width / range.x, viewRect.height / range.y);
+            double radiusMultiplier = Math.Min(viewRect.width / Math.Abs(range.x), viewRect.height / Math.Abs(range.y));
             for(int i=0; i<points.Count; i++)
             {
                 DoubleVector4 point = points[i];

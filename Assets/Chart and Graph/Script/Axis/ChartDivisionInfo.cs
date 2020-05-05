@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -203,11 +204,11 @@ namespace ChartAndGraph
         [SerializeField]
         [Simple,Canvas, NonCanvas]
         [Tooltip("A prefab for the division labels")]
-        private Text textPrefab;
+        private MonoBehaviour textPrefab;
         /// <summary>
         /// A prefab for the division labels
         /// </summary>
-        public Text TextPrefab
+        public MonoBehaviour TextPrefab
         {
             get { return textPrefab; }
             set
@@ -381,7 +382,9 @@ namespace ChartAndGraph
             }
         }
 
+#pragma warning disable 0067
         private event EventHandler OnDataUpdate;
+#pragma warning restore 0067
         private event EventHandler OnDataChanged;
 
         protected virtual void RaiseOnChanged()

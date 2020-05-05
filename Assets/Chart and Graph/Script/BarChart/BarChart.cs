@@ -1,4 +1,5 @@
-﻿using ChartAndGraph.Axis;
+#define Graph_And_Chart_PRO
+using ChartAndGraph.Axis;
 using ChartAndGraph.Common;
 using System;
 using System.Collections;
@@ -14,14 +15,31 @@ namespace ChartAndGraph
     /// base class for bar charts. This class is implemented as CanvasBarChart and WorldSpaceBarChart
     /// </summary>
     [ExecuteInEditMode]
-    public abstract class BarChart : AxisChart
-    { 
+    public abstract partial class BarChart : AxisChart
+    {
+        private Dictionary<KeyValuePair<string, string>, string> mLabelOverrides = new Dictionary<KeyValuePair<string, string>, string>();
+
+        public void SetLabelOverride(string category, string group, string newText)
+        {
+            mLabelOverrides[new KeyValuePair<string, string>(category, group)] = newText;
+        }
+
+        public void RemoveLabelOverride(string category, string group)
+        {
+            mLabelOverrides.Remove(new KeyValuePair<string, string>(category, group));
+        }
+
+        public void ClearLabelOverride(string category, string group)
+        {
+            mLabelOverrides.Clear();
+        }
+
         /// <summary>
         /// event arguments for a bar chart event
         /// </summary>
         public class BarEventArgs
         {
-            public BarEventArgs(Vector3 topPosition, double value,string category,string group)
+            public BarEventArgs(Vector3 topPosition, double value, string category, string group)
             {
                 TopPosition = topPosition;
                 Value = value;
@@ -29,11 +47,12 @@ namespace ChartAndGraph
                 Group = group;
             }
 
-            public Vector3 TopPosition { get; private set;}
+            public Vector3 TopPosition { get; private set; }
             public double Value { get; private set; }
             public string Category { get; private set; }
             public string Group { get; private set; }
         }
+
 
         protected override IChartData DataLink
         {
@@ -42,13 +61,130 @@ namespace ChartAndGraph
                 return Data;
             }
         }
+
+        public enum BarType
+        {
+            Normal,
+            Negative,
+#if Graph_And_Chart_PRO
+            Stacked
+#endif
+
+        }
+
+        protected override void OnBeforeSerializeEvent()
+        {
+            base.OnBeforeSerializeEvent();
+#if Graph_And_Chart_PRO
+            if (viewType == BarType.Stacked)
+            {
+                negativeBars = false;
+                stacked = true;
+            }
+            else
+#endif
+            if (viewType == BarType.Negative)
+            {
+                negativeBars = true;
+                stacked = false;
+            }
+            else
+            {
+                negativeBars = false;
+                stacked = false;
+            }
+        }
+
+        class SwitchAnimationEntry
+        {
+            public Vector3? toPosition;
+            public Vector3 prevPosition;
+            public float time;
+            public float totalTime;
+            public BarObject bar;
+        }
+
+        bool mSnapBars = true;
+        protected override void OnAfterDeserializeEvent()
+        {
+            base.OnAfterDeserializeEvent();
+#if Graph_And_Chart_PRO
+            if (stacked)
+                viewType = BarType.Stacked;
+            else
+#endif
+            if (negativeBars)
+                viewType = BarType.Negative;
+            else
+                viewType = BarType.Normal;
+        }
+
+
+        /// <summary>
+        /// </summary>
         [SerializeField]
+        [Tooltip("")]
+        private BarType viewType;
+
+        /// <summary>
+        /// height ratio. the width is determined by the properties of the bar chart
+        /// </summary>
+        public BarType ViewType
+        {
+            get { return viewType; }
+            set
+            {
+                viewType = value;
+#if Graph_And_Chart_PRO
+                if (viewType == BarType.Stacked)
+                {
+                    negativeBars = false;
+                    stacked = true;
+                }
+                else
+#endif
+                if (viewType == BarType.Negative)
+                {
+                    negativeBars = true;
+                    stacked = false;
+                }
+                else
+                {
+                    negativeBars = false;
+                    stacked = false;
+                }
+                Invalidate();
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        [SerializeField]
+        [HideInInspector]
+        [Tooltip("")]
+        private bool negativeBars;
+
+        /// <summary>
+        /// height ratio. the width is determined by the properties of the bar chart
+        /// </summary>
+        protected bool NegativeBars
+        {
+            get { return negativeBars; }
+            set
+            {
+                negativeBars = value;
+                Invalidate();
+            }
+        }
+
+        [SerializeField]
+        [HideInInspector]
         private bool stacked = false;
 
         /// <summary>
         /// 
         /// </summary>
-        public bool Stacked
+        protected bool Stacked
         {
             get { return stacked; }
             set { stacked = value; Invalidate(); }
@@ -62,7 +198,7 @@ namespace ChartAndGraph
         {
 
         }
-
+        protected override bool ShouldFitCanvas { get { return true; } }
         /// <summary>
         /// occures when a bar is clieck
         /// </summary>
@@ -101,7 +237,7 @@ namespace ChartAndGraph
         /// <summary>
         /// returns the bar seperation value for this chart. the value can be either 2d or 3d based on the derived class
         /// </summary>
-        protected abstract ChartOrientedSize BarSeperationLink {get;}
+        protected abstract ChartOrientedSize BarSeperationLink { get; }
 
         /// <summary>
         /// returns the group seperation value for this chart. the value can be either 2d or 3d based on the derived class
@@ -115,9 +251,28 @@ namespace ChartAndGraph
         /// the bars generated for the chart
         /// </summary>
         Dictionary<ChartItemIndex, BarObject> mBars = new Dictionary<ChartItemIndex, BarObject>();
+        /// <summary>
+        /// the bars generated for the chart
+        /// </summary>
+        Dictionary<KeyValuePair<string, string>, SwitchAnimationEntry> mSwitchEntries = new Dictionary<KeyValuePair<string, string>, SwitchAnimationEntry>();
 
+        [SerializeField]
+        [Tooltip("transition time for switch animations")]
+        protected float transitionTimeBetaFeature = -1f;
 
-        
+        /// <summary>
+        /// height ratio. the width is determined by the properties of the bar chart
+        /// </summary>
+        public float TransitionTimeBetaFeature
+        {
+            get { return transitionTimeBetaFeature; }
+            set
+            {
+                transitionTimeBetaFeature = value;
+                Invalidate();
+            }
+        }
+
         /// <summary>
         /// height ratio. the width is determined by the properties of the bar chart
         /// </summary>
@@ -189,7 +344,7 @@ namespace ChartAndGraph
             public double Value;
             public float Size;
             public Vector3 InnerPosition;
-            public Vector3 SizeDirection = new Vector3(0f,1f,0f);
+            public Vector3 SizeDirection = new Vector3(0f, 1f, 0f);
             public Vector3 InitialScale;
             public GameObject TopObject;
             public IBarGenerator Bar;
@@ -199,6 +354,7 @@ namespace ChartAndGraph
             public BillboardText GroupLabel;
             public float Elevation;
         }
+
 
         class GroupObject
         {
@@ -210,13 +366,13 @@ namespace ChartAndGraph
         }
 
         class LabelPositionInfo
-        { 
-            public LabelPositionInfo(ItemLabelsBase options,BarObject bar)
+        {
+            public LabelPositionInfo(ItemLabelsBase options, BarObject bar)
             {
                 Options = options;
                 Bar = bar;
             }
-            public LabelPositionInfo(ItemLabelsBase options,GroupObject group)
+            public LabelPositionInfo(ItemLabelsBase options, GroupObject group)
             {
                 Options = options;
                 Group = group;
@@ -251,8 +407,49 @@ namespace ChartAndGraph
             base.Update();
             if (Data != null)
                 ((IInternalBarData)Data).Update();
-        }
 
+            UpdateAnimations();
+        }
+        static List<KeyValuePair<string, string>> toRemove = new List<KeyValuePair<string, string>>();
+        void UpdateAnimations()
+        {
+
+            toRemove.Clear();
+            foreach (var pair in mSwitchEntries)
+            {
+                BarObject bar = pair.Value.bar;
+                if (bar == null)
+                    continue;
+                var entry = pair.Value;
+                if (entry.toPosition.HasValue == false)
+                    continue;
+
+                var toPosition = entry.toPosition.Value;
+
+                entry.time -= Time.deltaTime;
+                if (entry.time <= 0)
+                {
+                    toRemove.Add(pair.Key);
+                    if (IsCanvas)
+                        bar.TopObject.transform.GetComponent<RectTransform>().anchoredPosition = toPosition;
+                    else
+                        bar.TopObject.transform.localPosition = toPosition;
+                }
+                else
+                {
+                    float factor = entry.time / entry.totalTime;
+
+                    if (IsCanvas)
+                        bar.TopObject.transform.GetComponent<RectTransform>().anchoredPosition = Vector3.Lerp(toPosition, entry.prevPosition, factor);
+                    else
+                        bar.TopObject.transform.localPosition = Vector3.Lerp(toPosition, entry.prevPosition, factor);
+                }
+            }
+            for (int i = 0; i < toRemove.Count; i++)
+            {
+                mSwitchEntries.Remove(toRemove[i]);
+            }
+        }
         /// <summary>
         /// used internally , do not call this method
         /// </summary>
@@ -263,7 +460,7 @@ namespace ChartAndGraph
             {
                 HookEvents();
             }
-            Invalidate();            
+            Invalidate();
         }
 
         /// <summary>
@@ -275,8 +472,34 @@ namespace ChartAndGraph
             Data.ProperyUpdated += Data_ProperyUpdated;
             ((IInternalBarData)Data).InternalDataSource.DataStructureChanged -= MDataSource_DataStructureChanged;
             ((IInternalBarData)Data).InternalDataSource.DataStructureChanged += MDataSource_DataStructureChanged;
+            ((IInternalBarData)Data).InternalDataSource.ItemsReplaced -= InternalDataSource_ItemsReplaced;
+            ((IInternalBarData)Data).InternalDataSource.ItemsReplaced += InternalDataSource_ItemsReplaced; ;
+
             ((IInternalBarData)Data).InternalDataSource.DataValueChanged -= MDataSource_DataValueChanged1; ;
             ((IInternalBarData)Data).InternalDataSource.DataValueChanged += MDataSource_DataValueChanged1; ;
+        }
+
+        private void InternalDataSource_ItemsReplaced(string from, int fromindex, string to, int toIndex)
+        {
+            Invalidate();
+            if (transitionTimeBetaFeature < 0f)
+                return;
+            if (mSnapBars == false)
+                return;
+            mSwitchEntries.Clear();
+            mSnapBars = true;
+            foreach (var pair in mBars)
+            {
+                var bar = pair.Value;
+                var entry = new SwitchAnimationEntry();
+                if (IsCanvas)
+                    entry.prevPosition = bar.TopObject.GetComponent<RectTransform>().anchoredPosition;
+                else
+                    entry.prevPosition = bar.TopObject.transform.localPosition;
+                entry.time = transitionTimeBetaFeature;
+                entry.totalTime = transitionTimeBetaFeature;
+                mSwitchEntries[new KeyValuePair<string, string>(bar.Category, bar.Group)] = entry;
+            }
         }
 
         private void Data_ProperyUpdated()
@@ -300,6 +523,9 @@ namespace ChartAndGraph
                 RefreshBar(e);
         }
 
+        partial void StackedStage1(ref float elevation, double prevIntep);
+        partial void StackedStage2(ref double prevIntep, double interp);
+
         /// <summary>
         /// refreshses all bars when the data source is changed
         /// </summary>
@@ -310,13 +536,19 @@ namespace ChartAndGraph
             double[,] data = ((IInternalBarData)Data).InternalDataSource.getRawData();
             int rowCount = data.GetLength(0);
             int columnCount = data.GetLength(1);
-            for(int i=0; i<rowCount; i++)
+
+
+            double zero = -min / (max - min);
+            zero = Math.Max(0.0, Math.Min(1.0, zero)) * HeightRatio;
+
+
+            for (int i = 0; i < rowCount; i++)
             {
                 double prevIntep = 0.0;
-                for (int j=0; j<columnCount; j++)
+                for (int j = 0; j < columnCount; j++)
                 {
                     BarObject bar;
-                    
+
                     if (mBars.TryGetValue(new ChartItemIndex(i, j), out bar))
                     {
                         double amount = data[i, j];
@@ -326,14 +558,21 @@ namespace ChartAndGraph
                         interp = Math.Max(0.0, Math.Min(1.0, interp));
                         float height = (float)(interp * HeightRatio);
                         float elevation = 0f;
-                        if(Stacked)
-                            elevation = (float)prevIntep * HeightRatio;
+                        StackedStage1(ref elevation, prevIntep);
+                        if (NegativeBars)
+                        {
+                            if (amount < 0)
+                            {
+                                height = (float)-(zero - height);
+                            }
+                            else
+                                height = (float)(height - zero);
+                        }
                         float ySize = (height - elevation) * bar.InitialScale.y;
                         SetBarSize(bar.BarGameObject, new Vector3(BarSizeLink.Breadth * bar.InitialScale.x, ySize, BarSizeLink.Depth * bar.InitialScale.z), (float)elevation);
                         if (bar.Bar != null)
-                            bar.Bar.Generate((float)(interp -prevIntep ), ySize);
-                        if(Stacked)
-                            prevIntep = interp;
+                            bar.Bar.Generate((float)(interp - prevIntep), ySize);
+                        StackedStage2(ref prevIntep, interp);
                         bar.Size = height;
                         bar.Value = amount;
                         FixBarLabels(bar);
@@ -350,11 +589,15 @@ namespace ChartAndGraph
         /// <param name="bar"></param>
         private void FixBarLabels(BarObject bar)
         {
-            if(bar.ItemLabel && mItemLabels != null)
+            if (bar.ItemLabel && mItemLabels != null)
             {
-                bar.ItemLabel.UIText.text = mItemLabels.TextFormat.Format(ChartAdancedSettings.Instance.FormatFractionDigits(mItemLabels.FractionDigits, bar.Value), bar.Category, bar.Group);
-               
-                Vector3 newPos = AlignLabel(mItemLabels, bar.InnerPosition,bar.Size);
+                string text = mItemLabels.TextFormat.Format(ChartAdancedSettings.Instance.FormatFractionDigits(mItemLabels.FractionDigits, bar.Value), bar.Category, bar.Group);
+                string overrideText;
+                if (mLabelOverrides.TryGetValue(new KeyValuePair<string, string>(bar.Category, bar.Group), out overrideText))
+                    text = overrideText;
+                ChartCommon.UpdateTextParams(bar.ItemLabel.UIText, text);
+
+                Vector3 newPos = AlignLabel(mItemLabels, bar.InnerPosition, bar.Size);
                 bar.ItemLabel.transform.localPosition = newPos;
             }
             if (bar.GroupLabel && mGroupLabels != null)
@@ -369,7 +612,7 @@ namespace ChartAndGraph
                     bar.GroupLabel.gameObject.SetActive(false);
                 }
             }
-            if (bar.CategoryLabel && mCategoryLabels !=null)
+            if (bar.CategoryLabel && mCategoryLabels != null)
             {
                 Vector3 newPos = AlignLabel(mCategoryLabels, bar.InnerPosition, bar.Size);
                 bar.CategoryLabel.transform.localPosition = newPos;
@@ -387,15 +630,26 @@ namespace ChartAndGraph
             {
                 double min = ((IInternalBarData)Data).GetMinValue();
                 double max = ((IInternalBarData)Data).GetMaxValue();
+                double zero = -min / (max - min);
+                zero = Math.Max(0.0, Math.Min(1.0, zero)) * HeightRatio;
                 double interp = 0f;
                 if (min != max)
                     interp = (e.NewValue - min) / (max - min);
                 interp = Math.Max(0.0, Math.Min(1.0, interp));
                 float height = (float)(interp * HeightRatio);
+                if (NegativeBars)
+                {
+                    if (e.NewValue < 0)
+                    {
+                        height = (float)-(zero - height);
+                    }
+                    else
+                        height = (float)(height - zero);
+                }
                 float ySize = height * bar.InitialScale.y;
                 if (bar.Bar != null)
-                    bar.Bar.Generate((float)interp,ySize);
-                SetBarSize(bar.BarGameObject, new Vector3(BarSizeLink.Breadth * bar.InitialScale.x,ySize , BarSizeLink.Depth * bar.InitialScale.z),0);
+                    bar.Bar.Generate((float)interp, ySize);
+                SetBarSize(bar.BarGameObject, new Vector3(BarSizeLink.Breadth * bar.InitialScale.x, ySize, BarSizeLink.Depth * bar.InitialScale.z), 0);
                 bar.Size = height;
                 bar.Value = e.NewValue;
                 FixBarLabels(bar);
@@ -405,6 +659,7 @@ namespace ChartAndGraph
 
         private void MDataSource_DataStructureChanged(object sender, EventArgs e)
         {
+            mSwitchEntries.Clear();
             Invalidate();
         }
 
@@ -417,7 +672,7 @@ namespace ChartAndGraph
         /// <param name="allowOverflow">set this to false in order to clamp the worldspace point to the bounds of the chart. set this to true in order to ingnore the min max value of the chart , </param>
         /// <param name="point">the resulting point in worldspace coordinates</param>
         /// <returns></returns>
-        public bool PointToWorldSpace(string category, string group, double value,bool allowOverflow, out Vector3 point)
+        public bool PointToWorldSpace(string category, string group, double value, bool allowOverflow, out Vector3 point)
         {
             point = Vector3.zero;
             ChartSparseDataSource data = ((IInternalBarData)DataSource).InternalDataSource;
@@ -431,7 +686,7 @@ namespace ChartAndGraph
                 return false;
             double min = ((IInternalBarData)Data).GetMinValue();
             double max = ((IInternalBarData)Data).GetMaxValue();
-            if (min <= max)
+            if (min >= max)
                 return false;
             double interp = value / (max - min);
             if (allowOverflow == false)
@@ -466,7 +721,7 @@ namespace ChartAndGraph
         /// returns the world position for the specified bar value. This can be used to make objects aligned with the bars. The position is at the top of the bar and dependent on it's value
         /// </summary>
         /// <returns>true on success with track position set to the right value. false if the category or group names are wrong</returns>
-        public bool GetBarTrackPosition(string category, string group,out Vector3 trackPosition)
+        public bool GetBarTrackPosition(string category, string group, out Vector3 trackPosition)
         {
             trackPosition = Vector3.zero;
             ChartSparseDataSource data = ((IInternalBarData)DataSource).InternalDataSource;
@@ -506,15 +761,15 @@ namespace ChartAndGraph
         /// <param name="innerPosition"></param>
         /// <param name="size"></param>
         /// <returns></returns>
-        private Vector3 AlignLabel(AlignedItemLabels labels,Vector3 innerPosition,float size)
+        private Vector3 AlignLabel(AlignedItemLabels labels, Vector3 innerPosition, float size)
         {
-            float alignPos =0f;
+            float alignPos = 0f;
 
             if (labels.Alignment == ChartLabelAlignment.Top)
                 alignPos += size;
             return new Vector3(
                 labels.Location.Breadth,
-                alignPos+labels.Seperation,
+                alignPos + labels.Seperation,
                 labels.Location.Depth);
         }
 
@@ -526,13 +781,13 @@ namespace ChartAndGraph
             List<BillboardText> items = TextController.Text;
             if (items == null)
                 return;
-            for(int i=0; i<items.Count; ++i)
+            for (int i = 0; i < items.Count; ++i)
             {
                 BillboardText text = items[i];
                 LabelPositionInfo inf = text.UserData as LabelPositionInfo;
-                if(inf != null)
-                { 
-                    if(inf.Group != null)
+                if (inf != null)
+                {
+                    if (inf.Group != null)
                     {
                         if (mGroupLabels != null)
                         {
@@ -541,7 +796,7 @@ namespace ChartAndGraph
                             ChartCommon.FixBillboardText(mGroupLabels, text);
                         }
                     }
-                    else if( inf.Bar != null && inf.Options is ItemLabels)
+                    else if (inf.Bar != null && inf.Options is ItemLabels)
                     {
                         Vector3 position = AlignLabel((ItemLabels)inf.Options, inf.Bar.InnerPosition, inf.Bar.Size);
                         text.transform.localPosition = position;
@@ -556,7 +811,7 @@ namespace ChartAndGraph
         /// </summary>
         /// <param name="innerPosition">the local position of the bar in the chart</param>
         /// <returns>the new bar game object</returns>
-        private GameObject CreateBar(Vector3 innerPosition, double value, float size, float elevation,float normalizedSize, string category, string group, int index, int categoryIndex)
+        private GameObject CreateBar(Vector3 innerPosition, double value, float size, float elevation, float normalizedSize, string category, string group, int index, int categoryIndex)
         {
             if (BarPrefabLink == null)
             {
@@ -571,7 +826,16 @@ namespace ChartAndGraph
             topLevel.layer = gameObject.layer;
             topLevel.transform.SetParent(transform, false);
             topLevel.transform.localScale = new Vector3(1f, 1f, 1f);
-            topLevel.transform.localPosition = innerPosition;
+            if (IsCanvas)
+            {
+                var rect = topLevel.AddComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0f, 0f);
+                rect.anchorMax = new Vector2(0f, 0f);
+                rect.anchoredPosition = innerPosition;
+            }
+            else
+                topLevel.transform.localPosition = innerPosition;
+
             GameObject obj = (GameObject)GameObject.Instantiate(BarPrefabLink);
 
             Vector3 initialScale = obj.transform.localScale;
@@ -604,6 +868,15 @@ namespace ChartAndGraph
             barObj.Value = value;
             barObj.Elevation = elevation;
             inf.BarObject = barObj;
+
+            SwitchAnimationEntry ent;
+            if (mSwitchEntries.TryGetValue(new KeyValuePair<string, string>(category, group), out ent))
+            {
+                Vector3 toPosition = innerPosition;
+
+                ent.toPosition = toPosition;
+                ent.bar = barObj;
+            }
             mBars.Add(new ChartItemIndex(index, categoryIndex), barObj);
             ChartItemEvents[] events = obj.GetComponentsInChildren<ChartItemEvents>();
             for (int i = 0; i < events.Length; ++i)
@@ -637,7 +910,11 @@ namespace ChartAndGraph
             if (mItemLabels != null && mItemLabels.isActiveAndEnabled)
             {
                 string toSet = mItemLabels.TextFormat.Format(ChartAdancedSettings.Instance.FormatFractionDigits(mItemLabels.FractionDigits, value),
-                                                             category, group);
+                       category, group);
+                string overrideText;
+                if (mLabelOverrides.TryGetValue(new KeyValuePair<string, string>(category, group), out overrideText))
+                    toSet = overrideText;
+
                 Vector3 labelPos = AlignLabel(mItemLabels, innerPosition, size + elevation);
                 float angle = 45f;
                 if (mItemLabels.Alignment == ChartLabelAlignment.Base)
@@ -656,7 +933,7 @@ namespace ChartAndGraph
                 {
                     Vector3 labelPos = AlignLabel(mGroupLabels, innerPosition, size + elevation);
                     string toSet = mGroupLabels.TextFormat.Format(group, category, group);
-                   // float angle = 45f;
+                    // float angle = 45f;
                     BillboardText billboard = ChartCommon.CreateBillboardText(null, mGroupLabels.TextPrefab, topLevel.transform, toSet, labelPos.x, labelPos.y, labelPos.z, 0f, obj.transform, hideHierarchy, mGroupLabels.FontSize, mGroupLabels.FontSharpness);
                     barObj.GroupLabel = billboard;
                     TextController.AddText(billboard);
@@ -672,7 +949,7 @@ namespace ChartAndGraph
                     float angle = 45f;
                     if (mCategoryLabels.Alignment == ChartLabelAlignment.Base)
                         angle = -45f;
-                    BillboardText billboard = ChartCommon.CreateBillboardText(null,mCategoryLabels.TextPrefab, topLevel.transform, toSet, labelPos.x, labelPos.y, labelPos.z,angle, obj.transform, hideHierarchy, mCategoryLabels.FontSize, mCategoryLabels.FontSharpness);
+                    BillboardText billboard = ChartCommon.CreateBillboardText(null, mCategoryLabels.TextPrefab, topLevel.transform, toSet, labelPos.x, labelPos.y, labelPos.z, angle, obj.transform, hideHierarchy, mCategoryLabels.FontSize, mCategoryLabels.FontSharpness);
                     barObj.CategoryLabel = billboard;
                     TextController.AddText(billboard);
                 }
@@ -684,7 +961,7 @@ namespace ChartAndGraph
         }
 
         private Vector3 GetTopPosition(BarObject barObj)
-        {            
+        {
             Vector3 local = new Vector3(
                0f,
                barObj.Size,
@@ -717,7 +994,7 @@ namespace ChartAndGraph
         {
             base.OnItemHoverted(userData);
             BarEventArgs args = UserDataToEventArgs(userData);
-            if(args != null)
+            if (args != null)
             {
                 if (BarHovered != null)
                     BarHovered.Invoke(args);
@@ -734,7 +1011,7 @@ namespace ChartAndGraph
             base.OnItemSelected(userData);
             BarEventArgs args = UserDataToEventArgs(userData);
             if (args != null)
-            {                
+            {
                 if (BarClicked != null)
                     BarClicked.Invoke(args);
             }
@@ -746,11 +1023,11 @@ namespace ChartAndGraph
             Invalidate();
         }
 
-        protected virtual void SetBarSize(GameObject bar ,Vector3 size,float elevation)
+        protected virtual void SetBarSize(GameObject bar, Vector3 size, float elevation)
         {
             bar.transform.localScale = size;
             Vector3 p = bar.transform.localPosition;
-            p.y = elevation ;
+            p.y = elevation;
             bar.transform.localPosition = p;
         }
 
@@ -760,7 +1037,7 @@ namespace ChartAndGraph
         /// <param name="depth">the depth of the bar</param>
         /// <param name="orientedPosition">the oriented positions of the bar ( either vertical or horizontal depending on orientation)</param>
         /// <param name="orientedInterp">the oriented interpolator of the bar position. this is a value between [0,1] where orientedInterp*(width or height depending on orientation) = oriented position.  </param>
-        private void AddBarToChart(double depth,double value,double prevValue,double orientedPosition, double orientedInterp,string category,string group,int index,int categoryIndex)
+        private void AddBarToChart(double depth, double value, double prevValue, double orientedPosition, double orientedInterp, string category, string group, int index, int categoryIndex, double zero)
         {
             if (Stacked && orientedInterp < 0.0)
             {
@@ -771,7 +1048,19 @@ namespace ChartAndGraph
             if (Orientation == ChartOrientation.Vertical)
             {
                 double height = orientedInterp * HeightRatio;
-                CreateBar(new Vector3((float)orientedPosition, 0f, (float)depth), value, (float)height, (float)prevValue * HeightRatio, (float)orientedInterp, category, group, index, categoryIndex);
+                double y = 0.0;
+                if (NegativeBars)
+                {
+                    y = zero;
+                    if (value < 0.0)
+                    {
+                        y = zero;
+                        height = -(zero - height);
+                    }
+                    else
+                        height = height - zero;
+                }
+                CreateBar(new Vector3((float)orientedPosition, (float)y, (float)depth), value, (float)height, (float)prevValue * HeightRatio, (float)orientedInterp, category, group, index, categoryIndex);
             }
             else
             {
@@ -808,7 +1097,7 @@ namespace ChartAndGraph
                 return 0.0;
             if (axis == mHorizontalAxis)
                 return 0.0;
-            if(axis == mVerticalAxis)
+            if (axis == mVerticalAxis)
                 return ((IInternalBarData)Data).GetMaxValue();
             return 0.0;
         }
@@ -845,27 +1134,30 @@ namespace ChartAndGraph
             }
             else if (mGroupLabels.Alignment == GroupLabelAlignment.Center)
             {
-                pos += (obj.totalSize) *0.5f;
-                posDepth += (obj.totalDepth) *0.5f;
+                pos += (obj.totalSize) * 0.5f;
+                posDepth += (obj.totalDepth) * 0.5f;
             }
-            return new Vector3(pos + addBreadth, alignPos + seperation, (float)(posDepth) + addDepth);
+            Vector3 add = new Vector3();
+            if (IsCanvas)
+                add = -new Vector3(totalWidth * CanvasFitOffset.x, TotalHeight * CanvasFitOffset.y);
+            return new Vector3(pos + addBreadth, alignPos + seperation, (float)(posDepth) + addDepth) + add;
         }
-
+        partial void StackedStage3(ref double interp, double amount, double min, double total);
         /// <summary>
         /// 
         /// </summary>
         /// <param name="mesh"></param>
         /// <param name="orientedPosition"></param>
-        private void AddRowToChartMesh(double[,] data,int rowIndex,double orientedPosition,double depth)
+        private void AddRowToChartMesh(double[,] data, int rowIndex, double orientedPosition, double depth)
         {
-            if(((IInternalBarData)Data).InternalDataSource == null)
+            if (((IInternalBarData)Data).InternalDataSource == null)
                 return;
 
             int columnCount = data.GetLength(1);
             double barFullSize = BarSeperationLink.Breadth;
-            double totalSize = ((columnCount-1) * (barFullSize));
+            double totalSize = ((columnCount - 1) * (barFullSize));
             double totalDepth = columnCount * BarSeperationLink.Depth;
-            double start = orientedPosition - totalSize*0.5f;
+            double start = orientedPosition - totalSize * 0.5f;
             double min = ((IInternalBarData)Data).GetMinValue();
             double max = ((IInternalBarData)Data).GetMaxValue();
             double total = max - min;
@@ -875,7 +1167,6 @@ namespace ChartAndGraph
             {
 
                 GroupObject groupObj = new GroupObject();
-
                 groupObj.start = (float)start;
                 groupObj.depth = (float)depth;
                 groupObj.totalSize = (float)totalSize;
@@ -886,40 +1177,40 @@ namespace ChartAndGraph
 
                 string toSet = mGroupLabels.TextFormat.Format(group, "", "");
                 float angle = 45f;
-//                if(mGroupLabels.Alignment == GroupLabelAlignment.)
-                BillboardText billboard = ChartCommon.CreateBillboardText(null,mGroupLabels.TextPrefab, transform, toSet, position.x, position.y, position.z,angle,null, hideHierarchy, mGroupLabels.FontSize, mGroupLabels.FontSharpness);
+                //                if(mGroupLabels.Alignment == GroupLabelAlignment.)
+                BillboardText billboard = ChartCommon.CreateBillboardText(null, mGroupLabels.TextPrefab, transform, toSet, position.x, position.y, position.z, angle, null, hideHierarchy, mGroupLabels.FontSize, mGroupLabels.FontSharpness);
                 billboard.UserData = new LabelPositionInfo(mGroupLabels, groupObj);
                 TextController.AddText(billboard);
             }
-           // double prevValue = 0.0;
+            // double prevValue = 0.0;
+            double zero = (-min / total);
+            zero = Math.Max(0, Math.Min(1, zero)) * heightRatio;
             double prevInterp = 0.0;
             for (int i = 0; i < columnCount; i++)
             {
                 string category = ((IInternalBarData)Data).InternalDataSource.Columns[i].Name;
-                double rowInterp = (((float)i) / ((float)columnCount-1));
+                double rowInterp = (((float)i) / ((float)columnCount - 1));
                 if (double.IsInfinity(rowInterp) || double.IsNaN(rowInterp)) // calculate limit for 0/0
                     rowInterp = 0.0;
-                double pos =  rowInterp* totalSize;
+                double pos = rowInterp * totalSize;
                 double finalDepth = depth + rowInterp * totalDepth;
                 pos += start;// - barFullSize * 0.5f;
                 double amount = data[rowIndex, i];
                 double interp = (amount - min) / total;
-                if(Stacked)
-                {
-                    interp = (amount  - min) / total;
-                }
+                StackedStage3(ref interp, amount, min, total);
+
                 interp = Math.Max(0, Math.Min(1, interp));  // clamp to [0,1]
-                AddBarToChart(finalDepth, amount, prevInterp, pos,interp - prevInterp, category,group,rowIndex,i);
-                if(Stacked)
-                    prevInterp = interp;
+                AddBarToChart(finalDepth, amount, prevInterp, pos, interp - prevInterp, category, group, rowIndex, i, zero);
+                StackedStage2(ref prevInterp, interp);
             }
 
         }
 
         protected override void ClearChart()
         {
-            base.ClearChart();            
-            foreach(BarObject bar in mBars.Values)
+            base.ClearChart();
+
+            foreach (BarObject bar in mBars.Values)
             {
                 if (bar != null)
                 {
@@ -927,10 +1218,10 @@ namespace ChartAndGraph
                     {
                         bar.Bar.Clear();
                         MonoBehaviour b = bar.Bar as MonoBehaviour;
-                        if(b != null)
+                        if (b != null)
                             ChartCommon.SafeDestroy(b.gameObject);
                     }
-                    if(bar.TopObject != null)
+                    if (bar.TopObject != null)
                         ChartCommon.SafeDestroy(bar.TopObject);
                 }
             }
@@ -984,7 +1275,7 @@ namespace ChartAndGraph
         {
             if (gameObject.activeInHierarchy == false)
                 return;
-
+            mSnapBars = true;
             base.InternalGenerateChart();
             ClearChart();
             if (((IInternalBarData)Data).InternalDataSource == null)
@@ -994,7 +1285,13 @@ namespace ChartAndGraph
             double max = ((IInternalBarData)Data).GetMaxValue();
             if (max <= min)
                 return;
-            
+
+            if (IsCanvas)
+            {
+                var fitter = GetComponent<BarContentFitter>();
+                if (fitter != null && fitter.isActiveAndEnabled)
+                    fitter.Match();
+            }
             double[,] data = ((IInternalBarData)Data).InternalDataSource.getRawData();
             int rowCount = data.GetLength(0);
             int columnCount = data.GetLength(1);
@@ -1004,7 +1301,7 @@ namespace ChartAndGraph
             double barGroupSeprationSize = BarSeperationLink.Breadth * (columnCount - 1);
             double barGroupSize = barGroupSeprationSize + BarSizeLink.Breadth;
             double totalSize = GroupSeperationLink.Breadth * rowLimit;
-            double chartTotalSize = totalSize + AxisSeperationLink.Breadth*2f + barGroupSize;
+            double chartTotalSize = totalSize + AxisSeperationLink.Breadth * 2f + barGroupSize;
             if (Orientation == ChartOrientation.Vertical)
                 totalWidth = (float)chartTotalSize;
             else
@@ -1014,9 +1311,9 @@ namespace ChartAndGraph
             double barGroupSeperationDepth = BarSeperationLink.Depth * (columnCount);
             double barGroupDepthSize = barGroupSeperationDepth + BarSizeLink.Depth;
             double groupDepth = GroupSeperationLink.Depth * rowLimit;
-            totalDepth =(float)( groupDepth + AxisSeperationLink.Depth * 2f + barGroupDepthSize);
+            totalDepth = (float)(groupDepth + AxisSeperationLink.Depth * 2f + barGroupDepthSize);
             GenerateAxis(true);
-            double startPosition = AxisSeperationLink.Breadth + barGroupSize*0.5f;// + (orientedDimension - totalSize)*0.5;
+            double startPosition = AxisSeperationLink.Breadth + barGroupSize * 0.5f;// + (orientedDimension - totalSize)*0.5;
             if (rowLimit == 0)
                 AddRowToChartMesh(data, 0, startPosition, depth);
             else
@@ -1030,6 +1327,7 @@ namespace ChartAndGraph
                 }
             }
         }
+
         protected override LegenedData LegendInfo
         {
             get
@@ -1050,6 +1348,7 @@ namespace ChartAndGraph
                 return legend;
             }
         }
+
         protected override bool SupportsCategoryLabels
         {
             get
@@ -1057,6 +1356,7 @@ namespace ChartAndGraph
                 return true;
             }
         }
+
         protected override bool SupportsGroupLables
         {
             get
@@ -1064,6 +1364,7 @@ namespace ChartAndGraph
                 return true;
             }
         }
+
         protected override bool SupportsItemLabels
         {
             get

@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -75,7 +76,10 @@ namespace ChartAndGraph
         /// the sub division properies for this axis
         /// </summary>
         public ChartDivisionInfo SubDivisions { get { return subDivisions; } }
-
+        public void ClearFormats()
+        {
+            mFormats.Clear();
+        }
         public AxisBase()
         {
             AddInnerItems();
@@ -165,7 +169,7 @@ namespace ChartAndGraph
             float AutoAxisDepth = Depth.Value;
 //            float scrollFactor = (scrollOffset / (float)(maxValue - minValue));
             //scrollOffset = scrollFactor * parentSize;
-
+                
             if (Depth.Automatic)
             {
                 AutoAxisDepth = (float)((((IInternalUse)parent).InternalTotalDepth) - markDepth);
@@ -173,7 +177,14 @@ namespace ChartAndGraph
 
             double startValue = (scrollOffset + minValue);
             double endValue = (scrollOffset + maxValue) + double.Epsilon;
+            double direction = 1.0;
             Func<double, double> ValueToPosition = x => ((x - startValue) / range) * parentSize;
+            if (startValue > endValue)
+            {
+                direction = -1.0;
+                //ValueToPosition = x => (1.0- ((x - startValue) / range)) * parentSize;
+            }
+            gap = Math.Abs(gap);
             double fraction = gap - (scrollOffset - Math.Floor((scrollOffset / gap) - double.Epsilon) * gap);
             double mainfraction = -1f;
             double currentMain = 0f; 
@@ -190,12 +201,12 @@ namespace ChartAndGraph
             double startRange = startValue + fraction;
             foreach (double key in mFormats.Keys)
             {
-                if (key > endValue || key < startRange)
+                if (key* direction > endValue* direction || key* direction < startRange* direction)
                     mTmpToRemove.Add(key);
             }
             for(int k=0; k<mTmpToRemove.Count; k++)
                 mFormats.Remove(mTmpToRemove[k]);
-            for (double current = startRange; current <= endValue ; current += gap)
+            for (double current = startRange; direction*current <= direction*endValue; current += gap*direction)
             {
 
                 ++i;
@@ -218,6 +229,8 @@ namespace ChartAndGraph
                 }
 
                 double offset = ValueToPosition(current);
+                if (offset < 0 || offset > parentSize)
+                    continue;
                 DoubleVector3 start = startPosition + advanceDirection * offset;
                 DoubleVector3 size = halfThickness + length * lengthDirection;
                 start -= halfThickness;
@@ -234,7 +247,7 @@ namespace ChartAndGraph
                 {
                     double val = Math.Round(current*1000.0)/1000.0;
                     string toSet = "";
-                    int keyVal = (int)Math.Round(val);
+                    double keyVal = val;// (int)Math.Round(val);
                     var dic = (orientation == ChartOrientation.Horizontal) ? parent.HorizontalValueToStringMap : parent.VerticalValueToStringMap;
                     if (!(Math.Abs(val - keyVal) < 0.001 && dic.TryGetValue(keyVal, out toSet)))
                     {
@@ -246,7 +259,7 @@ namespace ChartAndGraph
                             {
                                 DateTime date = ChartDateUtility.ValueToDate(val);
                                 if (format == AxisFormat.DateTime)
-                                    toSet = ChartDateUtility.DateToDateTimeString(date);
+                                    toSet = ChartDateUtility.DateToDateTimeString(date, parent.CustomDateTimeFormat);
                                 else
                                 {
                                     if (format == AxisFormat.Date)

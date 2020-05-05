@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using ChartAndGraph.DataSource;
 using UnityEngine;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ namespace ChartAndGraph
         {
             public string Name;
             public ChartDynamicMaterial Materials;
+
         }
 
         [Serializable]
@@ -117,6 +119,35 @@ namespace ChartAndGraph
                 RaisePropertyUpdated();
             }
         }
+
+        public bool HasGroup(string groupName)
+        {
+            try
+            {
+                var row = mDataSource.Rows[groupName];
+                if (row != null)
+                    return true;
+            }
+            catch
+            {
+            }
+            return false;
+        }
+
+        public bool HasCategory(string category)
+        {
+            try
+            {
+                var col = mDataSource.Columns[category];
+                if (col != null)
+                    return true;
+            }
+            catch
+            {
+            }
+            return false;
+        }
+
         /// <summary>
         /// set this to true to automatically detect the lowest bar value int the chart. This value will be used to scale all other bars
         /// </summary>
@@ -185,6 +216,7 @@ namespace ChartAndGraph
                 min = rawMin.Value;
             return min;
         }
+
         public double GetMaxValue()
         {
             double max = MaxValue;
@@ -195,6 +227,7 @@ namespace ChartAndGraph
             return max;
 
         }
+
         public string GetCategoryName(int index)
         {
             return mDataSource.Columns[index].Name;
@@ -204,6 +237,16 @@ namespace ChartAndGraph
         {
             return mDataSource.Rows[index].Name;
         }
+
+        /// <summary>
+        /// used intenally , do not call
+        /// </summary>
+        /// <param name="cats"></param>
+        public object[] StoreAllCategoriesinOrder()
+        {
+            return mCategories.ToArray();
+        }
+
         public void OnBeforeSerialize()
         {
             int totalColumns = mDataSource.Columns.Count;
@@ -215,7 +258,6 @@ namespace ChartAndGraph
                 data.Materials = mDataSource.Columns[i].Material;
                 mCategories[i] = data;
             }
-
             int totalRows = mDataSource.Rows.Count;
             mGroups = new string[totalRows];
             for(int i=0; i< totalRows; i++)
@@ -249,7 +291,9 @@ namespace ChartAndGraph
             if (mData == null)
                 mData = new DataEntry[0];
             for (int i = 0; i < mCategories.Length; i++)
+            {
                 AddCategory(mCategories[i].Name, mCategories[i].Materials);
+            }
             for (int i = 0; i < mGroups.Length; i++)
                 AddGroup(mGroups[i]);
 
@@ -300,7 +344,7 @@ namespace ChartAndGraph
         public void ClearValues(double value = 0.0)
         {
             string[] catgories = mDataSource.Columns.Select(x => x.Name).ToArray();
-            string[] groups = mDataSource.Columns.Select(x => x.Name).ToArray();
+            string[] groups = mDataSource.Rows.Select(x => x.Name).ToArray();
             foreach (string g in groups)
             {
                 foreach (string c in catgories)
@@ -322,6 +366,33 @@ namespace ChartAndGraph
             }
         }
 
+        /// <summary>
+        /// Adds a new category to the bar chart. Each category has it's own material and name.
+        /// Note: you must also add groups to the bar data.
+        /// Example: you can set the chart categories to be "Player 1","Player 2","Player 3" in order to compare player achivments
+        /// </summary>
+        /// <param name="name">the name of the category</param>
+        /// <param name="material">the dynamic material of the category. dynamic materials allows setting the material for different events</param>
+        public void AddCategory(string name, ChartDynamicMaterial material,int position)
+        {
+            ChartDataColumn column = new ChartDataColumn(name);
+            column.Material = material;
+            mDataSource.mColumns.Insert(position,column);
+        }
+        /// <summary>
+        /// moves the category to a new position
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="newPosition"></param>
+        public void MoveCategory(string name,int newPosition)
+        {
+            mDataSource.mColumns.Move(name, newPosition);
+        }
+        
+        public void SwitchCategoryPositions(string firstCategory,string secondCategory)
+        {
+            mDataSource.mColumns.SwitchPositions(firstCategory, secondCategory);
+        }
         /// <summary>
         /// Adds a new category to the bar chart. Each category has it's own material and name.
         /// Note: you must also add groups to the bar data.
@@ -377,6 +448,7 @@ namespace ChartAndGraph
         public void SetMaterial(string category,ChartDynamicMaterial material)
         {
             mDataSource.Columns[category].Material = material;
+            RaisePropertyUpdated();
         }
 
         /// <summary>
@@ -436,7 +508,11 @@ namespace ChartAndGraph
             curve.postWrapMode = WrapMode.Once;
             curve.preWrapMode = WrapMode.Once;
         }
-
+        public void RestoreCategory(string name,object obj)
+        {
+            var cat = (CategoryData)obj;
+            SetMaterial(name, cat.Materials);
+        }
         public void SlideValue(string category, string group, double slideTo,float totalTime, AnimationCurve curve)
         {
             try

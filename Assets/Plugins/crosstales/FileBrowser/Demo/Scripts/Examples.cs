@@ -3,192 +3,178 @@ using UnityEngine.UI;
 
 namespace Crosstales.FB.Demo
 {
-    /// <summary>Examples for all methods.</summary>
-    [HelpURL("https://www.crosstales.com/media/data/assets/FileBrowser/api/class_crosstales_1_1_f_b_1_1_demo_1_1_examples.html")]
-    public class Examples : MonoBehaviour
-    {
-        #region Variables
+   /// <summary>Examples for all methods.</summary>
+   [HelpURL("https://www.crosstales.com/media/data/assets/FileBrowser/api/class_crosstales_1_1_f_b_1_1_demo_1_1_examples.html")]
+   public class Examples : MonoBehaviour
+   {
+      #region Variables
 
-        public GameObject TextPrefab;
+      public GameObject TextPrefab;
 
-        public GameObject ScrollView;
+      public GameObject ScrollView;
 
-        public Text Error;
+      public Button OpenFilesBtn;
+      public Button OpenFoldersBtn;
 
-        #endregion
+      public Text Error;
+
+      //private string testPath = @"D:\slaubenberger\git";
+      //private string testPath = @"C:\tmp";
+      //private string testPath = null;
+      //private string testPath = @"C:";
+
+      private string[] paths;
+
+      #endregion
 
 
-        #region Public methods
+      #region MonoBehaviour methods
 
-        public void OpenSingleFile()
-        {
-            //Debug.Log("OpenSingleFile");
+      public void Start()
+      {
+         //Util.Config.DEBUG = true;
 
-            ExtensionFilter[] extensions = new[] {
-                new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ),
-                new ExtensionFilter("Sound Files", "mp3", "wav" ),
-                new ExtensionFilter("All Files", "*" ),
-            };
+         if (OpenFilesBtn != null)
+            OpenFilesBtn.interactable = FileBrowser.canOpenMultipleFiles;
 
-            //string extensions = string.Empty;
+         if (OpenFoldersBtn != null)
+            OpenFoldersBtn.interactable = FileBrowser.canOpenMultipleFolders;
 
-            string path = FileBrowser.OpenSingleFile("Open File", string.Empty, extensions);
+         //Debug.Log("GetDirectories: " + FileBrowser.GetDirectories(testPath, true).CTDump());
+         //Debug.Log("GetFiles: " + FileBrowser.GetFiles(testPath, true, "*").CTDump());
+      }
 
-            //Debug.Log("Selected file: " + path);
+      public void Update()
+      {
+         //Debug.Log("Alive!");
 
-            rebuildList(path);
-        }
-
-        public void OpenFiles()
-        {
-            //Debug.Log("OpenFiles");
-
-            ExtensionFilter[] extensions = new[] {
-                new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ),
-                new ExtensionFilter("Sound Files", "mp3", "wav" ),
-                new ExtensionFilter("All Files", "*" ),
-            };
-
-            //string extensions = string.Empty;
-
-            string[] paths = FileBrowser.OpenFiles("Open Files", string.Empty, extensions, true);
-
-            /*
-            foreach (string path in paths)
-            {
-                Debug.Log("Selected file: " + path);
-            }
-            */
-
+         if ((Util.Helper.isWindowsPlatform || Util.Helper.isWindowsEditor) && Util.Config.NATIVE_WINDOWS && paths != null)
+         {
+            Debug.Log("REBUILD");
             rebuildList(paths);
-        }
+         }
+      }
 
-        public void OpenSingleFolder()
-        {
-            //Debug.Log("OpenSingleFolder");
+      #endregion
 
-            string path = FileBrowser.OpenSingleFolder("Open Folder");
 
-            //Debug.Log("Selected folder: " + path);
+      #region Public methods
 
-            //Debug.Log("Files: " + FileBrowser.GetFiles(path, "*").CTDump());
-            //Debug.Log("Directories: " + FileBrowser.GetDirectories(path).CTDump());
+      public void OpenSingleFile()
+      {
+         //string path = FileBrowser.OpenSingleFile("Open single file", testPath, new ExtensionFilter("Image Files", "png", "jpg", "jpeg"), new ExtensionFilter("Sound Files", "mp3", "wav"), new ExtensionFilter(Util.Constants.TEXT_ALL_FILES, "*"));
+         //string path = FileBrowser.OpenSingleFile("Open single file", testPath, "txt", "jpg", "pdf");
+         //string path = FileBrowser.OpenSingleFile("txt");
+         string path = FileBrowser.OpenSingleFile();
 
-            rebuildList(path);
-        }
+         //string text = System.IO.File.ReadAllText(path);
+         //Debug.Log(text);
 
-        public void OpenFolders()
-        {
-            //Debug.Log("OpenFolders");
+         rebuildList(path);
+      }
 
-            //string[] paths = FileBrowser.OpenFolders("Open Files", string.Empty, true);
-            string[] paths = FileBrowser.OpenFolders("Open Folders");
+      public void OpenFiles()
+      {
+         //string[] paths = FileBrowser.OpenFiles("Open files", testPath, new ExtensionFilter("Image Files", "png", "jpg", "jpeg"), new ExtensionFilter("Sound Files", "mp3", "wav"), new ExtensionFilter(Util.Constants.TEXT_ALL_FILES, "*"));
+         //string[] paths = FileBrowser.OpenFiles("txt", "jpg", "pdf");
+         //string[] paths = FileBrowser.OpenFiles("txt");
+         string[] paths = FileBrowser.OpenFiles();
 
-            /*
-            foreach (string path in paths)
-            {
-                Debug.Log("Selected folder: " + path);
-            }
-            */
+         rebuildList(paths);
+      }
 
+      public void OpenSingleFolder()
+      {
+         //string path = FileBrowser.OpenSingleFolder("Open folder", testPath);
+         string path = FileBrowser.OpenSingleFolder();
+
+         rebuildList(path);
+      }
+
+      public void OpenFolders()
+      {
+         //string[] paths = FileBrowser.OpenFolders("Open folders", testPath);
+         string[] paths = FileBrowser.OpenFolders();
+
+         rebuildList(paths);
+      }
+
+      public void SaveFile()
+      {
+         //string path = FileBrowser.SaveFile("Save file", testPath, "MySaveFile", new ExtensionFilter("Binary", "bin"), new ExtensionFilter("Text", "txt", "md"), new ExtensionFilter("C#", "cs"));
+         //string path = FileBrowser.SaveFile("Save file", testPath, "MySaveFile", "bin", "txt", "cs");
+         string path = FileBrowser.SaveFile("MySaveFile", "txt");
+         //string path = FileBrowser.SaveFile();
+
+         //string text = "Hello, this is a test!";
+         //System.IO.File.WriteAllText(path, text);
+
+         rebuildList(path);
+      }
+
+      public void OpenFilesAsync()
+      {
+         //FileBrowser.OpenFilesAsync((string[] paths) => { writePaths(paths); }, "Open files", testPath, true, new ExtensionFilter("Image Files", "png", "jpg", "jpeg"), new ExtensionFilter("Sound Files", "mp3", "wav"), new ExtensionFilter(Util.Constants.TEXT_ALL_FILES, "*"));
+         //FileBrowser.OpenFilesAsync((string[] paths) => { writePaths(paths); }, "Open files", testPath, true, "txt", "png");
+         //FileBrowser.OpenFilesAsync((string[] paths) => { writePaths(paths); }, true, "txt");
+         FileBrowser.OpenFilesAsync(paths => { writePaths(paths); });
+      }
+
+      public void OpenFoldersAsync()
+      {
+         //FileBrowser.OpenFoldersAsync((string[] paths) => { writePaths(paths); }, "Open folders", testPath, true);
+         FileBrowser.OpenFoldersAsync(paths => { writePaths(paths); });
+      }
+
+      public void SaveFileAsync()
+      {
+         //FileBrowser.SaveFileAsync((string paths) => { writePaths(paths); }, "Save File", testPath, "MySaveFile", new ExtensionFilter("Binary", "bin"), new ExtensionFilter("Text", "txt"), new ExtensionFilter("C#", "cs"));
+         //FileBrowser.SaveFileAsync((string paths) => { writePaths(paths); }, "Save file", testPath, "MySaveFile", "txt", "cs");
+         FileBrowser.SaveFileAsync(paths => { writePaths(paths); }, "MySaveFile", "txt");
+         //FileBrowser.SaveFileAsync(paths => { writePaths(paths); });
+      }
+
+      private void writePaths(params string[] paths)
+      {
+         if ((Util.Helper.isWindowsPlatform || Util.Helper.isWindowsEditor) && Util.Config.NATIVE_WINDOWS)
+         {
+            this.paths = paths;
+         }
+         else
+         {
             rebuildList(paths);
-        }
+         }
+      }
 
-        public void SaveFile()
-        {
-            //Debug.Log("SaveFile");
-
-            ExtensionFilter[] extensions = new[] {
-                        new ExtensionFilter("Binary", "bin"),
-                        new ExtensionFilter("Text", "txt"),
-                        new ExtensionFilter("C#", "cs"),
-                    };
-
-            //string extensions = "txt";
-
-            string path = FileBrowser.SaveFile("Save File", string.Empty, "MySaveFile", extensions);
-
-            //Debug.Log("Save file: " + path);
-
-            rebuildList(path);
-        }
-
-        public void OpenFilesAsync()
-        {
-            //Debug.Log("OpenFilesAsync");
+      #endregion
 
 
-            ExtensionFilter[] extensions = new[] {
-                new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ),
-                new ExtensionFilter("Sound Files", "mp3", "wav" ),
-                new ExtensionFilter("All Files", "*" ),
-            };
+      #region Private methods
 
-            //string extensions = string.Empty;
+      private void rebuildList(params string[] e)
+      {
+         for (int ii = ScrollView.transform.childCount - 1; ii >= 0; ii--)
+         {
+            Transform child = ScrollView.transform.GetChild(ii);
+            child.SetParent(null);
+            Destroy(child.gameObject);
+         }
 
-            FileBrowser.OpenFilesAsync("Open Files", string.Empty, extensions, true, (string[] paths) => { writePaths(paths); });
-        }
+         ScrollView.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 80 * e.Length);
 
-        public void OpenFoldersAsync()
-        {
-            //Debug.Log("OpenFoldersAsync");
+         for (int ii = 0; ii < e.Length; ii++)
+         {
+            GameObject go = Instantiate(TextPrefab, ScrollView.transform, true);
 
-            FileBrowser.OpenFoldersAsync("Open Folders", string.Empty, true, (string[] paths) => { writePaths(paths); });
-        }
+            go.transform.localScale = Vector3.one;
+            go.transform.localPosition = new Vector3(10, -80 * ii, 0);
+            go.GetComponent<Text>().text = e[ii];
+         }
 
-        public void SaveFileAsync()
-        {
-            //Debug.Log("SaveFileAsync");
+         paths = null;
+      }
 
-            ExtensionFilter[] extensions = new[] {
-                        new ExtensionFilter("Binary", "bin"),
-                        new ExtensionFilter("Text", "txt"),
-                        new ExtensionFilter("C#", "cs"),
-            };
-
-            //string extensions = "txt";
-
-            FileBrowser.SaveFileAsync("Save File", string.Empty, "MySaveFile", extensions, (string paths) => { writePaths(paths); });
-        }
-
-        private void writePaths(params string[] paths)
-        {
-            /*
-            foreach (string path in paths)
-            {
-                Debug.Log("Selected path: " + path);
-            }
-            */
-
-            rebuildList(paths);
-        }
-
-        #endregion
-
-        private void rebuildList(params string[] e)
-        {
-            for (int ii = ScrollView.transform.childCount - 1; ii >= 0; ii--)
-            {
-                Transform child = ScrollView.transform.GetChild(ii);
-                child.SetParent(null);
-                Destroy(child.gameObject);
-            }
-
-            ScrollView.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 80 * e.Length);
-
-            for (int ii = 0; ii < e.Length; ii++)
-            {
-                //if (Config.DEBUG)
-                //    Debug.Log(e[ii]);
-
-                GameObject go = Instantiate(TextPrefab);
-
-                go.transform.SetParent(ScrollView.transform);
-                go.transform.localScale = Vector3.one;
-                go.transform.localPosition = new Vector3(10, -80 * ii, 0);
-                go.GetComponent<Text>().text = e[ii].ToString();
-            }
-        }
-    }
+      #endregion
+   }
 }
-// © 2017-2019 crosstales LLC (https://www.crosstales.com)
+// © 2017-2020 crosstales LLC (https://www.crosstales.com)

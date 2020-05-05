@@ -1,4 +1,5 @@
-﻿using ChartAndGraph;
+#define Graph_And_Chart_PRO
+using ChartAndGraph;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,7 @@ namespace Assets
 
         public void OnEnable()
         {
+            
             mRedStyle = new GUIStyle();
             mRedStyle.normal.textColor = Color.red;
 
@@ -319,6 +321,7 @@ namespace Assets
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
+            serializedObject.Update();
             SerializedProperty radarData = serializedObject.FindProperty("Data");
             EditorGUILayout.BeginVertical();
             Splitter();
@@ -356,7 +359,7 @@ namespace Assets
             EditorGUI.indentLevel--;
             EditorGUILayout.EndVertical();
             serializedObject.ApplyModifiedProperties();
-            serializedObject.Update();
+            
             if (mUpdateWindow == true)
             {
                 mUpdateWindow = false;

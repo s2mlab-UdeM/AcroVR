@@ -45,9 +45,26 @@ public class AnimationF : MonoBehaviour
     LineRenderer[] lineFloor;
 
     public bool animateON = false;
+	public string playMode = MainParameters.Instance.languages.Used.animatorPlayModeSimulation;
 
-    int frameN = 0;
-	int subFrameN = 0;							// Un frame = dt, alors sous-frame est dt / n, pour le moment dt = 0.02 et n = 2, donc subFrameN = 0, 1
+	/// <summary> Vecteur contenant l'état (q0 et q0dot) au temps t(frame - 1). </summary>
+	public static double[] xTFrame0;
+	/// <summary> Vecteur contenant l'état (q0 et q0dot) au temps t(frame). </summary>
+	public static double[] xTFrame1;
+
+	// Vecteurs contenant les positions, vitesses et accelerations des articulations à l'instant t(frame - 1), t(frame - 0.5) et t(frame)
+
+	float[] qFrame0;                  // t(frame - 1)
+	float[] qdotFrame0;
+	float[] qddotFrame0;
+	float[] qFrame1;                  // t(frame - 0.5)
+	float[] qdotFrame1;
+	float[] qddotFrame1;
+	float[] qFrame2;                  // t(frame)
+	float[] qdotFrame2;
+	float[] qddotFrame2;
+
+	public int frameN = 0;
     //int firstFrame = 0;
     int numberFrames = 0;
     int frameContactGround = 0;
@@ -66,10 +83,9 @@ public class AnimationF : MonoBehaviour
 	public float[] debugTimeElapsed;
     float timeFrame = 0;
     float timeStarted = 0;
-    string playMode = MainParameters.Instance.languages.Used.animatorPlayModeSimulation;
     float factorPlaySpeed = 1;
 
-    double[] t;
+    double[] tQ;
     double[,] q;
     double[,] qdot;
 
@@ -91,11 +107,14 @@ public class AnimationF : MonoBehaviour
 
         dropDownPlayMode.interactable = false;
         dropDownPlayView.interactable = false;
-        buttonPlay.interactable = false;
-        buttonPlayImage.color = Color.gray;
-        dropDownPlaySpeed.interactable = false;
-        buttonGraph.interactable = false;
-        buttonGraphImage.color = Color.gray;
+		if (!MainParameters.Instance.testXSensUsed)
+		{
+			buttonPlay.interactable = false;
+			buttonPlayImage.color = Color.gray;
+		}
+		dropDownPlaySpeed.interactable = false;
+		buttonGraph.interactable = false;
+		buttonGraphImage.color = Color.gray;
         buttonRealTime.interactable = false;
         buttonRealTimeImage.color = Color.gray;
         buttonFirstPerson.interactable = false;
@@ -226,59 +245,19 @@ public class AnimationF : MonoBehaviour
         // On ajoute une marge de 10% sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé
 
         if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation || playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
-        {
-            float[] tagX, tagY, tagZ;
-            tagXMin = tagYMin = tagZMin = 9999;
-            tagXMax = tagYMax = tagZMax = -9999;
-            double[] qf = new double[q1.GetUpperBound(0) + 1];
-            for (int i = 0; i <= q1.GetUpperBound(1); i++)
-            {
-                qf = MathFunc.MatrixGetColumnD(q1, i);
-                if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)       // Mode Gesticulation: Les DDL racine doivent être à zéro
-                    for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.q1.Length; j++)
-                        qf[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1] = 0;
-
-                EvaluateTags(qf, out tagX, out tagY, out tagZ);
-                tagXMin = Math.Min(tagXMin, Mathf.Min(tagX));
-                tagXMax = Math.Max(tagXMax, Mathf.Max(tagX));
-                tagYMin = Math.Min(tagYMin, Mathf.Min(tagY));
-                tagYMax = Math.Max(tagYMax, Mathf.Max(tagY));
-                tagZMin = Math.Min(tagZMin, Mathf.Min(tagZ));
-                tagZMax = Math.Max(tagZMax, Mathf.Max(tagZ));
-            }
-            AddMarginOnMinMax(0.1f);
-            EvaluateFactorTags2Screen();
-        }
+			InitScreenVolumeDimension(q1);
         else
             PlayReset();
 
-        // Calculer et conserver toutes les positions, vitesses et accélérations des articulations (ddl) à 2 fois la fréquence d'échantillonnage
+		// Afficher la silhouette pour toute l'animation
 
-        //float t = 0;
-        //qd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot];
-        //qdotd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot];
-        //qddotd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot];
-        //for (int i = 0; i < numFramesTot; i++)
-        //{
-        //    t += MainParameters.Instance.joints.lagrangianModel.dt;
-        //    float[] qd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        //    float[] qdotd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        //    float[] qddotd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        //    Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, t, MainParameters.Instance.joints.lagrangianModel.q2, out qd1, out qdotd1, out qddotd1);
-        //    trajectory.ToString();                  // Pour enlever un warning lors de la compilation
-        //    for (int j = 0; j < qd1.Length; j++)
-        //        qd[j, i] = qd1[j];
-        //}
+		Play(0, numFramesTot);
+	}
 
-        // Afficher la silhouette pour toute l'animation
+	// =================================================================================================================================================================
+	/// <summary> Bouton Stop a été appuyer. </summary>
 
-        Play(0, numFramesTot);
-    }
-
-    // =================================================================================================================================================================
-    /// <summary> Bouton Stop a été appuyer. </summary>
-
-    public void ButtonStop()
+	public void ButtonStop()
     {
         PlayEnd();
     }
@@ -362,31 +341,32 @@ public class AnimationF : MonoBehaviour
 
         // Initialisation de certains paramètres
 
-        t = new double[nFrames];
+        tQ = new double[nFrames];
         q = new double[joints.lagrangianModel.nDDL, nFrames];
         qdot = new double[joints.lagrangianModel.nDDL, nFrames];
 
-        DoSimulation.qFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        DoSimulation.qdotFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        DoSimulation.qddotFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-		DoSimulation.qFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-		DoSimulation.qdotFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-		DoSimulation.qddotFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-		DoSimulation.qFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-		DoSimulation.qdotFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-		DoSimulation.qddotFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        qFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        qdotFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        qddotFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		qFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		qdotFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		qddotFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		qFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		qdotFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		qddotFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+
+		xTFrame1 = new double[MainParameters.Instance.joints.lagrangianModel.nDDL * 2];
 
 		frameN = 0;
-		subFrameN = 0;
         // firstFrame = frFrame;
         numberFrames = nFrames;
 		debugTimeElapsed = new float[numberFrames];
         frameContactGround = numberFrames + 1;
         if (nFrames > 1)
-            timeFrame = MainParameters.Instance.joints.lagrangianModel.dt / 2;
+            timeFrame = MainParameters.Instance.joints.lagrangianModel.dt;
         else
             timeFrame = 0;
-		animateON = true;
+		animateON = !Main.Instance.testXSensUsed;
         GraphManager.Instance.mouseTracking = false;
 
         // Effacer le message affiché au bas du panneau d'animation
@@ -399,8 +379,8 @@ public class AnimationF : MonoBehaviour
         {
             GameObject lineObject = new GameObject();
             LineRenderer lineRenderer = lineObject.AddComponent<LineRenderer>();
-            lineRenderer.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
-            lineRenderer.startWidth = 0.04f;
+			lineRenderer.material = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended"));
+			lineRenderer.startWidth = 0.04f;
             lineRenderer.endWidth = 0.04f;
             lineRenderer.gameObject.layer = 8;
 
@@ -458,12 +438,12 @@ public class AnimationF : MonoBehaviour
         }
     }
 
-    // =================================================================================================================================================================
-    /// <summary> Exécution d'un frame de l'animation. </summary>
+	// =================================================================================================================================================================
+	/// <summary> Exécution d'un frame de l'animation. </summary>
 
-    void PlayOneFrame()
-    {
-        MainParameters.StrucJoints joints = MainParameters.Instance.joints;
+	public void PlayOneFrame()
+	{
+		MainParameters.StrucJoints joints = MainParameters.Instance.joints;
 
 		// Effacer la silhouette précédente en premier
 
@@ -475,140 +455,209 @@ public class AnimationF : MonoBehaviour
 		for (int i = 0; i < 4; i++)
 			DrawObjects.Instance.Delete(lineFloor[i]);
 
-		// Lecture des données d'interpolation pour le sous-frame actuel
+		// Cas spécial à t = 0: on ne fait pas de calcul d'intégration et on utilise les données q0 et q0dot tel quel
 
-		Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, (2 * frameN + subFrameN) * timeFrame, MainParameters.Instance.joints.lagrangianModel.q2,
-			out DoSimulation.qFrame2, out DoSimulation.qdotFrame2, out DoSimulation.qddotFrame2);
-		trajectory.ToString();                  // Pour enlever un warning lors de la compilation
-
-		// Si le sous-frame est un sous-frame intermédiaire, alors on fait aucun calcul d'intégration et on affiche rien
-
-		if (subFrameN >= 1)
-		{
-			SaveInterpolationData();
-			subFrameN = 0;
-			return;
-		}
-		subFrameN = 1;
-
-		// Cas spécial à t = 0 => on ne fait pas de calcul d'intégration et on utilise les données q0 et q0dot tel quel
-
+		Trajectory trajectory;
 		if (frameN <= 0)
 		{
-			DoSimulation.xTFrame1 = new double[MainParameters.Instance.joints.lagrangianModel.nDDL * 2];
-			for (int i = 0; i < DoSimulation.xTFrame0.Length; i++)
-				DoSimulation.xTFrame1[i] = DoSimulation.xTFrame0[i];
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xTFrame1[i] = xTFrame0[i];
+
+			// Trajectory pour le t = 0
+
+			trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, 0, MainParameters.Instance.joints.lagrangianModel.q2, out qFrame0, out qdotFrame0, out qddotFrame0);
 		}
 
 		// Calcul d'intégration
 
 		else
 		{
-			DoSimulation.modeRT = true;
-			DoSimulation.xTFrame1 = Ode.RK4TempsReel(DoSimulation.xTFrame0, DoSimulation.ShortDynamicsRT);
+			float tFrame = (frameN - 1) * timeFrame;
+
+			// Trajectory pour le t = timeFrame / 2
+
+			trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, tFrame + MainParameters.Instance.joints.lagrangianModel.dt / 2,
+				MainParameters.Instance.joints.lagrangianModel.q2, out qFrame1, out qdotFrame1, out qddotFrame1);
+
+			// Trajectory pour le t = timeFrame
+
+			trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, tFrame + MainParameters.Instance.joints.lagrangianModel.dt, MainParameters.Instance.joints.lagrangianModel.q2,
+				 out qFrame2, out qdotFrame2, out qddotFrame2);
+
+			float[,] qint = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, 3];
+			float[,] qdint = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, 3];
+			float[,] qddint = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, 3];
+			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
+			{
+				qint[i, 0] = qFrame0[i];
+				qint[i, 1] = qFrame1[i];
+				qint[i, 2] = qFrame2[i];
+				qdint[i, 0] = qdotFrame0[i];
+				qdint[i, 1] = qdotFrame1[i];
+				qdint[i, 2] = qdotFrame2[i];
+				qddint[i, 0] = qddotFrame0[i];
+				qddint[i, 1] = qddotFrame1[i];
+				qddint[i, 2] = qddotFrame2[i];
+			}
+
+			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
+			{
+				qFrame0[i] = qFrame2[i];
+				qdotFrame0[i] = qdotFrame2[i];
+				qddotFrame0[i] = qddotFrame2[i];
+			}
+
+			float[] t = new float[3] { 0, timeFrame / 2, timeFrame };
+			double[] k_1 = DoSimulation.ShortDynamics_int(0, xTFrame0, t, qint, qdint, qddint);
+
+			double[] xT = new double[MainParameters.Instance.joints.lagrangianModel.nDDL * 2];
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame * 4.0f / 27.0f) * k_1[i];
+			double[] k_2 = DoSimulation.ShortDynamics_int(timeFrame * 4.0f / 27.0f, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame / 18.0f) * (k_1[i] + 3.0f * k_2[i]);
+			double[] k_3 = DoSimulation.ShortDynamics_int(timeFrame * 2.0f / 9.0f, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame / 12.0f) * (k_1[i] + 3.0f * k_3[i]);
+			double[] k_4 = DoSimulation.ShortDynamics_int(timeFrame * 1.0f / 3.0f, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame / 8.0f) * (k_1[i] + 3.0f * k_4[i]);
+			double[] k_5 = DoSimulation.ShortDynamics_int(timeFrame * 1.0f / 2.0f, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame / 54.0f) * (13.0f * k_1[i] - 27.0f * k_3[i] + 42.0f * k_4[i] + 8.0f * k_5[i]);
+			double[] k_6 = DoSimulation.ShortDynamics_int(timeFrame * 2.0f / 3.0f, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame / 4320.0f) * (389.0f * k_1[i] - 54.0f * k_3[i] + 966.0f * k_4[i] - 824.0f * k_5[i] + 243.0f * k_6[i]);
+			double[] k_7 = DoSimulation.ShortDynamics_int(timeFrame * 1.0f / 6.0f, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame / 20.0f) * (-234.0f * k_1[i] + 81.0f * k_3[i] - 1164.0f * k_4[i] + 656.0f * k_5[i] - 122.0f * k_6[i] + 800.0f * k_7[i]);
+			double[] k_8 = DoSimulation.ShortDynamics_int(timeFrame, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame / 288.0f) * (-127.0f * k_1[i] + 18.0f * k_3[i] - 678.0f * k_4[i] + 456.0f * k_5[i] - 9.0f * k_6[i] + 576.0f * k_7[i] + 4.0f * k_8[i]);
+			double[] k_9 = DoSimulation.ShortDynamics_int(timeFrame * 5.0f / 6.0f, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xT[i] = xTFrame0[i] + (timeFrame / 820.0f) * (1481.0f * k_1[i] - 81.0f * k_3[i] + 7104.0f * k_4[i] - 3376.0f * k_5[i] + 72.0f * k_6[i] - 5040.0f * k_7[i] -
+														60.0f * k_8[i] + 720.0f * k_9[i]);
+			double[] k_10 = DoSimulation.ShortDynamics_int(timeFrame, xT, t, qint, qdint, qddint);
+
+			for (int i = 0; i < xTFrame0.Length; i++)
+				xTFrame1[i] = xTFrame0[i] + timeFrame / 840.0f * (41.0f * k_1[i] + 27.0f * k_4[i] + 272.0f * k_5[i] + 27.0f * k_6[i] + 216.0f * k_7[i] + 216.0f * k_9[i] + 41.0f * k_10[i]);
 		}
-
-		// Conserver les données d'interpolation du sous-frame actuel
-
-		SaveInterpolationData();
 
 		// Initialisation du vecteur qT et copier le vecteur t(frame) dans le vecteur t(frame - 1)
 
 		double[] qT = new double[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        for (int i = 0; i < qT.Length; i++)
-            qT[i] = (float)DoSimulation.xTFrame1[i];
-        for (int i = 0; i < DoSimulation.xTFrame0.Length; i++)
-            DoSimulation.xTFrame0[i] = DoSimulation.xTFrame1[i];
+		for (int i = 0; i < qT.Length; i++)
+			qT[i] = (float)xTFrame1[i];
+		for (int i = 0; i < xTFrame0.Length; i++)
+			xTFrame0[i] = xTFrame1[i];
 
-        // Conserver les temps, positions et vitesses dans les matrices globales t, q et qdot, pour chacun des frames
+		// Conserver les temps, positions et vitesses dans les matrices globales tQ, q et qdot, pour chacun des frames
 
-        t[frameN] = 2 * timeFrame * frameN;
-        for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
-        {
-            q[i, frameN] = DoSimulation.xTFrame1[i];
-            qdot[i, frameN] = DoSimulation.xTFrame1[joints.lagrangianModel.nDDL + i];
-        }
+		tQ[frameN] = timeFrame * frameN;
+		for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
+		{
+			q[i, frameN] = xTFrame1[i];
+			qdot[i, frameN] = xTFrame1[joints.lagrangianModel.nDDL + i];
+		}
 
-        // Calcul des "tags", selon le modèle lagrangien utilisé
+		// Mode Gesticulation: Les DDL racine doivent être à zéro
 
-        float[] tagX;
-        float[] tagY;
-        float[] tagZ;
-        EvaluateTags(qT, out tagX, out tagY, out tagZ);
-        if (joints.condition > 0 && tagZ.Min() < -0.05f)
-        {
-            frameContactGround = frameN;
-            numberFrames = frameN + 1;
-        }
+		if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
+			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
+				qT[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = 0;
 
-        // Si le facteur de correspondance n'a pas été calculer précédemment, alors il nous faut le calculer
-        // Calculer un facteur de correspondance entre le volume utilisé par la silhouette et la dimension du volume disponible pour l'affichage
-        // Pour cela, il nous faut calculer les valeurs minimum et maximum des DDLs de la silhouette, dans les 3 dimensions
-        // Même si on modifie la dimension de la silhouette, on conserve quand même les proportions de la sihouette dans les 3 dimensions, donc le facteur est unique pour les 3 dimensions
-        // Pour le mode simulation, on ajoute une marge de 10% sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé
-        // Pour le mode gesticulation, on ajouter une marge de 25% sur les dimensions mimimum et maximum, au cas où les bras ne sont pas levé et qui le seront pas la suite.
+		// Calcul des "tags", selon le modèle lagrangien utilisé
 
-        int newTagLength = tagX.Length;
-        if (tagXMin == 0 && tagXMax == 0 && tagYMin == 0 && tagYMax == 0 && tagZMin == 0 && tagZMax == 0)
-        {
-            tagXMin = Mathf.Min(tagX);
-            tagXMax = Mathf.Max(tagX);
-            tagYMin = Mathf.Min(tagY);
-            tagYMax = Mathf.Max(tagY);
-            tagZMin = Mathf.Min(tagZ);
-            tagZMax = Mathf.Max(tagZ);
-            if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
-                AddMarginOnMinMax(0.1f);
-            else
-                AddMarginOnMinMax(0.25f);
-            EvaluateFactorTags2Screen();
-        }
+		float[] tagX;
+		float[] tagY;
+		float[] tagZ;
+		EvaluateTags(qT, out tagX, out tagY, out tagZ);
 
-        // On applique le facteur de correspondance pour optimiser l'affichage de la silhouette
-        // On centre la silhouette au milieu de l'espace disponible à l'écran (PanelAnimator)
+		// Vérifier s'il y a un contact avec le sol, si c'est le cas, alors il faut arrêter l'animation
 
-        float tagHalfMaxMinZ = (tagZMax - tagZMin) * factorTags2Screen / 2;
-        for (int i = 0; i < newTagLength; i++)
-        {
-            tagX[i] = (tagX[i] - tagXMin) * factorTags2Screen - (tagXMax - tagXMin) * factorTags2Screen / 2;
-            tagY[i] = (tagY[i] - tagYMin) * factorTags2Screen - (tagYMax - tagYMin) * factorTags2Screen / 2;
-            tagZ[i] = (tagZ[i] - tagZMin) * factorTags2Screen - tagHalfMaxMinZ;
-        }
+		if (joints.condition > 0 && tagZ.Min() < -0.05f && playMode != MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
+		{
+			frameContactGround = frameN;
+			numberFrames = frameN + 1;
+		}
 
-        // On conserve la nouvelle matrice de "tags" sous une forme Vector3
+		// Si le facteur de correspondance n'a pas été calculer précédemment, alors il nous faut le calculer
+		// Calculer un facteur de correspondance entre le volume utilisé par la silhouette et la dimension du volume disponible pour l'affichage
+		// Pour cela, il nous faut calculer les valeurs minimum et maximum des DDLs de la silhouette, dans les 3 dimensions
+		// Même si on modifie la dimension de la silhouette, on conserve quand même les proportions de la sihouette dans les 3 dimensions, donc le facteur est unique pour les 3 dimensions
+		// Pour le mode simulation, on ajoute une marge de 10% sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé
+		// Pour le mode gesticulation, on ajouter une marge de 25% sur les dimensions mimimum et maximum, au cas où les bras ne sont pas levé et qui le seront pas la suite.
 
-        Vector3[] tag = new Vector3[newTagLength];
-        for (int i = 0; i < newTagLength; i++)
-            tag[i] = new Vector3(tagX[i], tagY[i], tagZ[i]);
+		int newTagLength = tagX.Length;
+		if (tagXMin == 0 && tagXMax == 0 && tagYMin == 0 && tagYMax == 0 && tagZMin == 0 && tagZMax == 0)
+		{
+			tagXMin = Mathf.Min(tagX);
+			tagXMax = Mathf.Max(tagX);
+			tagYMin = Mathf.Min(tagY);
+			tagYMax = Mathf.Max(tagY);
+			tagZMin = Mathf.Min(tagZ);
+			tagZMax = Mathf.Max(tagZ);
+			if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
+				AddMarginOnMinMax(0.1f);
+			else
+				AddMarginOnMinMax(0.25f);
+			EvaluateFactorTags2Screen();
+		}
 
-        // Afficher la silhouette et le plancher si nécessaire
+		// On applique le facteur de correspondance pour optimiser l'affichage de la silhouette
+		// On centre la silhouette au milieu de l'espace disponible à l'écran (PanelAnimator)
 
-        for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
-            DrawObjects.Instance.Line(lineStickFigure[i], tag[joints.lagrangianModel.stickFigure[i, 0] - 1], tag[joints.lagrangianModel.stickFigure[i, 1] - 1]);
-        DrawObjects.Instance.Circle(lineCenterOfMass, 0.08f, tag[newTagLength - 1]);
-        for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
-            DrawObjects.Instance.Triangle(lineFilledFigure[i], tag[joints.lagrangianModel.filledFigure[i, 0] - 1], tag[joints.lagrangianModel.filledFigure[i, 1] - 1], tag[joints.lagrangianModel.filledFigure[i, 2] - 1]);
+		float tagHalfMaxMinZ = (tagZMax - tagZMin) * factorTags2Screen / 2;
+		for (int i = 0; i < newTagLength; i++)
+		{
+			tagX[i] = (tagX[i] - tagXMin) * factorTags2Screen - (tagXMax - tagXMin) * factorTags2Screen / 2;
+			tagY[i] = (tagY[i] - tagYMin) * factorTags2Screen - (tagYMax - tagYMin) * factorTags2Screen / 2;
+			tagZ[i] = (tagZ[i] - tagZMin) * factorTags2Screen - tagHalfMaxMinZ;
+		}
 
-        if (numberFrames > 1 && playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
-        {
-            float tagHalfMaxMinX = (tagXMax - tagXMin) * factorTags2ScreenX / 2;
-            float tagHalfMaxMinY = (tagYMax - tagYMin) * factorTags2ScreenY / 2;
-            float originZ = -tagZMin * factorTags2Screen - tagHalfMaxMinZ;
-            DrawObjects.Instance.Line(lineFloor[0], new Vector3(-tagHalfMaxMinX, -tagHalfMaxMinY, originZ), new Vector3(tagHalfMaxMinX, -tagHalfMaxMinY, originZ));
-            DrawObjects.Instance.Line(lineFloor[1], new Vector3(tagHalfMaxMinX, -tagHalfMaxMinY, originZ), new Vector3(tagHalfMaxMinX, tagHalfMaxMinY, originZ));
-            DrawObjects.Instance.Line(lineFloor[2], new Vector3(tagHalfMaxMinX, tagHalfMaxMinY, originZ), new Vector3(-tagHalfMaxMinX, tagHalfMaxMinY, originZ));
-            DrawObjects.Instance.Line(lineFloor[3], new Vector3(-tagHalfMaxMinX, tagHalfMaxMinY, originZ), new Vector3(-tagHalfMaxMinX, -tagHalfMaxMinY, originZ));
-        }
+		// On conserve la nouvelle matrice de "tags" sous une forme Vector3
 
-        // Afficher le déplacement d'un curseur selon l'échelle des temps, dans le graphique qui affiche les positions des angles pour l'articulation sélectionné
+		Vector3[] tag = new Vector3[newTagLength];
+		for (int i = 0; i < newTagLength; i++)
+			tag[i] = new Vector3(tagX[i], tagY[i], tagZ[i]);
 
-        //if (numberFrames > 1)														// Ça ralenti trop l'animation, on désactive pour le moment
-        //	GraphManager.Instance.DisplayCursor((firstFrame + frameN) * joints.lagrangianModel.dt);
+		// Afficher la silhouette et le plancher si nécessaire
 
-        // Inclémenter le compteur de frames
+		for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
+			DrawObjects.Instance.Line(lineStickFigure[i], tag[joints.lagrangianModel.stickFigure[i, 0] - 1], tag[joints.lagrangianModel.stickFigure[i, 1] - 1]);
+		DrawObjects.Instance.Circle(lineCenterOfMass, 0.08f, tag[newTagLength - 1]);
+		for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
+			DrawObjects.Instance.Triangle(lineFilledFigure[i], tag[joints.lagrangianModel.filledFigure[i, 0] - 1], tag[joints.lagrangianModel.filledFigure[i, 1] - 1], tag[joints.lagrangianModel.filledFigure[i, 2] - 1]);
 
-        frameN++;
-    }
+		if (numberFrames > 1 && playMode == MainParameters.Instance.languages.Used.animatorPlayModeSimulation)
+		{
+			float tagHalfMaxMinX = (tagXMax - tagXMin) * factorTags2ScreenX / 2;
+			float tagHalfMaxMinY = (tagYMax - tagYMin) * factorTags2ScreenY / 2;
+			float originZ = -tagZMin * factorTags2Screen - tagHalfMaxMinZ;
+			DrawObjects.Instance.Line(lineFloor[0], new Vector3(-tagHalfMaxMinX, -tagHalfMaxMinY, originZ), new Vector3(tagHalfMaxMinX, -tagHalfMaxMinY, originZ));
+			DrawObjects.Instance.Line(lineFloor[1], new Vector3(tagHalfMaxMinX, -tagHalfMaxMinY, originZ), new Vector3(tagHalfMaxMinX, tagHalfMaxMinY, originZ));
+			DrawObjects.Instance.Line(lineFloor[2], new Vector3(tagHalfMaxMinX, tagHalfMaxMinY, originZ), new Vector3(-tagHalfMaxMinX, tagHalfMaxMinY, originZ));
+			DrawObjects.Instance.Line(lineFloor[3], new Vector3(-tagHalfMaxMinX, tagHalfMaxMinY, originZ), new Vector3(-tagHalfMaxMinX, -tagHalfMaxMinY, originZ));
+		}
+
+		// Afficher le déplacement d'un curseur selon l'échelle des temps, dans le graphique qui affiche les positions des angles pour l'articulation sélectionné
+
+		//if (numberFrames > 1)														// Ça ralenti trop l'animation, on désactive pour le moment
+		//	GraphManager.Instance.DisplayCursor((firstFrame + frameN) * joints.lagrangianModel.dt);
+
+		// Inclémenter le compteur de frames
+
+		frameN++;
+	}
 
     // =================================================================================================================================================================
     /// <summary> Réinitialiser certains paramètres utilisés pour l'exécution de l'animation. </summary>
@@ -629,7 +678,7 @@ public class AnimationF : MonoBehaviour
     public void PlayEnd()
     {
         animateON = false;
-        GraphManager.Instance.mouseTracking = true;
+		GraphManager.Instance.mouseTracking = !MainParameters.Instance.testXSensUsed;
 
         // Calculer les données de rotation, et autres données nécessaire, utilisé pour les graphiques des résultats
 
@@ -651,7 +700,7 @@ public class AnimationF : MonoBehaviour
         // Enlever le bouton Stop et activer les autres contrôles du logiciel
 
         buttonStop.SetActive(false);
-        Main.Instance.EnableDisableControls(true, true);
+		if (!Main.Instance.testXSensUsed) Main.Instance.EnableDisableControls(true, true);
     }
 
     // =================================================================================================================================================================
@@ -693,7 +742,7 @@ public class AnimationF : MonoBehaviour
         }
     }
 
-    // =================================================================================================================================================================
+	// =================================================================================================================================================================
     /// <summary> Activer ou désactiver la silhouette. </summary>
 
     void EnableDisableAnimationOutline(bool status)
@@ -720,7 +769,7 @@ public class AnimationF : MonoBehaviour
     // =================================================================================================================================================================
     /// <summary> Ajouter une marge de sécurité sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé. </summary>
 
-    void AddMarginOnMinMax(float factor)
+    public void AddMarginOnMinMax(float factor)
     {
         float margin;
 
@@ -740,7 +789,7 @@ public class AnimationF : MonoBehaviour
     // =================================================================================================================================================================
     /// <summary> Calcul du facteur de correspondance entre la dimension du volume des Tags et la dimension du volume disponible à l'écran. </summary>
 
-    void EvaluateFactorTags2Screen()
+    public void EvaluateFactorTags2Screen()
     {
         // Calcul du facteur de correspondance.
 
@@ -762,7 +811,7 @@ public class AnimationF : MonoBehaviour
         int numF = numberFrames;
         if (frameContactGround < numberFrames)
         {
-            MainParameters.Instance.joints.tc = (float)t[frameContactGround];
+            MainParameters.Instance.joints.tc = (float)tQ[frameContactGround];
             AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgContactGround, MainParameters.Instance.joints.tc));
             numF = frameContactGround + 1;
         }
@@ -772,7 +821,7 @@ public class AnimationF : MonoBehaviour
         float[,] qdot1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numF];
         for (int i = 0; i < numF; i++)
         {
-            MainParameters.Instance.joints.t[i] = (float)t[i];
+            MainParameters.Instance.joints.t[i] = (float)tQ[i];
             for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.nDDL; j++)
             {
                 q1[j, i] = (float)q[j, i];
@@ -811,18 +860,34 @@ public class AnimationF : MonoBehaviour
     }
 
 	// =================================================================================================================================================================
-	/// <summary> Conserver les données d'interpolation du sous-frame actuel, pour être utiliser dans les frames suivants. </summary>
+	/// <summary> Initialisation de la dimension du volume utilisé à l'écran. </summary>
+	// Calculer un facteur de correspondance entre le volume utilisé par la silhouette et la dimension du volume disponible pour l'affichage
+	// Pour cela, il nous faut calculer les valeurs minimum et maximum des DDLs de la silhouette, dans les 3 dimensions
+	// Même si on modifie la dimension de la silhouette, on conserve quand même les proportions de la sihouette dans les 3 dimensions, donc le facteur est unique pour les 3 dimensions
+	// On ajoute une marge de 10% sur les dimensions mimimum et maximum, pour être certain que les mouvements ne dépasseront pas la dimension du panneau utilisé
 
-	void SaveInterpolationData()
+	public void InitScreenVolumeDimension(float[,] q1)
 	{
-		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
+		float[] tagX, tagY, tagZ;
+		tagXMin = tagYMin = tagZMin = 9999;
+		tagXMax = tagYMax = tagZMax = -9999;
+		double[] qf = new double[q1.GetUpperBound(0) + 1];
+		for (int i = 0; i <= q1.GetUpperBound(1); i++)
 		{
-			DoSimulation.qFrame0[i] = DoSimulation.qFrame1[i];
-			DoSimulation.qdotFrame0[i] = DoSimulation.qdotFrame1[i];
-			DoSimulation.qddotFrame0[i] = DoSimulation.qddotFrame1[i];
-			DoSimulation.qFrame1[i] = DoSimulation.qFrame2[i];
-			DoSimulation.qdotFrame1[i] = DoSimulation.qdotFrame2[i];
-			DoSimulation.qddotFrame1[i] = DoSimulation.qddotFrame2[i];
+			qf = MathFunc.MatrixGetColumnD(q1, i);
+			if (playMode == MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)       // Mode Gesticulation: Les DDL racine doivent être à zéro
+				for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.q1.Length; j++)
+					qf[MainParameters.Instance.joints.lagrangianModel.q1[j] - 1] = 0;
+
+			EvaluateTags(qf, out tagX, out tagY, out tagZ);
+			tagXMin = Math.Min(tagXMin, Mathf.Min(tagX));
+			tagXMax = Math.Max(tagXMax, Mathf.Max(tagX));
+			tagYMin = Math.Min(tagYMin, Mathf.Min(tagY));
+			tagYMax = Math.Max(tagYMax, Mathf.Max(tagY));
+			tagZMin = Math.Min(tagZMin, Mathf.Min(tagZ));
+			tagZMax = Math.Max(tagZMax, Mathf.Max(tagZ));
 		}
+		AddMarginOnMinMax(0.1f);
+		EvaluateFactorTags2Screen();
 	}
 }

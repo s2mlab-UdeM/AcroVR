@@ -85,11 +85,11 @@ public class GraphManager : MonoBehaviour
 
 	void Update()
 	{
-        // Vérifier si la lecture des contrôles de la souris est active
-        // Vérifier aussi si l'option de désactiver l'action du dernier bouton de la souris est active
+		// Vérifier si la lecture des contrôles de la souris est active
+		// Vérifier aussi si l'option de désactiver l'action du dernier bouton de la souris est active
 
-        if (!mouseTracking) return;
-        if (mouseDisableLastButton)
+		if (!mouseTracking) return;
+		if (mouseDisableLastButton)
 		{
 			if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
 			{

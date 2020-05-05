@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,8 @@ namespace ChartAndGraph
 {
     public class WorldSpaceGraphChart : GraphChartBase
     {
+        List<DoubleVector4> mClipped = new List<DoubleVector4>();
+        List<Vector4> mTransformed = new List<Vector4>();
         private StringBuilder mRealtimeStringBuilder = new StringBuilder();
         protected Dictionary<string, List<BillboardText>> m3DTexts = new Dictionary<string, List<BillboardText>>();
         private float totalDepth = 0f;
@@ -191,7 +194,7 @@ namespace ChartAndGraph
                 {
                     BillboardText b = catgoryTexts[args.Index];
                     mActiveTexts.Add(b);
-                    Text t = b.UIText;
+                    GameObject t = b.UIText;
                     if (t != null)
                     {
                         foreach (ChartItemEffect effect in t.GetComponents<ChartItemEffect>())
@@ -218,11 +221,22 @@ namespace ChartAndGraph
             m3DTexts.Clear();
             mActiveTexts.Clear();
         }
+
+        public override void ClearCache()
+        {
+            
+        }
+
         public override void GenerateRealtime()
         {
             base.GenerateRealtime();
             Debug.Log("realtime graph updates are not yet supported for 3d graphs");
         }
+        protected override void ViewPortionChanged()
+        {
+            Invalidate();
+        }
+
         public override void InternalGenerateChart()
         {
             if (gameObject.activeInHierarchy == false)
@@ -232,13 +246,21 @@ namespace ChartAndGraph
 
             if (Data == null)
                 return;
-            
-            double minX = (float)((IInternalGraphData)Data).GetMinValue(0, false);
-            double minY = (float)((IInternalGraphData)Data).GetMinValue(1, false);
-            double maxX = (float)((IInternalGraphData)Data).GetMaxValue(0, false);
-            double maxY = (float)((IInternalGraphData)Data).GetMaxValue(1, false);
-            DoubleVector3 min = new DoubleVector3(minX, minY);
-            DoubleVector3 max = new DoubleVector3(maxX, maxY);
+
+            double minX = ((IInternalGraphData)Data).GetMinValue(0, false);
+            double minY = ((IInternalGraphData)Data).GetMinValue(1, false);
+            double maxX = ((IInternalGraphData)Data).GetMaxValue(0, false);
+            double maxY = ((IInternalGraphData)Data).GetMaxValue(1, false);
+
+            double xScroll = GetScrollOffset(0);
+            double yScroll = GetScrollOffset(1);
+            double xSize = maxX - minX;
+            double ySize = maxY - minY;
+            double xOut = minX + xScroll + xSize;
+            double yOut = minY + yScroll + ySize;
+
+            DoubleVector3 min = new DoubleVector3(xScroll + minX, yScroll + minY);
+            DoubleVector3 max = new DoubleVector3(xOut, yOut);
 
             Rect viewRect = new Rect(0f, 0f, widthRatio, heightRatio);
 
@@ -251,9 +273,13 @@ namespace ChartAndGraph
             mActiveTexts.Clear();
             foreach (GraphData.CategoryData data in ((IInternalGraphData)Data).Categories)
             {
+                mClipped.Clear();
                 maxThickness = Math.Max(data.LineThickness, maxThickness);
                 DoubleVector3[] points = data.getPoints().ToArray();
-                TransformPoints(points, viewRect, min, max);
+                Rect uv;
+                int refrenceIndex = ClipPoints(points, mClipped, out uv);
+                TransformPoints(mClipped, mTransformed, viewRect, min, max);
+
                 if (points.Length == 0 && ChartCommon.IsInEditMode)
                 {
                     edit = true;
@@ -264,6 +290,7 @@ namespace ChartAndGraph
                     DoubleVector3 pos2 = ChartCommon.interpolateInRect(viewRect, new DoubleVector3(0.5f, y2, -1f)).ToDoubleVector3();
                     DoubleVector3 pos3 = ChartCommon.interpolateInRect(viewRect, new DoubleVector3(1f, y1, -1f)).ToDoubleVector3();
                     points = new DoubleVector3[] { pos1, pos2, pos3 };
+                    mTransformed.AddRange(points.Select(x => (Vector4)x.ToVector3()));
                     index++;
                 }
 
@@ -279,16 +306,21 @@ namespace ChartAndGraph
                     positiveDepth = Math.Max(positiveDepth, data.Depth);
                 // if (data.DotPrefab != null)
                 //{
-                for (int i = 0; i < points.Length; i++)
+                float minViewX = Math.Min(viewRect.xMin, viewRect.xMax);
+                float maxViewX = Math.Max(viewRect.xMin, viewRect.xMax);
+                for (int i = 0; i < mTransformed.Count; i++)
                 {
+                    float transX = mTransformed[i].x;
+                    if (minViewX > transX || maxViewX < transX)
+                        continue;
                     DoubleVector3 pointValue = points[i];
                     if (edit == false)
-                        pointValue = Data.GetPoint(data.Name, i);
+                        pointValue = Data.GetPoint(data.Name, i +refrenceIndex);
 
-                    string xFormat = StringFromAxisFormat(pointValue.x, mHorizontalAxis);
-                    string yFormat = StringFromAxisFormat(pointValue.y, mVerticalAxis);
+                    string xFormat = StringFromAxisFormat(pointValue, mHorizontalAxis,true);
+                    string yFormat = StringFromAxisFormat(pointValue, mVerticalAxis, false);
 
-                    GraphEventArgs args = new GraphEventArgs(i, (points[i] + new DoubleVector3(0.0, 0.0, data.Depth)).ToVector3(), pointValue.ToDoubleVector2(), (float)pointValue.z, data.Name, xFormat, yFormat);
+                    GraphEventArgs args = new GraphEventArgs(i, (mTransformed[i] + new Vector4(0f, 0f, (float)data.Depth)), pointValue.ToDoubleVector2(), (float)pointValue.z, data.Name, xFormat, yFormat);
                     GameObject point = CreatePointObject(data);
                     ChartItemEvents[] events = point.GetComponentsInChildren<ChartItemEvents>();
 
@@ -301,7 +333,7 @@ namespace ChartAndGraph
                         comp.UserData = args;
                     }
 
-                    double pointSize = points[i].z * data.PointSize;
+                    double pointSize = mTransformed[i].w * data.PointSize;
                     if (pointSize < 0f)
                         pointSize = data.PointSize;
 
@@ -322,14 +354,15 @@ namespace ChartAndGraph
                             controller.Materials = new ChartDynamicMaterial(data.PointMaterial, hover, selected);
                         }
                     }
-                    DoubleVector3 position = points[i];
+
+                    DoubleVector3 position = new DoubleVector3(mTransformed[i]);
                     position.z = data.Depth;
                     point.transform.localPosition = position.ToVector3();
                     if (mItemLabels != null && mItemLabels.isActiveAndEnabled)
                     {
-                        Vector3 labelPos = (points[i] + new DoubleVector3(mItemLabels.Location.Breadth, mItemLabels.Seperation, mItemLabels.Location.Depth + data.Depth)).ToVector3();
+                        Vector3 labelPos = (new DoubleVector3(mTransformed[i]) + new DoubleVector3(mItemLabels.Location.Breadth, mItemLabels.Seperation, mItemLabels.Location.Depth + data.Depth)).ToVector3();
                         if (mItemLabels.Alignment == ChartLabelAlignment.Base)
-                            labelPos.y -= (float)points[i].y;
+                            labelPos.y -= (float)mTransformed[i].y;
                         FormatItem(mRealtimeStringBuilder, xFormat, yFormat);
                         string formatted = mRealtimeStringBuilder.ToString();
                         string toSet = mItemLabels.TextFormat.Format(formatted, data.Name, "");
@@ -339,11 +372,41 @@ namespace ChartAndGraph
                     }
                 }
                 //}
-                for (int i = 0; i < points.Length; i++)
+                for (int i = 0; i < mTransformed.Count; i++)
                 {
-                    points[i].z = 0f;
+                    var t = mTransformed[i];
+                    t.z = 0f;
+                    t.w = 0f;
+                    mTransformed[i]= t;
                 }
-                Vector3[] floatPoints = points.Select(x => x.ToVector3()).ToArray();
+                Vector3[] floatPoints = mTransformed.Select(x => (Vector3)x).ToArray();
+                if (floatPoints.Length >= 2)
+                {
+                    Vector2 res;
+                    float maxF = Math.Max(floatPoints[0].y, floatPoints[1].y);
+                    float minF = Math.Min(floatPoints[0].y, floatPoints[1].y);
+                    float firstX = viewRect.x;
+                    float secondX = viewRect.x + viewRect.width;
+                    if(min.x >max.x)
+                    {
+                        float tmp = firstX;
+                        firstX = secondX;
+                        secondX = tmp;
+                    }
+                    if (ChartCommon.SegmentIntersection(floatPoints[0],floatPoints[1], new Vector3(firstX, maxF, 0f), new Vector3(firstX, minF, 0f),out res))
+                    {
+                        floatPoints[0] = res;
+                    }
+                    Vector3 last = floatPoints[floatPoints.Length - 1];
+                    Vector3 secondLast = floatPoints[floatPoints.Length - 2];
+                    maxF = Math.Max(last.y, secondLast.y);
+                    minF = Math.Min(last.y, secondLast.y);
+
+                    if (ChartCommon.SegmentIntersection(last,secondLast, new Vector3(secondX, maxF, 0f), new Vector3(secondX, minF, 0f), out res))
+                    {
+                        floatPoints[floatPoints.Length - 1] = res;
+                    }
+                }
                 if (data.LinePrefab != null)
                 {
                     PathGenerator lines = CreateLineObject(data);
@@ -352,8 +415,8 @@ namespace ChartAndGraph
                     if (data.LineTiling.EnableTiling == true && data.LineTiling.TileFactor > 0f)
                     {
                         float length = 0f;
-                        for (int i = 1; i < points.Length; i++)
-                            length += (float)(points[i - 1] - points[i]).magnitude;
+                        for (int i = 1; i < mTransformed.Count; i++)
+                            length += (float)(((Vector3)mTransformed[i - 1]) - (Vector3)mTransformed[i]).magnitude;
                       //  tiling = length / data.LineTiling.TileFactor;
                     }
 

@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace ChartAndGraph
     /// <summary>
     /// controls the change of materials for a chart item based on the events that the item recives
     /// </summary>
-    class ChartMaterialController : MonoBehaviour,IPointerEnterHandler,IPointerExitHandler,IPointerDownHandler,IPointerUpHandler
+    class ChartMaterialController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         private static bool WarnedNull = false;
 
@@ -25,7 +26,7 @@ namespace ChartAndGraph
         /// </summary>
         internal ChartDynamicMaterial Materials
         {
-            get { return materials;  }
+            get { return materials; }
             set
             {
                 materials = value;
@@ -39,11 +40,11 @@ namespace ChartAndGraph
             }
         }
 
-        private void SetMaterial(Material m,Material fallback)
+        private void SetMaterial(Material m, Material fallback)
         {
             if (mRenderer == null)
                 mRenderer = GetComponent<Renderer>();
-            if(mRenderer != null)
+            if (mRenderer != null)
                 ChartCommon.SafeAssignMaterial(mRenderer, m, fallback);
             else
             {
@@ -55,14 +56,14 @@ namespace ChartAndGraph
                     mMat.hideFlags = HideFlags.DontSave;
                 }
                 if (mCanvasRenderer != null)
-                    mCanvasRenderer.material= mMat;
+                    mCanvasRenderer.material = mMat;
 
             }
         }
 
         private void WarnNullItem()
         {
-            if(WarnedNull == false)
+            if (WarnedNull == false)
             {
                 Debug.LogWarning("null material are not allowed");
                 WarnedNull = true;
@@ -78,6 +79,7 @@ namespace ChartAndGraph
         private bool mMouseOver = false;
         private bool mMouseDown = false;
         private int? CombineId;
+        private int? BaseColorId;
         float mAccumilatedTime = 0f;
         bool mLerping = false;
 
@@ -86,10 +88,15 @@ namespace ChartAndGraph
             mLerpEffect = GetComponent<ChartItemMaterialLerpEffect>();
             Refresh();
         }
-
+        int BaseColor()
+        {
+            if (BaseColorId.HasValue == false)
+                BaseColorId = Shader.PropertyToID("_BaseColor");
+            return BaseColorId.Value;
+        }
         int Combine()
         {
-            if(CombineId.HasValue == false)
+            if (CombineId.HasValue == false)
                 CombineId = Shader.PropertyToID("_Combine");
             return CombineId.Value;
         }
@@ -154,21 +161,25 @@ namespace ChartAndGraph
         }
 
         Color GetColorCombine(Material m)
-        {            
+        {
             if (m.HasProperty(Combine()))
                 return m.GetColor(Combine());
+            if (m.HasProperty(BaseColor()))
+                return m.GetColor(BaseColor());
             return m.color;
         }
 
-        void SetColorCombine(Material m,Color c)
+        void SetColorCombine(Material m, Color c)
         {
             if (m.HasProperty(Combine()))
                 m.SetColor(Combine(), c);
+            else if (m.HasProperty(BaseColor()))
+                m.SetColor(BaseColor(), c);
             else
                 m.color = c;
         }
 
-        void SetRendererColor( Color c)
+        void SetRendererColor(Color c)
         {
             if (mRenderer == null)
                 mRenderer = GetComponent<Renderer>();
@@ -217,7 +228,7 @@ namespace ChartAndGraph
         {
             if (ChartCommon.IsInEditMode)
                 return;
-            if(c == Color.clear)
+            if (c == Color.clear)
                 c = GetColorCombine(materials.Normal);
             if (mLerpEffect == null)
                 SetRendererColor(c);

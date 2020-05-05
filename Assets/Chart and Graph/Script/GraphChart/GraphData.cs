@@ -1,4 +1,5 @@
-﻿using ChartAndGraph.Exceptions;
+#define Graph_And_Chart_PRO
+using ChartAndGraph.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,24 +9,40 @@ using UnityEngine;
 namespace ChartAndGraph
 {
     [Serializable]
-    public class GraphData : ScrollableChartData, IInternalGraphData
+    public partial class GraphData : ScrollableChartData, IInternalGraphData
     {
         private List<DoubleVector3> mTmpDriv = new List<DoubleVector3>();
+        partial void CheckExtended(ref bool result);
+
+        bool IsExtended
+        {
+            get
+            {
+                bool res = false;
+                CheckExtended(ref res);
+                return res;
+            }
+        }
 
         [Serializable]
         public class CategoryData : BaseScrollableCategoryData
         {
+            static List<DoubleVector3> mEmpty = new List<DoubleVector3>();
+            public bool Enabled = true;
             public bool IsBezierCurve;
             public int SegmentsPerCurve = 10;
             public List<DoubleVector3> mTmpCurveData = new List<DoubleVector3>();
             public List<DoubleVector3> Data = new List<DoubleVector3>();
             public bool Regenerate = true;
-
+            public bool AllowNonFunctions = false;
+            public Vector2[] initialData;
             public List<DoubleVector3> getPoints()
             {
+                if (Enabled == false)
+                    return mEmpty;
                 if (IsBezierCurve == false)
                     return Data;
-                if(Regenerate == false)
+                if (Regenerate == false)
                     return mTmpCurveData;
                 Regenerate = false;
                 mTmpCurveData.Clear();
@@ -35,7 +52,7 @@ namespace ChartAndGraph
                 if (Data.Count < 4)
                     return mTmpCurveData;
                 int endCount = Data.Count - 1;
-                for (int i=0; i<endCount; i+=3)
+                for (int i = 0; i < endCount; i += 3)
                 {
                     AddInnerCurve(Data[i], Data[i + 1], Data[i + 2], Data[i + 3]);
                     mTmpCurveData.Add(Data[i + 3]);
@@ -43,9 +60,9 @@ namespace ChartAndGraph
                 return mTmpCurveData;
             }
 
-            public void AddInnerCurve(DoubleVector3 p1, DoubleVector3 c1,DoubleVector3 c2,DoubleVector3 p2)
+            public void AddInnerCurve(DoubleVector3 p1, DoubleVector3 c1, DoubleVector3 c2, DoubleVector3 p2)
             {
-                for (int i=0; i<SegmentsPerCurve; i++)
+                for (int i = 0; i < SegmentsPerCurve; i++)
                 {
                     double blend = ((double)i) / (double)SegmentsPerCurve;
                     double invBlend = 1f - blend;
@@ -54,7 +71,7 @@ namespace ChartAndGraph
                 }
             }
 
-            public ChartItemEffect LineHoverPrefab; 
+            public ChartItemEffect LineHoverPrefab;
             public ChartItemEffect PointHoverPrefab;
             public Material LineMaterial;
             public MaterialTiling LineTiling;
@@ -67,6 +84,33 @@ namespace ChartAndGraph
             public FillPathGenerator FillPrefab;
             public GameObject DotPrefab;
             public double Depth = 0f;
+
+
+            public object Store()
+            {
+                return MemberwiseClone();
+            }
+
+            public void Restore(object store)
+            {
+                var cat = (CategoryData)store;
+                LineHoverPrefab = cat.LineHoverPrefab;
+                PointHoverPrefab = cat.PointHoverPrefab;
+                LineMaterial = cat.LineMaterial;
+                LineTiling = cat.LineTiling;
+                LineThickness = cat.LineThickness;
+                FillMaterial = cat.FillMaterial;
+                StetchFill = cat.StetchFill;
+                PointMaterial = cat.PointMaterial;
+                PointSize = cat.PointSize;
+                LinePrefab = cat.LinePrefab;
+                FillPrefab = cat.FillPrefab;
+                DotPrefab = cat.DotPrefab;
+                Depth = cat.Depth;
+                IsBezierCurve = cat.IsBezierCurve;
+                SegmentsPerCurve = cat.SegmentsPerCurve;
+                AllowNonFunctions = cat.AllowNonFunctions;
+            }
         }
 
         class VectorComparer : IComparer<DoubleVector3>
@@ -86,6 +130,7 @@ namespace ChartAndGraph
         class SerializedCategory
         {
             public string Name;
+            public Vector2[] InitialData = new Vector2[0];
             public bool IsBezierCurve;
             public int SegmentsPerCurve = 10;
             [NonCanvasAttribute]
@@ -109,16 +154,27 @@ namespace ChartAndGraph
             public GameObject DotPrefab;
             public Material PointMaterial;
             public double PointSize;
+            public int ViewOrder;
+            [HideInInspector]
+            public bool AllowNonFunctionsBeta = false;
         }
 
-        class Slider : BaseSlider
+        partial class Slider : BaseSlider
         {
+#pragma warning disable 0649
+#pragma warning disable 0414
             public string category;
             public int from;
             public DoubleVector3 To;
             public DoubleVector3 current;
             public int index;
             private GraphData mParent;
+#pragma warning restore 0414
+#pragma warning restore 0649
+            public override string Category
+            {
+                get { return category; }
+            }
 
             public Slider(GraphData parent)
             {
@@ -133,51 +189,17 @@ namespace ChartAndGraph
                 }
             }
 
+            public override int MinIndex
+            {
+                get { return from; }
+            }
+
             public override DoubleVector2 Min
             {
                 get
                 {
                     return current.ToDoubleVector2();
                 }
-            }
-
-            public override bool Update()
-            {
-                BaseScrollableCategoryData baseData;
-                CategoryData data;
-
-                if (mParent.mData.TryGetValue(category, out baseData) == false)
-                    return true;
-                data = (CategoryData)baseData;
-                if (data.IsBezierCurve)
-                    return false;
-                List<DoubleVector3> points = data.Data;
-
-                if (from >= points.Count || index >= points.Count)
-                    return true;
-
-                DoubleVector3 fromPoint = points[from];
-                DoubleVector3 to = To;
-                double time = Time.time;
-                time -= StartTime;
-
-                if (Duration <= 0.0001f)
-                    time = 1f;
-                else
-                {
-                    time /= Duration;
-                    Math.Max(0.0, Math.Min(time, 1.0));
-                }
-                DoubleVector3 v = DoubleVector3.Lerp(fromPoint, to, time);
-                current = v;
-                points[index] = v;
-                if (time >= 1f)
-                {
-                    mParent.ModifyMinMax(data, v);
-                    return true;
-                }
-
-                return false;
             }
         }
         VectorComparer mComparer = new VectorComparer();
@@ -210,7 +232,7 @@ namespace ChartAndGraph
             ClearCategory(category);
         }
 
-        event EventHandler IInternalGraphData.InternalRealTimeDataChanged
+        event Action<int, string> IInternalGraphData.InternalRealTimeDataChanged
         {
             add
             {
@@ -222,7 +244,17 @@ namespace ChartAndGraph
                 RealtimeDataChanged -= value;
             }
         }
-
+        event EventHandler IInternalGraphData.InternalViewPortionChanged
+        {
+            add
+            {
+                ViewPortionChanged += value;
+            }
+            remove
+            {
+                ViewPortionChanged -= value;
+            }
+        }
         event EventHandler IInternalGraphData.InternalDataChanged
         {
             add
@@ -277,7 +309,75 @@ namespace ChartAndGraph
             data.PointSize = pointSize;
             RaiseDataChanged();
         }
+        public bool isCategoryEnabled(string category)
+        {
+            if (mData.ContainsKey(category) == false)
+            {
+                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
+                return false;
+            }
+            CategoryData data = (CategoryData)mData[category];
+            return data.Enabled;
+        }
+        public void SetCategoryEnabled(string category, bool enabled)
+        {
+            if (mData.ContainsKey(category) == false)
+            {
+                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
+                return;
+            }
+            CategoryData data = (CategoryData)mData[category];
+            data.Enabled = enabled;
+            RaiseDataChanged();
+        }
 
+        public object StoreCategory(string category)
+        {
+            if (mData.ContainsKey(category) == false)
+            {
+                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
+                return null;
+            }
+            CategoryData data = (CategoryData)mData[category];
+            return data.Store();
+        }
+
+        public void RestoreCategory(string category, object store)
+        {
+            if (mData.ContainsKey(category) == false)
+            {
+                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
+                return;
+            }
+            CategoryData data = (CategoryData)mData[category];
+            data.Restore(store);
+
+        }
+        /// <summary>
+        /// used intenally , do not call
+        /// </summary>
+        /// <param name="cats"></param>
+        public object[] StoreAllCategoriesinOrder()
+        {
+            return mData.Values.Where(x => x.ViewOrder >= 0).OrderBy(x => x.ViewOrder).Cast<object>().ToArray();
+        }
+        /// <summary>
+        /// this is a beta method that allows having paths drawn on the graph
+        /// </summary>
+        /// <param name="category"></param>
+        /// <param name="AllowNonFunctions"></param>
+        public void ClearAndSetAllowNonFunctions(string category, bool AllowNonFunctions)
+        {
+            if (mData.ContainsKey(category) == false)
+            {
+                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
+                return;
+            }
+            CategoryData data = (CategoryData)mData[category];
+            data.AllowNonFunctions = AllowNonFunctions;
+            ClearCategory(category);
+
+        }
         public void Set2DCategoryPrefabs(string category, ChartItemEffect lineHover, ChartItemEffect pointHover)
         {
             if (mData.ContainsKey(category) == false)
@@ -290,7 +390,7 @@ namespace ChartAndGraph
             data.PointHoverPrefab = pointHover;
         }
 
-        public void AddCategory3DGraph(string category, PathGenerator linePrefab, Material lineMaterial, double lineThickness, MaterialTiling lineTiling, FillPathGenerator fillPrefab, Material innerFill, bool strechFill, GameObject pointPrefab, Material pointMaterial, double pointSize, double depth,bool isCurve,int segmentsPerCurve)
+        protected void AddInnerCategoryGraph(string category, PathGenerator linePrefab, Material lineMaterial, double lineThickness, MaterialTiling lineTiling, FillPathGenerator fillPrefab, Material innerFill, bool strechFill, GameObject pointPrefab, Material pointMaterial, double pointSize, double depth, bool isCurve, int segmentsPerCurve,Vector2[] initialData =null)
         {
             if (mData.ContainsKey(category))
                 throw new ArgumentException(String.Format("A category named {0} already exists", category));
@@ -312,9 +412,31 @@ namespace ChartAndGraph
             data.Depth = depth;
             data.IsBezierCurve = isCurve;
             data.SegmentsPerCurve = segmentsPerCurve;
+            data.initialData = initialData;
             RaiseDataChanged();
         }
 
+        void SetInitialData(string category, Vector2[] initialData,bool isCurve)
+        {
+            if (initialData.Length ==0)
+                return;
+            if(isCurve)
+            {
+                Vector2 p = initialData[0];
+                SetCurveInitialPoint(category,p.x,p.y);
+                for (int i = 1; i < initialData.Length; i++)
+                    AddLinearCurveToCategory(category, new DoubleVector2(initialData[i]));
+                MakeCurveCategorySmooth(category);
+            }
+            else
+            {
+                for (int i = 0; i < initialData.Length; i++)
+                {
+                    Vector2 p = initialData[i];
+                    AddPointToCategory(category, p.x,p.y);
+                }
+            }
+        }
         /// <summary>
         /// sets the line style for the category
         /// </summary>
@@ -368,45 +490,6 @@ namespace ChartAndGraph
             RaiseDataChanged();
         }
 
-        /// <summary>
-        /// sets the prefabs for a 3d graph category,
-        /// </summary>
-        /// <param name="category"></param>
-        /// <param name="linePrefab"></param>
-        /// <param name="fillPrefab"></param>
-        /// <param name="dotPrefab"></param>
-        public void Set3DCategoryPrefabs(string category, PathGenerator linePrefab, FillPathGenerator fillPrefab, GameObject dotPrefab)
-        {
-            if (mData.ContainsKey(category) == false)
-            {
-                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
-                return;
-            }
-            CategoryData data = (CategoryData)mData[category];
-            data.LinePrefab = linePrefab;
-            data.DotPrefab = dotPrefab;
-            data.FillPrefab = fillPrefab;
-            RaiseDataChanged();
-        }
-
-        /// <summary>
-        /// sets the depth for a 3d graph category
-        /// </summary>
-        /// <param name="category"></param>
-        /// <param name="depth"></param>
-        public void Set3DCategoryDepth(string category, double depth)
-        {
-            if (mData.ContainsKey(category) == false)
-            {
-                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
-                return;
-            }
-            if (depth < 0)
-                depth = 0f;
-            CategoryData data = (CategoryData)mData[category];
-            data.Depth = depth;
-            RaiseDataChanged();
-        }
 
         /// <summary>
         /// sets the fill style for the selected category.set the material to null for no fill
@@ -457,6 +540,7 @@ namespace ChartAndGraph
         /// <param name="y"></param>
         public void AddPointToCategory(string category, DateTime x, DateTime y, double pointSize = -1f)
         {
+
             double xVal = ChartDateUtility.DateToValue(x);
             double yVal = ChartDateUtility.DateToValue(y);
             AddPointToCategory(category, (double)xVal, (double)yVal, pointSize);
@@ -469,7 +553,7 @@ namespace ChartAndGraph
         /// <param name="category"></param>
         /// <param name="point"></param>
         /// <returns></returns>
-        public bool GetLastPoint(string category,out DoubleVector3 point)
+        public bool GetLastPoint(string category, out DoubleVector3 point)
         {
             CategoryData data = (CategoryData)mData[category];
             List<DoubleVector3> points = data.getPoints();
@@ -477,7 +561,7 @@ namespace ChartAndGraph
             if (points.Count == 0)
                 return false;
             int index = points.Count - 1;
-            point =  points[index];
+            point = points[index];
             return true;
         }
 
@@ -494,6 +578,29 @@ namespace ChartAndGraph
             return points[index];
 
         }
+
+        public static void AddPointToCategoryWithLabel(GraphChartBase chart, string category, DateTime x, double y, double pointSize = -1, string xLabel = null, string yLabel = null)
+        {
+            AddPointToCategoryWithLabel(chart, category, ChartDateUtility.DateToValue(x), y, pointSize, xLabel, yLabel);
+        }
+        public static void AddPointToCategoryWithLabel(GraphChartBase chart, string category, double x, DateTime y, double pointSize = -1, string xLabel = null, string yLabel = null)
+        {
+            AddPointToCategoryWithLabel(chart, category, x, ChartDateUtility.DateToValue(y), pointSize, xLabel, yLabel);
+        }
+        public static void AddPointToCategoryWithLabel(GraphChartBase chart, string category, DateTime x, DateTime y, double pointSize = -1, string xLabel = null, string yLabel = null)
+        {
+            AddPointToCategoryWithLabel(chart, category, ChartDateUtility.DateToValue(x), ChartDateUtility.DateToValue(y), pointSize, xLabel, yLabel);
+        }
+
+
+
+        public static void AddPointToCategoryWithLabel(GraphChartBase chart, string category, double x, double y, double pointSize = -1, string xLabel = null, string yLabel = null)
+        {
+            DoubleVector3 item = new DoubleVector3(x, y, 0.0);
+            chart.VectorValueToStringMap[item] = new KeyValuePair<string, string>(xLabel, yLabel);
+            chart.DataSource.AddPointToCategory(category, x, y, pointSize);
+        }
+        
 
         /// <summary>
         /// adds a point to the category. having the point x value as date
@@ -519,74 +626,6 @@ namespace ChartAndGraph
 
         }
 
-        public void AddPointToCategoryRealtime(string category, DateTime x, DateTime y, double slideTime = 0f, double pointSize = -1f)
-        {
-            double xVal = ChartDateUtility.DateToValue(x);
-            double yVal = ChartDateUtility.DateToValue(y);
-            AddPointToCategoryRealtime(category, (double)xVal, (double)yVal, slideTime,pointSize);
-        }
-
-        public void AddPointToCategoryRealtime(string category, DateTime x, double y, double slideTime = 0f, double pointSize = -1f)
-        {
-            double xVal = ChartDateUtility.DateToValue(x);
-            AddPointToCategoryRealtime(category, (double)xVal, y, slideTime,pointSize);
-        }
-
-        public void AddPointToCategoryRealtime(string category, double x, DateTime y, double slideTime = 0f, double pointSize = -1f)
-        {
-            double yVal = ChartDateUtility.DateToValue(y);
-            AddPointToCategoryRealtime(category, x, (double)yVal, slideTime, pointSize);
-        }  
-
-        public void AddPointToCategoryRealtime(string category, double x, double y,double slideTime =0f, double pointSize = -1f)
-        {
-            if (mData.ContainsKey(category) == false)
-            {
-                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
-                return;
-            }
-
-            CategoryData data = (CategoryData)mData[category];
-            
-            if (data.IsBezierCurve == true)
-            {
-                Debug.LogWarning("Category is Bezier curve. use AddCurveToCategory instead ");
-                return;
-            }
-
-            DoubleVector3 point = new DoubleVector3(x, y, pointSize);
-            List<DoubleVector3> points = data.Data;
-
-            if (points.Count > 0)
-            {
-                if (points[points.Count - 1].x > point.x)
-                {
-                    Debug.LogWarning("realtime points can only be added at the end of the graph");
-                    return;
-                }
-            }
-
-
-            if (slideTime <= 0f || points.Count == 0)
-            {
-                points.Add(point);
-                ModifyMinMax(data, point);
-            }
-            else
-            {
-                Slider s = new Slider(this);
-                s.category = category;
-                s.from = points.Count - 1;
-                s.index = points.Count;
-                s.StartTime = Time.time;
-                s.Duration = slideTime;
-                s.To = point;
-                mSliders.Add(s);
-                s.current = points[points.Count - 1];
-                points.Add(s.current);
-            }
-            RaiseRealtimeDataChanged();
-        }
 
         public void SetCurveInitialPoint(string category, DateTime x, double y, double pointSize = -1f)
         {
@@ -602,7 +641,18 @@ namespace ChartAndGraph
         {
             SetCurveInitialPoint(category, x,ChartDateUtility.DateToValue(y), pointSize);
         }
+        public void SetCategoryViewOrder(string category, int viewOrder)
+        {
+            if (mData.ContainsKey(category) == false)
+            {
+                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
+                return;
+            }
 
+            CategoryData data = (CategoryData)mData[category];
+            data.ViewOrder = viewOrder;
+            RaiseDataChanged();
+        }
         public void SetCurveInitialPoint(string category, double x, double y,double pointSize = -1f)
         {
             if (mData.ContainsKey(category) == false)
@@ -726,6 +776,11 @@ namespace ChartAndGraph
 
         public void AddCurveToCategory(string category, DoubleVector2 controlPointA, DoubleVector2 controlPointB , DoubleVector2 toPoint,double pointSize = -1f)
         {
+            if (!IsExtended && pointSize >= 0f)
+            {
+                Debug.LogError("Point sizes are not supported in the lite version of Graph and Chart");
+                pointSize = -1f;
+            }
             if (mData.ContainsKey(category) == false)
             {
                 Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
@@ -772,7 +827,7 @@ namespace ChartAndGraph
             
             RaiseDataChanged();
         }
-
+        
         /// <summary>
         /// adds a point to the category. The points are sorted by their x value automatically
         /// </summary>
@@ -780,6 +835,12 @@ namespace ChartAndGraph
         /// <param name="point"></param>
         public void AddPointToCategory(string category, double x,double y, double pointSize = -1f)
         {
+            
+            if (!IsExtended && pointSize >= 0f)
+            {
+                Debug.LogError("Point sizes are not supported in the lite version of Graph and Chart");
+                pointSize = -1f;
+            }
             if (mData.ContainsKey(category) == false)
             {
                 Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
@@ -810,7 +871,7 @@ namespace ChartAndGraph
 
             if (points.Count > 0)
             {
-                if (points[points.Count - 1].x <= point.x)
+                if (data.AllowNonFunctions || points[points.Count - 1].x <= point.x)
                 {
                     points.Add(point);
                     RaiseDataChanged();
@@ -835,7 +896,7 @@ namespace ChartAndGraph
         {
             return GetMinValue(axis, dataValue);
         }
-
+        
         public override void OnAfterDeserialize()
         {
             if (mSerializedData == null)
@@ -848,16 +909,22 @@ namespace ChartAndGraph
                 if (cat.Depth < 0)
                     cat.Depth = 0f;
                 string name = cat.Name;
-                AddCategory3DGraph(name,cat.LinePrefab, cat.Material, cat.LineThickness, cat.LineTiling,cat.FillPrefab, cat.InnerFill,cat.StetchFill,cat.DotPrefab,cat.PointMaterial,cat.PointSize,cat.Depth,cat.IsBezierCurve,cat.SegmentsPerCurve);
+                AddInnerCategoryGraph(name,cat.LinePrefab, cat.Material, cat.LineThickness, cat.LineTiling,cat.FillPrefab, cat.InnerFill,cat.StetchFill,cat.DotPrefab,cat.PointMaterial,cat.PointSize,cat.Depth,cat.IsBezierCurve,cat.SegmentsPerCurve,cat.InitialData);
                 Set2DCategoryPrefabs(name, cat.LineHoverPrefab, cat.PointHoverPrefab);
                 CategoryData data = (CategoryData)mData[name];
+                data.AllowNonFunctions = cat.AllowNonFunctionsBeta;
+                data.ViewOrder = i;
                 if (data.Data == null)
                     data.Data = new List<DoubleVector3>();
                 else
                     data.Data.Clear();
-                if(cat.data != null)
-                    data.Data.AddRange(cat.data);
-                data.MaxX = cat.MaxX;
+
+                if (cat.InitialData != null)
+                    SetInitialData(name, cat.InitialData, cat.IsBezierCurve);
+
+//                if (cat.data != null)
+//                    data.Data.AddRange(cat.data);
+                data.MaxX = cat.MaxX; 
                 data.MaxY = cat.MaxY;
                 data.MinX = cat.MinX;
                 data.MinY = cat.MinY;
@@ -888,17 +955,20 @@ namespace ChartAndGraph
                 cat.data = pair.Value.Data.ToArray();
                 cat.PointSize = pair.Value.PointSize;
                 cat.IsBezierCurve = pair.Value.IsBezierCurve;
+                cat.AllowNonFunctionsBeta = pair.Value.AllowNonFunctions;
                 cat.SegmentsPerCurve = pair.Value.SegmentsPerCurve;
                 cat.PointMaterial = pair.Value.PointMaterial;
                 cat.LinePrefab = pair.Value.LinePrefab;
                 cat.Depth = pair.Value.Depth;
                 cat.DotPrefab = pair.Value.DotPrefab;
                 cat.FillPrefab = pair.Value.FillPrefab;
+                cat.ViewOrder = pair.Value.ViewOrder;
+                cat.InitialData = pair.Value.initialData;
                 if (cat.Depth < 0)
                     cat.Depth = 0f;
                 serialized.Add(cat);
             }
-            mSerializedData = serialized.ToArray();
+            mSerializedData = serialized.OrderBy(x=>x.ViewOrder).ToArray();
         }
 
         protected override void AppendDatum(string category, MixedSeriesGenericValue value)
@@ -935,7 +1005,7 @@ namespace ChartAndGraph
         {
             get
             {
-                return mData.Values.Select(x=>(CategoryData)x);
+                return mData.Values.Select(x=>(CategoryData)x).OrderBy(x=>x.ViewOrder);
             }
         }
     }

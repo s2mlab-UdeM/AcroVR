@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -71,17 +72,16 @@ namespace ChartAndGraph
             {
                 for (int i = 0; i < mCurrentTexts.Count; i++)
                 {
-                    string key = mCurrentTexts[i].UIText.text;
+                    string key = ChartCommon.GetText(mCurrentTexts[i].UIText);
                     mCurrentTexts[i].SetVisible(false);
                     mCurrentTexts[i].Recycled = true;
-                    if (mRecycled.ContainsKey(key))
+                    if (key == null || mRecycled.ContainsKey(key))
                     {
                         mCached.Add(mCurrentTexts[i]);
                         continue;
                     }
                     mRecycled[key] = mCurrentTexts[i];
                 }
-
             }
             mText.Clear();
             mCurrentTexts.Clear();
@@ -93,21 +93,21 @@ namespace ChartAndGraph
             if (Orientation == ChartOrientation.Vertical)
                 arr = mUvs[0];
             else
-                arr= mUvs[1];
-            if (Tile <=0f)
+                arr = mUvs[1];
+            if (Tile <= 0f)
             {
                 for (int i = 0; i < 4; i++)
                 {
                     Vector2 uv = arr[i];
-                    mTmpUv[i] = new Vector2(Offset + uv.x*Length, uv.y);
+                    mTmpUv[i] = new Vector2(Offset + uv.x * Length, uv.y);
                 }
                 return mTmpUv;
             }
             float length = rect.width;
             if (orientaion == ChartOrientation.Horizontal)
                 length = rect.height;
-            length /= Math.Abs(Length); 
-            for (int i=0; i<4; i++)
+            length /= Math.Abs(Length);
+            for (int i = 0; i < 4; i++)
             {
                 Vector2 uv = arr[i];
                 mTmpUv[i] = new Vector2((Offset + uv.x * Length) * length / Tile, uv.y);
@@ -118,7 +118,7 @@ namespace ChartAndGraph
         void DestoryBillboard(BillboardText t)
         {
             t.Recycled = false;
-            Text uiText = t.UIText;
+            GameObject uiText = t.UIText;
             TextDirection d = t.Direction;
             if (uiText != null && uiText.gameObject != null)
                 ChartCommon.SafeDestroy(uiText.gameObject);
@@ -133,12 +133,12 @@ namespace ChartAndGraph
             foreach (BillboardText t in mRecycled.Values)
             {
                 mCached.Add(t);
-//                DestoryBillboard(t);
+                //                DestoryBillboard(t);
             }
-            mRecycled.Clear();   
+            mRecycled.Clear();
         }
 
-        public virtual BillboardText AddText(AnyChart chart, Text prefab, Transform parentTransform, int fontSize,float fontSharpness, string text, float x, float y, float z,float angle, object userData)
+        public virtual BillboardText AddText(AnyChart chart, MonoBehaviour prefab, Transform parentTransform, int fontSize, float fontSharpness, string text, float x, float y, float z, float angle, object userData)
         {
             BillboardText recycled = null;
             if (RecycleText == true)
@@ -164,11 +164,13 @@ namespace ChartAndGraph
                     }
                 }
             }
-                
-            BillboardText billboardText = ChartCommon.CreateBillboardText(recycled, prefab, parentTransform, text, x, y, z,angle,null, ((IInternalUse) chart).HideHierarchy,fontSize, fontSharpness);
+
+            BillboardText billboardText = ChartCommon.CreateBillboardText(recycled, prefab, parentTransform, text, x, y, z, angle, null, ((IInternalUse)chart).HideHierarchy, fontSize, fontSharpness);
+            if (billboardText == null)
+                return null;
             billboardText.Recycled = false;
             billboardText.UserData = userData;
-            if(recycled == null)
+            if (recycled == null)
                 mText.Add(billboardText);
             mCurrentTexts.Add(billboardText);
             return billboardText;

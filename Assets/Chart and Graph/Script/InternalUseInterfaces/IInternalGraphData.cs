@@ -1,4 +1,6 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +20,8 @@ namespace ChartAndGraph
         void OnAfterDeserialize();
         void Update();
         event EventHandler InternalDataChanged;
-        event EventHandler InternalRealTimeDataChanged;
+        event EventHandler InternalViewPortionChanged;
+        event Action<int,string> InternalRealTimeDataChanged;
         int TotalCategories { get; }
         IEnumerable<GraphData.CategoryData> Categories { get; }
     }

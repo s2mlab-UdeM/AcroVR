@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ using UnityEngine.UI;
 
 namespace ChartAndGraph
 {
-    public class GraphChart : GraphChartBase, ICanvas
+    public partial class GraphChart : GraphChartBase, ICanvas
     {
         HashSet<string> mOccupiedCateogies = new HashSet<string>();
         Dictionary<string, CategoryObject> mCategoryObjects = new Dictionary<string, CategoryObject>();
@@ -16,12 +17,35 @@ namespace ChartAndGraph
         List<DoubleVector4> mClipped = new List<DoubleVector4>();
         List<Vector4> mTransformed = new List<Vector4>();
         List<int> mTmpToRemove = new List<int>();
-        private bool SupressRealtimeGeneration = false;
+        private bool SupressRealtimeGeneration = false; 
         private StringBuilder mRealtimeStringBuilder = new StringBuilder();
 
         /// <summary>
-        /// The seperation between the axis and the chart bars.
+        /// occures when a point is clicked
         /// </summary>
+        public GraphEvent LineClicked = new GraphEvent();
+        /// <summary>
+        /// occurs when a point is hovered
+        /// </summary>
+        public GraphEvent LineHovered = new GraphEvent();
+
+        protected void OnLineSelected(object userData)
+        {
+            GraphEventArgs args = userData as GraphEventArgs;
+            if (LineClicked != null)
+                LineClicked.Invoke(args);
+            AddOccupiedCategory(args.Category, "line");
+        }
+
+        protected void OnLineHovered(object userData)
+        {
+            GraphEventArgs args = userData as GraphEventArgs;
+            if (LineHovered != null)
+                LineHovered.Invoke(args);
+            AddOccupiedCategory(args.Category, "line");
+        }
+
+
         [SerializeField]
         private bool fitToContainer = false;
         public bool FitToContainer
@@ -34,6 +58,38 @@ namespace ChartAndGraph
             }
         }
 
+        [SerializeField]
+        private ChartMagin fitMargin;
+        public ChartMagin FitMargin
+        {
+            get { return fitMargin; }
+            set
+            {
+                fitMargin = value;
+                OnPropertyUpdated();
+            }
+        }
+
+        // [SerializeField]
+        private bool enableBetaOptimization = false; // this features is not ready yet
+
+        private bool EnableBetaOptimization
+        {
+            get { return enableBetaOptimization; }
+            set
+            {
+                enableBetaOptimization = value;
+                OnPropertyUpdated();
+            }
+        }
+
+        protected override ChartMagin MarginLink
+        {
+            get
+            {
+                return FitMargin;
+            }
+        }
         public override bool IsCanvas
         {
             get
@@ -78,7 +134,11 @@ namespace ChartAndGraph
             t.SetParent(rectMask.transform, false);
             t.localScale = new Vector3(1f, 1f, 1f);
             t.anchorMin = new Vector2(0f, 0f);
+            t.anchorMax = new Vector2(1f, 1f);
+            t.sizeDelta = new Vector2(0f, 0f);
+            t.anchorMin = new Vector2(0f, 0f);
             t.anchorMax = new Vector2(0f, 0f);
+
             t.anchoredPosition = Vector3.zero;
             t.localRotation = Quaternion.identity;
             return lines;
@@ -95,8 +155,12 @@ namespace ChartAndGraph
             ClearBillboard();
             mActiveTexts.Clear();
             mCategoryObjects.Clear();
+            ClearRealtimeIndexdata();
         }
-
+        public override void ClearCache()
+        {
+            mCategoryObjects.Clear();
+        }
         protected override double GetCategoryDepth(string category)
         {
             return 0.0;
@@ -108,7 +172,10 @@ namespace ChartAndGraph
             double factor = size / mag;
             return factor * radius;
         }
-
+        protected override void ViewPortionChanged()
+        {
+            InvalidateRealtime();
+        }
         public override void GenerateRealtime()
         {
             if (SupressRealtimeGeneration)
@@ -146,6 +213,12 @@ namespace ChartAndGraph
                 if (mCategoryObjects.TryGetValue(data.Name, out obj) == false)
                     continue;
 
+                int minUpdateIndex = 0;
+                if (mRealtimeUpdateIndex == true)
+                {
+                    if (mMinimumUpdateIndex.TryGetValue(data.Name, out minUpdateIndex) == false)
+                        minUpdateIndex = int.MaxValue;
+                }
                 mClipped.Clear();
                 mTmpData.Clear();
 
@@ -194,14 +267,15 @@ namespace ChartAndGraph
                         if (obj.mCahced.TryGetValue(pointIndex, out toSet) == false)
                         {
                             DoubleVector3 pointValue = mTmpData[i + refrenceIndex];
-                            string xFormat = StringFromAxisFormat(pointValue.x, mHorizontalAxis, mItemLabels.FractionDigits);
-                            string yFormat = StringFromAxisFormat(pointValue.y, mVerticalAxis, mItemLabels.FractionDigits);
+                            string xFormat = StringFromAxisFormat(pointValue, mHorizontalAxis, mItemLabels.FractionDigits,true);
+                            string yFormat = StringFromAxisFormat(pointValue, mVerticalAxis, mItemLabels.FractionDigits,false);
                             FormatItem(mRealtimeStringBuilder, xFormat, yFormat);
                             string formatted = mRealtimeStringBuilder.ToString();
                             mItemLabels.TextFormat.Format(mRealtimeStringBuilder, formatted, data.Name, "");
                             toSet = mRealtimeStringBuilder.ToString();
                             obj.mCahced[pointIndex] = toSet;
                         }
+                        labelPos -= new Vector3(CanvasFitOffset.x * TotalWidth, CanvasFitOffset.y * TotalHeight,0f);
                         BillboardText billboard = m.AddText(this, mItemLabels.TextPrefab, parentT, mItemLabels.FontSize, mItemLabels.FontSharpness, toSet, labelPos.x, labelPos.y, labelPos.z, 0f, null);
                         AddBillboardText(data.Name, i + refrenceIndex, billboard);
                     }
@@ -225,7 +299,7 @@ namespace ChartAndGraph
                     pickRect.xMax += halfSize;
                     pickRect.yMax += halfSize;
                     obj.mDots.SetViewRect(pickRect, uv);
-                    obj.mDots.ModifyLines(mTransformed);
+                    obj.mDots.ModifyLines(minUpdateIndex,mTransformed);
                     obj.mDots.SetRefrenceIndex(refrenceIndex);
                 }
 
@@ -243,24 +317,25 @@ namespace ChartAndGraph
                         tiling = 1f;
                     obj.mLines.Tiling = tiling;
                     obj.mLines.SetViewRect(viewRect, uv);
-                    obj.mLines.ModifyLines(mTransformed);
+                    obj.mLines.ModifyLines(minUpdateIndex,mTransformed);
                     obj.mLines.SetRefrenceIndex(refrenceIndex);
                 }
 
                 if (obj.mFill != null)
                 {
                     obj.mFill.SetViewRect(viewRect, uv);
-                    obj.mFill.ModifyLines(mTransformed);
+                    obj.mFill.ModifyLines(minUpdateIndex,mTransformed);
                     obj.mFill.SetRefrenceIndex(refrenceIndex);
                 }
             }
+            ClearRealtimeIndexdata();
         }
-
-        protected override bool FitAspectCanvas
+        protected override bool ShouldFitCanvas { get { return true; } }
+        protected override FitType FitAspectCanvas
         {
             get
             {
-                return true;
+                return FitType.Aspect;
             }
         }
 
@@ -277,7 +352,7 @@ namespace ChartAndGraph
                 widthRatio = trans.rect.width;
                 heightRatio = trans.rect.height;
             }
-
+            
             ClearChart();
 
             if (Data == null)
@@ -340,6 +415,7 @@ namespace ChartAndGraph
                 if (data.FillMaterial != null)
                 {
                     CanvasLines fill = CreateDataObject(data, mask);
+                    fill.EnableOptimization = enableBetaOptimization;
                     fill.material = data.FillMaterial;
                     fill.SetRefrenceIndex(refrenceIndex);
                     fill.SetLines(list);
@@ -347,7 +423,7 @@ namespace ChartAndGraph
                     fill.MakeFillRender(viewRect, data.StetchFill);
                     categoryObj.mFill = fill;
                 }
-
+                string catName = data.Name;
                 if (data.LineMaterial != null)
                 {
                     CanvasLines lines = CreateDataObject(data, mask);
@@ -363,6 +439,7 @@ namespace ChartAndGraph
                     if (tiling <= 0.0001f)
                         tiling = 1f;
                     lines.SetViewRect(viewRect, uv);
+                    lines.EnableOptimization = enableBetaOptimization;
                     lines.Thickness = (float)data.LineThickness;
                     lines.Tiling = tiling;
                     lines.SetRefrenceIndex(refrenceIndex);
@@ -370,7 +447,9 @@ namespace ChartAndGraph
                     lines.SetHoverPrefab(data.LineHoverPrefab);
                     lines.SetLines(list);
                     categoryObj.mLines = lines;
-
+                    lines.Hover += (idx, t, d, pos) => { Lines_Hover(catName, idx, pos); };
+                    lines.Click += (idx, t, d, pos) => { Lines_Clicked(catName, idx, pos); };
+                    lines.Leave += () => { Lines_Leave(catName); };
                 }
 
                 //if (data.PointMaterial != null)
@@ -378,6 +457,7 @@ namespace ChartAndGraph
                 CanvasLines dots = CreateDataObject(data, mask);
                 categoryObj.mDots = dots;
                 dots.material = data.PointMaterial;
+                dots.EnableOptimization = enableBetaOptimization;
                 dots.SetLines(list);
                 Rect pickRect = viewRect;
                 float halfSize = (float)data.PointSize * 0.5f;
@@ -408,16 +488,17 @@ namespace ChartAndGraph
                     {
                         if (mTransformed[i].w == 0f)
                             continue;
-                        Vector2 pointValue = mTransformed[i];
-                        if (textRect.Contains(pointValue) == false)
+                        DoubleVector2 pointValue = new DoubleVector2(mTransformed[i]);
+                        if (textRect.Contains(pointValue.ToVector2()) == false)
                             continue;
                         if (edit == false)
-                            pointValue = Data.GetPoint(data.Name, i + refrenceIndex).ToVector2();
-                        string xFormat = StringFromAxisFormat(pointValue.x, mHorizontalAxis, mItemLabels.FractionDigits);
-                        string yFormat = StringFromAxisFormat(pointValue.y, mVerticalAxis, mItemLabels.FractionDigits);
+                            pointValue = Data.GetPoint(data.Name, i + refrenceIndex).ToDoubleVector2();
+                        string xFormat = StringFromAxisFormat(pointValue.ToDoubleVector3(), mHorizontalAxis, mItemLabels.FractionDigits,true);
+                        string yFormat = StringFromAxisFormat(pointValue.ToDoubleVector3(), mVerticalAxis, mItemLabels.FractionDigits,false);
                         Vector3 labelPos = ((Vector3)mTransformed[i]) + new Vector3(mItemLabels.Location.Breadth, mItemLabels.Seperation, mItemLabels.Location.Depth);
                         if (mItemLabels.Alignment == ChartLabelAlignment.Base)
                             labelPos.y -= mTransformed[i].y;
+                        labelPos -= new Vector3(CanvasFitOffset.x * TotalWidth, CanvasFitOffset.y * TotalHeight,0f);
                         FormatItem(mRealtimeStringBuilder, xFormat, yFormat);
                         string formatted = mRealtimeStringBuilder.ToString();
                         string toSet = mItemLabels.TextFormat.Format(formatted, data.Name, "");
@@ -427,17 +508,23 @@ namespace ChartAndGraph
                         AddBillboardText(data.Name, i + refrenceIndex, billboard);
                     }
                 }
-                string catName = data.Name;
+
                 dots.Hover += (idx,t,d, pos) => { Dots_Hover(catName, idx, pos); };
                 dots.Click += (idx,t,d, pos) => { Dots_Click(catName, idx, pos); };
                 dots.Leave += () => { Dots_Leave(catName); };
                 mCategoryObjects[catName] = categoryObj;
             }
         }
+
         private void Dots_Leave(string category)
         {
             TriggerActiveTextsOut();
-            OnItemLeave(new GraphEventArgs(0,Vector3.zero,new DoubleVector2(0.0,0.0),-1f,category,"",""));
+            OnItemLeave(new GraphEventArgs(0,Vector3.zero,new DoubleVector2(0.0,0.0),-1f,category,"",""),"point");
+        }
+
+        private void Lines_Leave(string category)
+        {
+            OnItemLeave(new GraphEventArgs(0, Vector3.zero, new DoubleVector2(0.0, 0.0), -1f, category, "", ""),"line");
         }
 
         private void Dots_Click(string category,int idx, Vector2 pos)
@@ -451,9 +538,25 @@ namespace ChartAndGraph
                 if (catgoryTexts.TryGetValue(idx, out b))
                     SelectActiveText(b);
             }
-            string xString = StringFromAxisFormat(point.x, mHorizontalAxis);
-            string yString = StringFromAxisFormat(point.y, mVerticalAxis);
+            string xString = StringFromAxisFormat(point, mHorizontalAxis,true);
+            string yString = StringFromAxisFormat(point, mVerticalAxis,false);
             OnItemSelected(new GraphEventArgs(idx,pos, point.ToDoubleVector2(),(float)point.z, category,xString,yString));
+        }
+
+        private void Lines_Clicked(string category,int idx,Vector2 pos)
+        {
+            DoubleVector3 point = Data.GetPoint(category, idx);
+            string xString = StringFromAxisFormat(point, mHorizontalAxis, true);
+            string yString = StringFromAxisFormat(point, mVerticalAxis, false);
+            OnLineSelected(new GraphEventArgs(idx, pos, point.ToDoubleVector2(), (float)point.z, category, xString, yString));
+        }
+
+        private void Lines_Hover(string category,int idx,Vector2 pos)
+        {
+            DoubleVector3 point = Data.GetPoint(category, idx);
+            string xString = StringFromAxisFormat(point, mHorizontalAxis, true);
+            string yString = StringFromAxisFormat(point, mVerticalAxis, false);
+            OnLineHovered(new GraphEventArgs(idx, pos, point.ToDoubleVector2(), (float)point.z, category, xString, yString));
         }
 
         private void Dots_Hover(string category, int idx, Vector2 pos)
@@ -468,8 +571,8 @@ namespace ChartAndGraph
                     SelectActiveText(b);
             }
 
-            string xString = StringFromAxisFormat(point.x, mHorizontalAxis);
-            string yString = StringFromAxisFormat(point.y, mVerticalAxis);
+            string xString = StringFromAxisFormat(point, mHorizontalAxis,true);
+            string yString = StringFromAxisFormat(point, mVerticalAxis,false);
             OnItemHoverted(new GraphEventArgs(idx,pos, point.ToDoubleVector2(),(float)point.z, category, xString, yString));
         }
 
@@ -477,24 +580,29 @@ namespace ChartAndGraph
         {
             base.OnItemHoverted(userData);
             var args = userData as GraphEventArgs;
-            mOccupiedCateogies.Add(args.Category);
+            AddOccupiedCategory(args.Category, "point");
         }
 
         protected override void OnItemSelected(object userData)
         {
             base.OnItemSelected(userData);
             var args = userData as GraphEventArgs;
-            mOccupiedCateogies.Add(args.Category);
+            AddOccupiedCategory(args.Category, "point");
         }
-
-        protected override void OnItemLeave(object userData)
+        void AddOccupiedCategory(string cat,string type)
+        {
+            mOccupiedCateogies.Add(cat + "|"+ type);
+        }
+        protected override void OnItemLeave(object userData,string type)
         {
             GraphEventArgs args = userData as GraphEventArgs;
             if (args == null)
                 return;
-            string category = args.Category;
-            mOccupiedCateogies.Remove(category);
-            mOccupiedCateogies.RemoveWhere(x => !Data.HasCategory(x));
+
+            string item = args.Category + "|" + type;
+            mOccupiedCateogies.Remove(item);
+            mOccupiedCateogies.RemoveWhere(x => !Data.HasCategory(x.Split('|')[0]));
+
             if (mOccupiedCateogies.Count == 0)
             {
                 if (NonHovered != null)

@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,8 @@ namespace ChartAndGraph
         protected Dictionary<string, BaseScrollableCategoryData> mData = new Dictionary<string, BaseScrollableCategoryData>();
         
         protected event EventHandler DataChanged;
-        protected event EventHandler RealtimeDataChanged;
+        protected event EventHandler ViewPortionChanged;
+        protected event Action<int,string> RealtimeDataChanged;
 
         protected bool mSuspendEvents = false;
 
@@ -47,7 +49,7 @@ namespace ChartAndGraph
             {
                 automaticVerticalViewGap = value;
                 RestoreDataValues();
-                RaiseDataChanged();
+                RaiseViewPortionChanged();
             }
         }
 
@@ -67,7 +69,7 @@ namespace ChartAndGraph
             {
                 automaticVerticallView = value;
                 RestoreDataValues();
-                RaiseDataChanged();
+                RaiseViewPortionChanged();
             }
         }
 
@@ -82,7 +84,7 @@ namespace ChartAndGraph
             {
                 automaticcHorizontaViewGap = value;
                 RestoreDataValues();
-                RaiseDataChanged();
+                RaiseViewPortionChanged();
             }
         }
 
@@ -102,7 +104,7 @@ namespace ChartAndGraph
             {
                 automaticHorizontalView = value;
                 RestoreDataValues();
-                RaiseDataChanged();
+                RaiseViewPortionChanged();
             }
         }
 
@@ -118,7 +120,7 @@ namespace ChartAndGraph
             set
             {
                 horizontalViewSize = value;
-                RaiseDataChanged();
+                RaiseViewPortionChanged();
             }
         }
 
@@ -135,7 +137,7 @@ namespace ChartAndGraph
             set
             {
                 horizontalViewOrigin = value;
-                RaiseDataChanged();
+                RaiseViewPortionChanged();
             }
         }
 
@@ -151,7 +153,7 @@ namespace ChartAndGraph
             set
             {
                 verticalViewSize = value;
-                RaiseDataChanged();
+                RaiseViewPortionChanged();
             }
         }
 
@@ -162,6 +164,7 @@ namespace ChartAndGraph
         {
             mSliders.Clear();
             mData.Clear();
+            RaiseDataChanged();
         }
 
         [SerializeField]
@@ -176,21 +179,23 @@ namespace ChartAndGraph
             set
             {
                 verticalViewOrigin = value;
-                RaiseDataChanged();
+                RaiseViewPortionChanged();
             }
         }
 
         public void Update()
         {
-            bool updated = mSliders.Count > 0;
+          //  bool updated = mSliders.Count > 0;
 
             mSliders.RemoveAll(x =>
             {
-                return x.Update();
-            });
-
-            if (updated)
-                RaiseRealtimeDataChanged();
+                bool res = x.Update(); 
+                if(res == false)
+                {
+                    RaiseRealtimeDataChanged(x.MinIndex,x.Category);
+                }
+                return res;
+            });             
         }
 
         /// <summary>
@@ -222,9 +227,29 @@ namespace ChartAndGraph
             if (dataValue == false)
             {
                 if (axis == 0 && automaticHorizontalView == false)
-                    return HorizontalViewOrigin + Math.Max(0.001f, horizontalViewSize);
+                {
+                    double axisAdd = horizontalViewSize;
+                    if (Math.Abs(axisAdd) < 0.0001f)
+                    {
+                        if (axisAdd < 0)
+                            axisAdd = -0.0001f;
+                        else
+                            axisAdd = 0.0001f;
+                    }
+                    return HorizontalViewOrigin + axisAdd;
+                }
                 if (axis == 1 && AutomaticVerticallView == false)
-                    return VerticalViewOrigin + Math.Max(0.001f, verticalViewSize);
+                {
+                    double axisAdd = verticalViewSize;
+                    if (Math.Abs(axisAdd) < 0.0001f)
+                    {
+                        if (axisAdd < 0)
+                            axisAdd = -0.0001f;
+                        else
+                            axisAdd = 0.0001f;
+                    }
+                    return VerticalViewOrigin + axisAdd;
+                }
             }
             double? res = null;
             double add = 0;
@@ -306,15 +331,22 @@ namespace ChartAndGraph
             return res.Value - add - gap;
         }
 
-        protected void RaiseRealtimeDataChanged()
+        protected void RaiseRealtimeDataChanged(int index,string category)
         {
             if (mSuspendEvents)
                 return;
-            
+           
             if (RealtimeDataChanged != null)
-                RealtimeDataChanged(this, EventArgs.Empty);
+                RealtimeDataChanged(index, category);
         }
 
+        protected void RaiseViewPortionChanged()
+        {
+            if (mSuspendEvents)
+                return;
+            if (ViewPortionChanged != null)
+                ViewPortionChanged(this, EventArgs.Empty);
+        }
         protected void RaiseDataChanged()
         {
             if (mSuspendEvents)

@@ -1,0 +1,375 @@
+version 3
+
+
+// General informations
+root_actuated	1
+external_forces	0
+
+// Informations about Pelvis segment
+	// Segment
+	segment	Pelvis
+		parent	ROOT
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			0 0 1 0
+			0 0 0 1
+		translations	xyz
+		rotations	xyz
+		meshfile	./.
+	endsegment	
+
+	// Markers
+	marker	Pelvis
+		parent	Pelvis
+		position	      0       0 0.09191
+		technical	1
+		anatomical	0
+	endmarker	
+
+	// Inertial Magnetic Unit
+	imu	Pelvis_IMU
+		parent	Pelvis
+		RTinMatrix	1
+		RT
+			0.272084 0.400637 0.874906        0
+			-0.218079  0.911223 -0.349448         0
+			 -0.937236 -0.0957193     0.3353    0.09191
+			0 0 0 1
+		technical	1
+		anatomical	1
+	endimu	
+
+
+// Informations about ThoraxChest segment
+	// Segment
+	segment	ThoraxChest
+		parent	Pelvis
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			    0     0     1 0.185
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+// Informations about Head segment
+	// Segment
+	segment	Head
+		parent	ThoraxChest
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			    0     0     1 0.294
+			0 0 0 1
+		rotations	xyz
+		meshfile	./.
+	endsegment	
+
+	// Markers
+	marker	Head
+		parent	Head
+		position	      0       0 0.17046
+		technical	1
+		anatomical	0
+	endmarker	
+
+	// Inertial Magnetic Unit
+	imu	Head_IMU
+		parent	Head
+		RTinMatrix	1
+		RT
+			 -0.979011   0.203805 0.00102341          0
+			-0.203805 -0.978953 -0.010685         0
+			-0.0011758 -0.0106693   0.999942    0.17046
+			0 0 0 1
+		technical	1
+		anatomical	1
+	endimu	
+
+
+// Informations about RightThigh segment
+	// Segment
+	segment	RightThigh
+		parent	Pelvis
+		RTinMatrix	1
+		RT
+			    1     0     0 -0.16
+			0 1 0 0
+			0 0 1 0
+			0 0 0 1
+		rotations	x
+		meshfile	./.
+	endsegment	
+
+	// Markers
+	marker	RightThigh
+		parent	RightThigh
+		position	       0        0 -0.19117
+		technical	1
+		anatomical	0
+	endmarker	
+
+	// Inertial Magnetic Unit
+	imu	RightUpperLeg_IMU
+		parent	RightThigh
+		RTinMatrix	1
+		RT
+			0.0731578 -0.813139  0.577454         0
+			-0.0781546    0.57255   0.816136          0
+			 -0.994253  -0.104837 -0.0216641   -0.19117
+			0 0 0 1
+		technical	1
+		anatomical	1
+	endimu	
+
+
+// Informations about RightLeg segment
+	// Segment
+	segment	RightLeg
+		parent	RightThigh
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			     0      0      1 -0.428
+			0 0 0 1
+		rotations	x
+		meshfile	./.
+	endsegment	
+
+	// Markers
+	marker	RightLeg
+		parent	RightLeg
+		position	      0       0 -0.1936
+		technical	1
+		anatomical	0
+	endmarker	
+
+	// Inertial Magnetic Unit
+	imu	RightLowerLeg_IMU
+		parent	RightLeg
+		RTinMatrix	1
+		RT
+			 0.100862 -0.703162  0.703839         0
+			0.0032258  0.707674  0.706531         0
+			 -0.994895 -0.0689916  0.0736456    -0.1936
+			0 0 0 1
+		technical	1
+		anatomical	1
+	endimu	
+
+
+// Informations about RightFoot segment
+	// Segment
+	segment	RightFoot
+		parent	RightLeg
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			        0       0.5 -0.866025         0
+			       0 0.866025      0.5    -0.44
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+// Informations about LeftThigh segment
+	// Segment
+	segment	LeftThigh
+		parent	Pelvis
+		RTinMatrix	1
+		RT
+			   1    0    0 0.16
+			0 1 0 0
+			0 0 1 0
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+// Informations about LeftLeg segment
+	// Segment
+	segment	LeftLeg
+		parent	LeftThigh
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			     0      0      1 -0.428
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+// Informations about LeftFoot segment
+	// Segment
+	segment	LeftFoot
+		parent	LeftLeg
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			        0       0.5 -0.866025         0
+			       0 0.866025      0.5    -0.44
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+// Informations about RightArm segment
+	// Segment
+	segment	RightArm
+		parent	ThoraxChest
+		RTinMatrix	1
+		RT
+			     1      0      0 -0.185
+			0 1 0 0
+			    0     0     1 0.294
+			0 0 0 1
+		rotations	xy
+		meshfile	./.
+	endsegment	
+
+	// Markers
+	marker	RightArm
+		parent	RightArm
+		position	       0        0 -0.10525
+		technical	1
+		anatomical	0
+	endmarker	
+
+	// Inertial Magnetic Unit
+	imu	RightUpperArm_IMU
+		parent	RightArm
+		RTinMatrix	1
+		RT
+			0.0876393 -0.866395  0.491609         0
+			0.0687204  0.497591  0.864686         0
+			 -0.993779 -0.0419968   0.103147   -0.10525
+			0 0 0 1
+		technical	1
+		anatomical	1
+	endimu	
+
+
+// Informations about RightF_Arm segment
+	// Segment
+	segment	RightF_Arm
+		parent	RightArm
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			     0      0      1 -0.281
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+// Informations about RightHand segment
+	// Segment
+	segment	RightHand
+		parent	RightF_Arm
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			     0      0      1 -0.217
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+// Informations about LeftArm segment
+	// Segment
+	segment	LeftArm
+		parent	ThoraxChest
+		RTinMatrix	1
+		RT
+			    1     0     0 0.185
+			0 1 0 0
+			    0     0     1 0.294
+			0 0 0 1
+		rotations	xy
+		meshfile	./.
+	endsegment	
+
+	// Markers
+	marker	LeftArm
+		parent	LeftArm
+		position	       0        0 -0.12578
+		technical	1
+		anatomical	0
+	endmarker	
+
+	// Inertial Magnetic Unit
+	imu	LeftUpperArm_IMU
+		parent	LeftArm
+		RTinMatrix	1
+		RT
+			-0.00252088    0.972337   -0.233568           0
+			-0.157415 -0.231042 -0.960125         0
+			-0.987529 0.0343466  0.153642  -0.12578
+			0 0 0 1
+		technical	1
+		anatomical	1
+	endimu	
+
+
+// Informations about LeftF_Arm segment
+	// Segment
+	segment	LeftF_Arm
+		parent	LeftArm
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			     0      0      1 -0.281
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+// Informations about LeftHand segment
+	// Segment
+	segment	LeftHand
+		parent	LeftF_Arm
+		RTinMatrix	1
+		RT
+			1 0 0 0
+			0 1 0 0
+			     0      0      1 -0.217
+			0 0 0 1
+		meshfile	./.
+	endsegment	
+
+
+
+
+
+
+
+
+
+
+

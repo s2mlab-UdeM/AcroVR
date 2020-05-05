@@ -68,6 +68,22 @@ public class MathFunc
 	}
 
 	// =================================================================================================================================================================
+	/// <summary> Interpolation linéaire sur des données d'une dimension et t = 3 valeurs seulement (similaire à la fonction MatLab Interp1(x, v, xq, 'linear')). </summary>
+
+	public static double[] Interp1(float ti, float[] t, float[,] x)
+	{
+		double[] y = new double[x.GetUpperBound(0) + 1];
+		for (int i = 0; i < y.Length; i++)
+		{
+			if (ti <= t[1])
+				y[i] = x[i, 0] + (ti - t[0]) * (x[i, 1] - x[i, 0]) / (t[1] - t[0]);
+			else
+				y[i] = x[i, 1] + (ti - t[1]) * (x[i, 2] - x[i, 1]) / (t[2] - t[1]);
+		}
+		return y;
+	}
+
+	// =================================================================================================================================================================
 	/// <summary>
 	/// <para> Vérification du signe d'un vecteur. </para>
 	/// Retourne: -1 si vect inférieur à 0, 0 si vect égal 0, 1 si vect supérieur à 0

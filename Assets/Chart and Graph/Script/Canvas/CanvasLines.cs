@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace ChartAndGraph
     /// <summary>
     /// this class is used internally in order to draw lines, line fill and line points into a mesh
     /// </summary>
-    public class CanvasLines : EventHandlingGraphic
+    public partial class CanvasLines : EventHandlingGraphic
     {
         /// <summary>
         /// thickness of the lines being drawn
@@ -19,7 +20,7 @@ namespace ChartAndGraph
         public float Thickness = 2f;
 
         float innerTile = 1f;
-
+        int mMinModifyIndex = 0;
         /// <summary>
         /// Tiling value for the graphic. The tiliing is the total length of the lines being drawn. It is set by the parent graph
         /// </summary>
@@ -64,12 +65,6 @@ namespace ChartAndGraph
         /// bounding box for the value of mLines, used for event handling
         /// </summary>
         float mMinX, mMinY, mMaxX, mMaxY;
-#if !UNITY_2017_1_OR_NEWER
-        /// <summary>
-        /// A chart mesh used for populating the 
-        /// </summary>
-        WorldSpaceChartMesh mMesh = null;
-#endif
 
         /// <summary>
         /// Sets point render mode
@@ -230,6 +225,10 @@ namespace ChartAndGraph
                 Vector3 to = mLines[index + 1];
                 return new Line(from, to, halfThickness, false, false);
             }
+            public double GetLineMag(int index)
+            {
+                return (mLines[index] - mLines[index + 1]).magnitude;
+            }
 
         }
 
@@ -266,19 +265,22 @@ namespace ChartAndGraph
             }
         }
 
-        internal void ModifyLines(List<Vector4> lines)
+        internal void ModifyLines(int minModifyIndex,List<Vector4> lines)
         {
             if (mLines.Count == 0)
             {
                 mLines.Add(new LineSegement(lines.ToArray()));
                 return;
             }
+
+            mMinModifyIndex = minModifyIndex;
             FindBoundingValues();
             mLines[0].ModifiyLines(lines);
             SetVerticesDirty(); // clear previous animations
             Rebuild(CanvasUpdate.PostLayout);
             RefreshInputs();
         }
+        public bool EnableOptimization { get; set; }
 
         /// <summary>
         /// sets the lines for this renderer
@@ -287,10 +289,14 @@ namespace ChartAndGraph
         internal void SetLines(List<LineSegement> lines)
         {
             mLines = lines;
-            FindBoundingValues();
+            FindBoundingValues(); 
+            mMinModifyIndex = 0;
             SetAllDirty();
             ClearEvents(); // clear previous animations
-            Rebuild(CanvasUpdate.PreRender);
+            if(EnableOptimization)
+                Rebuild(CanvasUpdate.PostLayout);
+            else
+                Rebuild(CanvasUpdate.PreRender);
         }
 
         protected override void UpdateMaterial()
@@ -458,7 +464,7 @@ namespace ChartAndGraph
                 mCachedMaterial.SetFloat("_ChartTiling", Tiling);
             }
         }
-
+        partial void ProcesssPoint(ref Vector4 point, ref float halfSize);
         IEnumerable<UIVertex> getDotVeritces()
         {
             if (mLines == null)
@@ -469,16 +475,15 @@ namespace ChartAndGraph
             {
                 LineSegement seg = mLines[i];
                 int total = seg.PointCount;
-                for (int j = 0; j < total; ++j)
+                for (int j = mMinModifyIndex; j < total; ++j)
                 {
                     Vector4 magPoint = seg.getPoint(j);
                     if (magPoint.w == 0f)
                         continue;
 
-                    Vector3 point = (Vector3)magPoint;
+                    Vector3 point = (Vector3)magPoint;                    
                     halfSize = mPointSize * 0.5f;
-                    if (magPoint.w >= 0f)
-                        halfSize = magPoint.w * 0.5f;
+                    ProcesssPoint(ref magPoint, ref halfSize);
                     Vector3 p1 = point + new Vector3(-halfSize, -halfSize, 0f);
                     Vector3 p2 = point + new Vector3(halfSize, -halfSize, 0f);
                     Vector3 p3 = point + new Vector3(-halfSize, halfSize, 0f);
@@ -503,12 +508,13 @@ namespace ChartAndGraph
 
         Vector2 TransformUv(Vector2 uv)
         {
-            if (mUvRect.HasValue == false)
-                return uv;
-            Rect r = mUvRect.Value;
-            float x = r.x + uv.x * r.width;
-            float y = r.y + uv.y * r.height;
-            return new Vector2(x, y);
+            return uv;
+            //if (mUvRect.HasValue == false)
+            //    return uv;
+            //Rect r = mUvRect.Value;
+            //float x = r.x + uv.x * r.width;
+            //float y = r.y + uv.y * r.height;
+            //return new Vector2(x, y);
         }
 
         IEnumerable<UIVertex> getFillVeritces()
@@ -520,7 +526,7 @@ namespace ChartAndGraph
             {
                 LineSegement seg = mLines[i];
                 int totalLines = seg.LineCount;
-                for (int j = 0; j < totalLines; ++j)
+                for (int j = mMinModifyIndex; j < totalLines; ++j)
                 {
                     Vector3 from;
                     Vector3 to;
@@ -581,12 +587,9 @@ namespace ChartAndGraph
                 Line? prev = null;
                 float tileUv = 0f;
                 float totalUv = 0f;
-                for (int j = 0; j < totalLines; ++j)
-                {
-                    Line line = seg.GetLine(j, halfThickness, false, false);
-                    totalUv += line.Mag;
-                }
-                for (int j = 0; j < totalLines; ++j)
+                for (int j = mMinModifyIndex; j < totalLines; ++j)
+                    totalUv += (float)seg.GetLineMag(j);
+                for (int j = mMinModifyIndex; j < totalLines; ++j)
                 {
                     Line line;
                     bool hasNext = j + 1 < totalLines;
@@ -640,7 +643,7 @@ namespace ChartAndGraph
                         yield return v1;
                         yield return v2;
                     }
-                    z -= 0.05f;
+                    //z -= 0.05f;
                     prev = line;
                 }
             }
@@ -661,7 +664,96 @@ namespace ChartAndGraph
             return vertices;
         }
 
+        Mesh mVHMesh;
+        List<Vector3> mPositions = new List<Vector3>();
+        List<Vector2> mUvs = new List<Vector2>();
+        List<int> mTringles = new List<int>();
+
+        void WriteTo<T> (List<T> list,int index,T val)
+        {
+            if (list.Count == index)
+                list.Add(val);
+            else
+                list[index] = val;
+        }
+
+        protected override void UpdateGeometry()
+        {
+
+            if (EnableOptimization == false)
+            {
+                mMinModifyIndex = 0;
+                base.UpdateGeometry();
+                return;
+            }
+
+            if (mVHMesh == null)
+                mVHMesh = new Mesh();
+            if (mMinModifyIndex == int.MaxValue)
+                mMinModifyIndex = mPositions.Count;
+            if (mMinModifyIndex <= 0)
+            {
+                mMinModifyIndex = 0;
+                mPositions.Clear();
+                mUvs.Clear();
+                mTringles.Clear();
+                foreach (UIVertex v in getVerices())
+                {
+                    mPositions.Add(v.position);
+                    mUvs.Add(v.uv0);
+                }
+                int quads = (mPositions.Count / 4) ;
+                int baseIndex = 0;
+                for (int i = 0; i < quads; i++)
+                {
+
+                    mTringles.Add(baseIndex);
+                    mTringles.Add(baseIndex + 1);
+                    mTringles.Add(baseIndex + 3);
+
+                    mTringles.Add(baseIndex + 3);
+                    mTringles.Add(baseIndex + 2);
+                    mTringles.Add(baseIndex);
+                    baseIndex += 4;
+                }
+            }
+            else
+            {
+
+               // Debug.Log("adding");
+                int total = 0;
+                int index = mMinModifyIndex;
+                foreach (UIVertex v in getVerices())
+                {
+                 //   Debug.Log("extra");
+                    WriteTo<Vector3>(mPositions, index, v.position);
+                    WriteTo<Vector2>(mUvs, index, v.uv0);
+                    total++;
+                }
+                int quads = total / 4;
+                for (int i = 0; i < quads; i++)
+                {
+                //    Debug.Log("extra tring");
+                    mTringles.Add(0);
+                    mTringles.Add(1);
+                    mTringles.Add(3);
+
+                    mTringles.Add(3);
+                    mTringles.Add(2);
+                    mTringles.Add(0);
+                }
+            }
+            mVHMesh.Clear();
+            mVHMesh.SetVertices(mPositions);
+            mVHMesh.SetUVs(0, mUvs);
+            mVHMesh.SetTriangles(mTringles, 0);
+            //at the end 
+            mMinModifyIndex = int.MaxValue;
+            GetComponent<CanvasRenderer>().SetMesh(mVHMesh);
+        }
+
 #if (!UNITY_5_2_0) && (!UNITY_5_2_1)
+    
         protected override void OnPopulateMesh(VertexHelper vh)
         {
             base.OnPopulateMesh(vh);
@@ -683,6 +775,10 @@ namespace ChartAndGraph
 #endif
 #pragma warning disable 0672
 #if !UNITY_2017_1_OR_NEWER
+        /// <summary>
+        /// A chart mesh used for populating the 
+        /// </summary>
+        WorldSpaceChartMesh mMesh = null;
         protected override void OnPopulateMesh(Mesh m)
         {
             if (mMesh == null)
@@ -690,6 +786,7 @@ namespace ChartAndGraph
             else
                 mMesh.Clear();
             int vPos = 0;
+            mMinModifyIndex = 0; // not supported here
             foreach (UIVertex v in getVerices())
             {
                 mTmpVerts[vPos++] = v;

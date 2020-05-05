@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,11 +28,19 @@ namespace ChartAndGraph
         /// </summary>
         public abstract DoubleVector2 Min { get; }
 
+        public abstract string Category { get; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public abstract int MinIndex { get; }
         /// <summary>
         /// returns true if the slider should be removed after this update. (meaning the slider is done)
         /// </summary>
         /// <returns></returns>
-        public abstract bool Update();
+        public virtual bool Update()
+        {
+            return true;
+        }
 
     }
 }

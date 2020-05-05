@@ -1,10 +1,10 @@
-﻿using UnityEngine;
+#define Graph_And_Chart_PRO
+using UnityEngine;
 using System.Collections;
 using ChartAndGraph;
 
 public class StreamingGraph : MonoBehaviour
 {
-
     public GraphChart Graph;
     public int TotalPoints = 5;
     float lastTime = 0f;

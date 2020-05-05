@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,17 +24,17 @@ namespace ChartAndGraph
         /// occures when the mouse is over the item
         /// </summary>
         [Tooltip("Occures when the mouse is over the item")]
-        public Event OnMouseHover;
+        public Event OnMouseHover = new Event();
         /// <summary>
         /// occurs when the mouse is no longer over the item
         /// </summary>
         [Tooltip("Occurs when the mouse is no longer over the item")]
-        public Event OnMouseLeave;
+        public Event OnMouseLeave = new Event();
         /// <summary>
         /// occurs when the user clicks the chart item
         /// </summary>
         [Tooltip("Occurs when the user clicks the chart item")]
-        public Event OnSelected;
+        public Event OnSelected = new Event();
 
         private bool mMouseOver = false;
         private bool mMouseDown = false;
