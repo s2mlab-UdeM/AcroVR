@@ -15,7 +15,7 @@ public class Tab3_OnClick : MonoBehaviour
 	/// Compare 2 avatar play sequenceses
 	public void Compare2PlayAvatars_DrawManager()
 	{
-		ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(2);
+//		ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(2);
 
 	}
 

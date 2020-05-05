@@ -47,8 +47,9 @@ public class _ButtonTest : MonoBehaviour
 	/// CommentEmpty
 	public void Test1()
 	{
-			ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(1);
 
+        ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.SingleFemale);
+        ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
 	}
 
 	public void Test2()

@@ -9,6 +9,13 @@ using System.Collections.Generic;
 
 public class DrawManager : MonoBehaviour
 {
+    public enum AvatarMode
+    {
+        SingleFemale,
+        DoubleFemale,
+        SingleMale,
+    }
+
     const string dllpath = "biorbd_c.dll";
     [DllImport(dllpath)] static extern IntPtr c_biorbdModel(StringBuilder pathToModel);
     [DllImport(dllpath)] static extern int c_nQ(IntPtr model);
@@ -23,6 +30,7 @@ public class DrawManager : MonoBehaviour
     public GameObject girl2;
     GameObject girl1Prefab;
     GameObject girl2Prefab;
+    GameObject man1Prefab;
     ////////////////
     /// <summary>
     /// Hip
@@ -99,16 +107,22 @@ public class DrawManager : MonoBehaviour
     bool isPaused = false;
     public bool isEditing = false;
 
+    float pauseStart = 0;
+    float pauseTime = 0;
+
     IntPtr ptr_model;
 
     void Awake()
     {
-        girl1Prefab = (GameObject)Resources.Load("girl1", typeof(GameObject));
-        girl1 = Instantiate(girl1Prefab);
+//        girl1Prefab = (GameObject)Resources.Load("girl1", typeof(GameObject));
+//        man1Prefab = (GameObject)Resources.Load("man1", typeof(GameObject));
+
+//        girl1 = Instantiate(girl1Prefab);
+//        girl1 = Instantiate(man1Prefab);
 
         ///////////////////////////
         // Hip
-        girl1LeftUp = girl1.transform.Find("Petra.002/hips/thigh.L").gameObject;
+/*        girl1LeftUp = girl1.transform.Find("Petra.002/hips/thigh.L").gameObject;
         girl1RightUp = girl1.transform.Find("Petra.002/hips/thigh.R").gameObject;
         // Knee
         girl1LeftLeg = girl1.transform.Find("Petra.002/hips/thigh.L/shin.L").gameObject;
@@ -120,11 +134,11 @@ public class DrawManager : MonoBehaviour
         girl1Hip = girl1.transform.Find("Petra.002/hips").gameObject;
         ///////////////////////////
 
-        firstView = girl1.transform.Find("Petra.002/hips/FirstViewPoint").gameObject;
+        firstView = girl1.transform.Find("Petra.002/hips/FirstViewPoint").gameObject;*/
         //        stickMan = GameObject.Find("StickMan");
 
         ThetaScale = 0.01f;
-        girl1.SetActive(false);
+//        girl1.SetActive(false);
         cntAvatar = 1;
 
         avatarSpawnpoint = GameObject.FindGameObjectWithTag("AnchorAvatarToWorld");
@@ -133,12 +147,19 @@ public class DrawManager : MonoBehaviour
 
     void Update()
     {
+        if (isPaused && pauseStart == 0) pauseStart = Time.time;
+        if (!isPaused && pauseStart != 0)
+        {
+            pauseTime = Time.time - pauseStart;
+            pauseStart = 0;
+        }
+
         if (!animateON) return;
 
         if (frameN <= 0) timeStarted = Time.time;
-        if (Time.time - timeStarted >= (timeFrame * frameN) * factorPlaySpeed)
+        if (Time.time - (timeStarted + pauseTime) >= (timeFrame * frameN) * factorPlaySpeed)
         {
-            timeElapsed = Time.time - timeStarted;
+            timeElapsed = Time.time - (timeStarted + pauseTime);
 
             if (frameN < numberFrames)
                 PlayOneFrame();
@@ -162,26 +183,50 @@ public class DrawManager : MonoBehaviour
                 PlayEnd();
         }*/
 
-    public void ShowAvatar(int num)
+    public void LoadAvatar(AvatarMode mode)
     {
-        cntAvatar = num;
-        if (MainParameters.Instance.joints.nodes == null) return;
-        girl1.SetActive(true);
-        girl1.transform.rotation = Quaternion.identity;
-        transform.parent.GetComponentInChildren<StatManager>().DestroyHandleCircle();
+        string namePrefab1 = "";
+        string namePrefab2 = "";
+        switch (mode)
+        {
+            case AvatarMode.SingleFemale:
+                cntAvatar = 1;
+                namePrefab1 = "girl1";
+                break;
+            case AvatarMode.DoubleFemale:
+                cntAvatar = 2;
+                namePrefab1 = "girl1";
+                namePrefab2 = "girl2";
+                break;
+            case AvatarMode.SingleMale:
+                namePrefab1 = "man1";
+                break;
+        }
+
+        girl1Prefab = (GameObject)Resources.Load(namePrefab1, typeof(GameObject));
+        girl1 = Instantiate(girl1Prefab);
+
+        girl1LeftUp = girl1.transform.Find("Petra.002/hips/thigh.L").gameObject;
+        girl1RightUp = girl1.transform.Find("Petra.002/hips/thigh.R").gameObject;
+        // Knee
+        girl1LeftLeg = girl1.transform.Find("Petra.002/hips/thigh.L/shin.L").gameObject;
+        girl1RightLeg = girl1.transform.Find("Petra.002/hips/thigh.R/shin.R").gameObject;
+        // Shoulder
+        girl1RightArm = girl1.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.R/upper_arm.R").gameObject;
+        girl1LeftArm = girl1.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.L/upper_arm.L").gameObject;
+        // Root
+        girl1Hip = girl1.transform.Find("Petra.002/hips").gameObject;
+        ///////////////////////////
+
+        firstView = girl1.transform.Find("Petra.002/hips/FirstViewPoint").gameObject;
 
         q1 = MakeSimulation();
-
-        // test0 = q1[12,51]
-        // test1 = q1[12,54]
-        Play_s(q1, 0, q1.GetUpperBound(1) + 1);
 
         if (cntAvatar > 1)
         {
             ///////////////////////////
             // Hip
-//            girl2Prefab = (GameObject)Resources.Load("girl2", typeof(GameObject));
-            girl2Prefab = (GameObject)Resources.Load("girl1", typeof(GameObject));
+            girl2Prefab = (GameObject)Resources.Load(namePrefab2, typeof(GameObject));
             girl2 = Instantiate(girl2Prefab);
             girl2LeftUp = girl2.transform.Find("Petra.002/hips/thigh.L").gameObject;
             girl2RightUp = girl2.transform.Find("Petra.002/hips/thigh.R").gameObject;
@@ -198,6 +243,19 @@ public class DrawManager : MonoBehaviour
             q1_girl2 = MakeSimulation();
             q_girl2 = MathFunc.MatrixCopy(q1_girl2);
         }
+    }
+
+    public void ShowAvatar()
+    {
+//        cntAvatar = num;
+        if (MainParameters.Instance.joints.nodes == null) return;
+//        girl1.SetActive(true);
+        girl1.transform.rotation = Quaternion.identity;
+        transform.parent.GetComponentInChildren<StatManager>().DestroyHandleCircle();
+
+        // test0 = q1[12,51]
+        // test1 = q1[12,54]
+        Play_s(q1, 0, q1.GetUpperBound(1) + 1);
     }
 
     public void SetAnimationSpeed(float speed)
@@ -217,10 +275,26 @@ public class DrawManager : MonoBehaviour
 
     public void PlayEnd()
     {
-//        animateON = false;
-        //        frameN = 0;
+        //        animateON = false;
+        // frameN = 0;
+
+        DisplayNewMessage(false, false, string.Format(" {0} = {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgSimulationDuration, timeElapsed));
+        DisplayNewMessage(false, true, string.Format(" {0}", MainParameters.Instance.languages.Used.displayMsgEndSimulation));
+
+
         transform.parent.GetComponentInChildren<GameManager>().InterpolationDDL();
         transform.parent.GetComponentInChildren<GameManager>().DisplayDDL(0, true);
+    }
+
+    private void DisplayNewMessage(bool clear, bool display, string message)
+    {
+        if (clear) MainParameters.Instance.scrollViewMessages.Clear();
+        MainParameters.Instance.scrollViewMessages.Add(message);
+    }
+
+    public string DisplayMessage()
+    {
+        return string.Join(Environment.NewLine, MainParameters.Instance.scrollViewMessages.ToArray());
     }
 
     private void Play_s(float[,] qq, int frFrame, int nFrames)
@@ -520,6 +594,13 @@ public class DrawManager : MonoBehaviour
                 rotAbs[j, i] = Math.Abs(MainParameters.Instance.joints.rot[j, i]);
             }
         }
+
+        float numSomersault = MathFunc.MatrixGetColumn(rotAbs, 0).Max() + MainParameters.Instance.joints.takeOffParam.rotation / 360;
+        DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgNumberSomersaults, numSomersault));
+        DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgNumberTwists, MathFunc.MatrixGetColumn(rotAbs, 2).Max()));
+        DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgFinalTwist, MainParameters.Instance.joints.rot[tIndex - 1, 2]));
+        DisplayNewMessage(false, true, string.Format(" {0} = {1:0}°", MainParameters.Instance.languages.Used.displayMsgMaxTilt, MathFunc.MatrixGetColumn(rotAbs, 1).Max() * 360));
+        DisplayNewMessage(false, true, string.Format(" {0} = {1:0}°", MainParameters.Instance.languages.Used.displayMsgFinalTilt, MainParameters.Instance.joints.rot[tIndex - 1, 1] * 360));
 
         return qOut;
     }
@@ -1013,12 +1094,12 @@ public class DrawManager : MonoBehaviour
         isPaused = pause;
     }
 
-    void OnGUI()
+/*    void OnGUI()
     {
         // Need to remove OnGui function
         //frameN = (int)GUI.HorizontalScrollbar(new Rect(Screen.width - 200, 430, 100, 30), frameN, 1.0F, 0.0F, numberFrames);
 
-/*        if(transform.parent.GetComponentInChildren<AniGraphManager>().takeoffCanvas.activeSelf)
+        if(transform.parent.GetComponentInChildren<AniGraphManager>().takeoffCanvas.activeSelf)
         {
             //            DrawingLine.DrawLine(new Vector2(frameN * 500/numberFrames + 32f, 325), new Vector2(frameN * 500 / numberFrames + 32f, 565), UnityEngine.Color.red, 4, false);
 
@@ -1027,8 +1108,8 @@ public class DrawManager : MonoBehaviour
             else
                 DrawingLine.DrawLine(new Vector2((frameN * 0.02f * 500 / MainParameters.Instance.joints.duration) + 30f, 325), new Vector2((frameN * 0.02f * 500 / MainParameters.Instance.joints.duration) + 30f, 565), UnityEngine.Color.red, 4, false);
 
-        }*/
-    }
+        }
+    }*/
 
     private void Line(LineRenderer lineRendererObject, Vector3 position1, Vector3 position2)
     {

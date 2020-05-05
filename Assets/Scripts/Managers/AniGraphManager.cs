@@ -235,7 +235,7 @@ public class AniGraphManager : MonoBehaviour
                 //            MovementF.Instance.InterpolationAndDisplayDDL(ddlUsed, ddlUsed, (int)Mathf.Round(MainParameters.Instance.joints.nodes[ddlUsed].T[nodeUsed] / MainParameters.Instance.joints.lagrangianModel.dt), false);
 
                 int temp = transform.parent.GetComponentInChildren<DrawManager>().frameN;
-                transform.parent.GetComponentInChildren<DrawManager>().ShowAvatar(1);
+                transform.parent.GetComponentInChildren<DrawManager>().ShowAvatar();
                 transform.parent.GetComponentInChildren<DrawManager>().frameN = temp;
             }
         }

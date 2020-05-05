@@ -13,7 +13,8 @@ public class Level2 : MonoBehaviour
 
     void Start () {
         ToolBox.GetInstance().GetManager<GameManager>().MissionLoad();
-        ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(1);
+        ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.SingleFemale);
+        ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
 
         ToolBox.GetInstance().GetManager<StatManager>().ProfileLoad("Student1");
 

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class Level1 : MonoBehaviour
 {
@@ -6,6 +7,8 @@ public class Level1 : MonoBehaviour
     bool isTakeOff = false;
 
     bool bFirstView = false;
+
+    public Text result;
 
     void Start ()
     {
@@ -29,14 +32,16 @@ public class Level1 : MonoBehaviour
             //        MainParameters.Instance.joints.duration = mission.goal.Duration;
             //        MainParameters.Instance.joints.takeOffParam.anteroposteriorSpeed = v;
 
-            ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(1);
+            ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.SingleFemale);
+            ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
         }
 
         if (GUI.Button(new Rect(Screen.width - 200, 70, 100, 50), "Load 2"))
         {
             ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
             ToolBox.GetInstance().GetManager<GameManager>().MissionLoad();
-            ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(2);
+            ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.DoubleFemale);
+            ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
         }
         if (GUI.Button(new Rect(Screen.width - 200, 130, 100, 50), "Result"))
         {
@@ -49,8 +54,8 @@ public class Level1 : MonoBehaviour
         }
         if (GUI.Button(new Rect(Screen.width - 200, 250, 100, 50), "Replay"))
         {
-//            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
-            ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(1);
+            //            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
+            ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
         }
 
         if (GUI.Button(new Rect(Screen.width - 200, 310, 100, 50), "Pause"))
@@ -65,6 +70,8 @@ public class Level1 : MonoBehaviour
             {
                 isTakeOff = true;
                 ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOn();
+
+                result.text = ToolBox.GetInstance().GetManager<DrawManager>().DisplayMessage();
             }
             else
             {
@@ -74,6 +81,13 @@ public class Level1 : MonoBehaviour
         }
 
         GUI.TextField(new Rect(Screen.width - 200, 470, 100, 30), ToolBox.GetInstance().GetManager<StatManager>().dofName);
+
+        if (GUI.Button(new Rect(Screen.width - 95, 10, 100, 50), "Load(Man)"))
+        {
+            ToolBox.GetInstance().GetManager<GameManager>().MissionLoad();
+            ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.SingleMale);
+            ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
+        }
     }
 
     void Update () {

@@ -26,8 +26,8 @@ public class PlayController : MonoBehaviour
 	public void PlayAvatar1_DrawManager()
 	{
 		ToolBox.GetInstance().GetManager<DrawManager>().SetAnimationSpeed(playSpeed);
-		ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(1);
-
+        ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.SingleFemale);
+        ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
 	}
 
 	/// Pause / un-pause avatar play sequence
@@ -48,7 +48,7 @@ public class PlayController : MonoBehaviour
 	/// Replay avatar play sequence
 	public void ReplayAvatar_DrawManager()
 	{
-		ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar(1);
+        ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
 	}
 
 	/// Play avatar #2 sequence
