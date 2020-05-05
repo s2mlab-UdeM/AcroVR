@@ -123,12 +123,12 @@ public class DisplayResultGraphic : MonoBehaviour
                     return;
                 }
             }
-            string testDataFile = string.Format("{0}\\TestDataFileOnline {1}", dirFiles, System.IO.Path.GetFileName(MainParameters.Instance.joints.fileName));
-            System.IO.File.WriteAllText(testDataFile, string.Format("Time\tRotation\t\t\tAngular speed{0}", System.Environment.NewLine));
-            System.IO.File.AppendAllText(testDataFile, string.Format("\tSomersault\tTilt\tTwist\tSomersault\tTilt\tTwist{0}", System.Environment.NewLine));
+            string testDataFile = string.Format("{0}\\TestDataFileOnline-2020-03-26 {1}", dirFiles, System.IO.Path.GetFileName(MainParameters.Instance.joints.fileName));
+            System.IO.File.WriteAllText(testDataFile, string.Format("Reel Frame Time\tTime\tRotation\t\t\tAngular speed{0}", System.Environment.NewLine));
+            System.IO.File.AppendAllText(testDataFile, string.Format("\t\tSomersault\tTilt\tTwist\tSomersault\tTilt\tTwist{0}", System.Environment.NewLine));
             for (int i = 0; i < MainParameters.Instance.joints.t.Length; i++)
             {
-                System.IO.File.AppendAllText(testDataFile, string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}{7}", MainParameters.Instance.joints.t[i],
+                System.IO.File.AppendAllText(testDataFile, string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}{8}", AnimationF.Instance.debugTimeElapsed[i], MainParameters.Instance.joints.t[i], 
                     MainParameters.Instance.joints.rot[i, 0], MainParameters.Instance.joints.rot[i, 1], MainParameters.Instance.joints.rot[i, 2],
                     MainParameters.Instance.joints.rotdot[i, 0], MainParameters.Instance.joints.rotdot[i, 1], MainParameters.Instance.joints.rotdot[i, 2], System.Environment.NewLine));
             }

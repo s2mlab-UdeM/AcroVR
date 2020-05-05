@@ -47,7 +47,8 @@ public class AnimationF : MonoBehaviour
     public bool animateON = false;
 
     int frameN = 0;
-    int firstFrame = 0;
+	int subFrameN = 0;							// Un frame = dt, alors sous-frame est dt / n, pour le moment dt = 0.02 et n = 2, donc subFrameN = 0, 1
+    //int firstFrame = 0;
     int numberFrames = 0;
     int frameContactGround = 0;
     float tagXMin = 0;
@@ -62,6 +63,7 @@ public class AnimationF : MonoBehaviour
     float animationMaxDimOnScreen = 20;         // Dimension maximum de la silhouette à l'écran en unité de "Line renderer" (même dimension dans les 3 directions x, y, z)
 
     float timeElapsed = 0;
+	public float[] debugTimeElapsed;
     float timeFrame = 0;
     float timeStarted = 0;
     string playMode = MainParameters.Instance.languages.Used.animatorPlayModeSimulation;
@@ -139,14 +141,17 @@ public class AnimationF : MonoBehaviour
             // Affichage du chronomètre
 
             if (numberFrames > 1)
-                textChrono.text = string.Format("{0:0.0}", timeElapsed);
+				textChrono.text = string.Format("{0:0.0}", timeElapsed);
 
-            // Traiter le prochain frame
+			// Traiter le prochain frame
 
-            if (frameN < numberFrames)
-                PlayOneFrame();                     // Affichage de la silhouette
-            else
-                PlayEnd();                          // Fin de l'animation
+			if (frameN < numberFrames)
+			{
+				debugTimeElapsed[frameN] = timeElapsed;
+				PlayOneFrame();                     // Affichage de la silhouette
+			}
+			else
+				PlayEnd();                          // Fin de l'animation
         }
     }
 
@@ -249,21 +254,21 @@ public class AnimationF : MonoBehaviour
 
         // Calculer et conserver toutes les positions, vitesses et accélérations des articulations (ddl) à 2 fois la fréquence d'échantillonnage
 
-        float t = 0;
-        qd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot * 2];
-        qdotd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot * 2];
-        qddotd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot * 2];
-        for (int i = 0; i < numFramesTot * 2; i++)
-        {
-            t += MainParameters.Instance.joints.lagrangianModel.dt / 2;
-            float[] qd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-            float[] qdotd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-            float[] qddotd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-            Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, t, MainParameters.Instance.joints.lagrangianModel.q2, out qd1, out qdotd1, out qddotd1);
-            trajectory.ToString();                  // Pour enlever un warning lors de la compilation
-            for (int j = 0; j < qd1.Length; j++)
-                qd[j, i] = qd1[j];
-        }
+        //float t = 0;
+        //qd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot];
+        //qdotd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot];
+        //qddotd = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, numFramesTot];
+        //for (int i = 0; i < numFramesTot; i++)
+        //{
+        //    t += MainParameters.Instance.joints.lagrangianModel.dt;
+        //    float[] qd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        //    float[] qdotd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        //    float[] qddotd1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        //    Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, t, MainParameters.Instance.joints.lagrangianModel.q2, out qd1, out qdotd1, out qddotd1);
+        //    trajectory.ToString();                  // Pour enlever un warning lors de la compilation
+        //    for (int j = 0; j < qd1.Length; j++)
+        //        qd[j, i] = qd1[j];
+        //}
 
         // Afficher la silhouette pour toute l'animation
 
@@ -361,22 +366,27 @@ public class AnimationF : MonoBehaviour
         q = new double[joints.lagrangianModel.nDDL, nFrames];
         qdot = new double[joints.lagrangianModel.nDDL, nFrames];
 
-        DoSimulation.q2T = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        DoSimulation.q2dotT = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        DoSimulation.q2dotdotT = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        DoSimulation.q2TplusdT = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        DoSimulation.q2dotTplusdT = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
-        DoSimulation.q2dotdotTplusdT = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        DoSimulation.qFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        DoSimulation.qdotFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+        DoSimulation.qddotFrame0 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		DoSimulation.qFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		DoSimulation.qdotFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		DoSimulation.qddotFrame1 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		DoSimulation.qFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		DoSimulation.qdotFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		DoSimulation.qddotFrame2 = new float[MainParameters.Instance.joints.lagrangianModel.nDDL];
 
-        frameN = 0;
-        firstFrame = frFrame;
+		frameN = 0;
+		subFrameN = 0;
+        // firstFrame = frFrame;
         numberFrames = nFrames;
+		debugTimeElapsed = new float[numberFrames];
         frameContactGround = numberFrames + 1;
         if (nFrames > 1)
-            timeFrame = MainParameters.Instance.joints.lagrangianModel.dt;
+            timeFrame = MainParameters.Instance.joints.lagrangianModel.dt / 2;
         else
             timeFrame = 0;
-        animateON = true;
+		animateON = true;
         GraphManager.Instance.mouseTracking = false;
 
         // Effacer le message affiché au bas du panneau d'animation
@@ -455,61 +465,68 @@ public class AnimationF : MonoBehaviour
     {
         MainParameters.StrucJoints joints = MainParameters.Instance.joints;
 
-        // Positions, vitesses et accélérations des articulations (ddl) au temps t + dt
+		// Effacer la silhouette précédente en premier
 
-        for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
-        {
-            int ii = frameN * 2;
-            DoSimulation.q2T[i] = qd[i, ii];
-            DoSimulation.q2dotT[i] = qdotd[i, ii];
-            DoSimulation.q2dotdotT[i] = qddotd[i, ii];
-            DoSimulation.q2TplusdT[i] = qd[i, ii + 1];
-            DoSimulation.q2dotTplusdT[i] = qdotd[i, ii + 1];
-            DoSimulation.q2dotdotTplusdT[i] = qddotd[i, ii + 1];
-        }
+		for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
+			DrawObjects.Instance.Delete(lineStickFigure[i]);
+		DrawObjects.Instance.Delete(lineCenterOfMass);
+		for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
+			DrawObjects.Instance.Delete(lineFilledFigure[i]);
+		for (int i = 0; i < 4; i++)
+			DrawObjects.Instance.Delete(lineFloor[i]);
 
-        // Calcul de l'état suivant en utilisant BioRBD
+		// Lecture des données d'interpolation pour le sous-frame actuel
 
-        DoSimulation.modeRT = true;
-        DoSimulation.xTplusdT = Ode.RK4TempsReel(DoSimulation.xT, DoSimulation.ShortDynamics);
+		Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, (2 * frameN + subFrameN) * timeFrame, MainParameters.Instance.joints.lagrangianModel.q2,
+			out DoSimulation.qFrame2, out DoSimulation.qdotFrame2, out DoSimulation.qddotFrame2);
+		trajectory.ToString();                  // Pour enlever un warning lors de la compilation
 
-        //DoSimulation.modeRT = false;                              // Test fait pour voir si ça serait mieux avec RK547M, mais c'est différent, mais pas vraiment mieux au premier abord..
-        //Options options = new Options();
-        //options.InitialStep = joints.lagrangianModel.dt;
-        //var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(DoSimulation.xT), DoSimulation.ShortDynamics, options);
-        //var points = sol.SolveFromToStep(0, joints.lagrangianModel.dt, joints.lagrangianModel.dt / 100).ToArray();
+		// Si le sous-frame est un sous-frame intermédiaire, alors on fait aucun calcul d'intégration et on affiche rien
 
-        //Debug.Log(string.Format("points.len = {0}, {1}", points.GetUpperBound(0), points[0].X.Length));
-        //Debug.Log(string.Format("frameN = {0}", frameN));
-        //DoSimulation.xTplusdT = new double[MainParameters.Instance.joints.lagrangianModel.nDDL * 2];
-        //for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL * 2; i++)
-        //    DoSimulation.xTplusdT[i] = points[99].X[i];
+		if (subFrameN >= 1)
+		{
+			SaveInterpolationData();
+			subFrameN = 0;
+			return;
+		}
+		subFrameN = 1;
 
-        // Effacer la silhouette précédente en premier
+		// Cas spécial à t = 0 => on ne fait pas de calcul d'intégration et on utilise les données q0 et q0dot tel quel
 
-        for (int i = 0; i < joints.lagrangianModel.stickFigure.Length / 2; i++)
-            DrawObjects.Instance.Delete(lineStickFigure[i]);
-        DrawObjects.Instance.Delete(lineCenterOfMass);
-        for (int i = 0; i < joints.lagrangianModel.filledFigure.Length / 4; i++)
-            DrawObjects.Instance.Delete(lineFilledFigure[i]);
-        for (int i = 0; i < 4; i++)
-            DrawObjects.Instance.Delete(lineFloor[i]);
+		if (frameN <= 0)
+		{
+			DoSimulation.xTFrame1 = new double[MainParameters.Instance.joints.lagrangianModel.nDDL * 2];
+			for (int i = 0; i < DoSimulation.xTFrame0.Length; i++)
+				DoSimulation.xTFrame1[i] = DoSimulation.xTFrame0[i];
+		}
 
-        // Initialisation du vecteur qT et copier le vecteur de l'état t+dt dans le vecteur de l'état t
+		// Calcul d'intégration
 
-        double[] qT = new double[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		else
+		{
+			DoSimulation.modeRT = true;
+			DoSimulation.xTFrame1 = Ode.RK4TempsReel(DoSimulation.xTFrame0, DoSimulation.ShortDynamicsRT);
+		}
+
+		// Conserver les données d'interpolation du sous-frame actuel
+
+		SaveInterpolationData();
+
+		// Initialisation du vecteur qT et copier le vecteur t(frame) dans le vecteur t(frame - 1)
+
+		double[] qT = new double[MainParameters.Instance.joints.lagrangianModel.nDDL];
         for (int i = 0; i < qT.Length; i++)
-            qT[i] = (float)DoSimulation.xTplusdT[i];
-        for (int i = 0; i < DoSimulation.xT.Length; i++)
-            DoSimulation.xT[i] = DoSimulation.xTplusdT[i];
+            qT[i] = (float)DoSimulation.xTFrame1[i];
+        for (int i = 0; i < DoSimulation.xTFrame0.Length; i++)
+            DoSimulation.xTFrame0[i] = DoSimulation.xTFrame1[i];
 
         // Conserver les temps, positions et vitesses dans les matrices globales t, q et qdot, pour chacun des frames
 
-        t[frameN] = timeFrame * frameN;
+        t[frameN] = 2 * timeFrame * frameN;
         for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
         {
-            q[i, frameN] = DoSimulation.xTplusdT[i];
-            qdot[i, frameN] = DoSimulation.xTplusdT[joints.lagrangianModel.nDDL + i];
+            q[i, frameN] = DoSimulation.xTFrame1[i];
+            qdot[i, frameN] = DoSimulation.xTFrame1[joints.lagrangianModel.nDDL + i];
         }
 
         // Calcul des "tags", selon le modèle lagrangien utilisé
@@ -792,4 +809,20 @@ public class AnimationF : MonoBehaviour
         AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} = {1:0}°",
             MainParameters.Instance.languages.Used.displayMsgFinalTilt, MainParameters.Instance.joints.rot[numF - 1, 1] * 360));
     }
+
+	// =================================================================================================================================================================
+	/// <summary> Conserver les données d'interpolation du sous-frame actuel, pour être utiliser dans les frames suivants. </summary>
+
+	void SaveInterpolationData()
+	{
+		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
+		{
+			DoSimulation.qFrame0[i] = DoSimulation.qFrame1[i];
+			DoSimulation.qdotFrame0[i] = DoSimulation.qdotFrame1[i];
+			DoSimulation.qddotFrame0[i] = DoSimulation.qddotFrame1[i];
+			DoSimulation.qFrame1[i] = DoSimulation.qFrame2[i];
+			DoSimulation.qdotFrame1[i] = DoSimulation.qdotFrame2[i];
+			DoSimulation.qddotFrame1[i] = DoSimulation.qddotFrame2[i];
+		}
+	}
 }

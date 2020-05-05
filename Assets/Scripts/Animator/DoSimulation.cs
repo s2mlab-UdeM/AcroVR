@@ -8,19 +8,22 @@ using System.Runtime.InteropServices;
 
 public class DoSimulation
 {
-	/// <summary> Vecteur contenant l'état (q0 et q0dot) au temps t. </summary>
-	public static double[] xT;
-	/// <summary> Vecteur contenant l'état (q0 et q0dot) au temps t + dt. </summary>
-	public static double[] xTplusdT;
+	/// <summary> Vecteur contenant l'état (q0 et q0dot) au temps t(frame - 1). </summary>
+	public static double[] xTFrame0;
+	/// <summary> Vecteur contenant l'état (q0 et q0dot) au temps t(frame). </summary>
+	public static double[] xTFrame1;
 
-	// Déclaration des vecteurs contenant les positions, vitesses et accelerations des articulations à l'instant t et t + dt
+	// Vecteurs contenant les positions, vitesses et accelerations des articulations à l'instant t(frame - 1), t(frame - 0.5) et t(frame)
 
-	public static float[] q2T;
-	public static float[] q2dotT;
-	public static float[] q2dotdotT;
-	public static float[] q2TplusdT;
-	public static float[] q2dotTplusdT;
-	public static float[] q2dotdotTplusdT;
+	public static float[] qFrame0;					// t(frame - 1)
+	public static float[] qdotFrame0;
+	public static float[] qddotFrame0;
+	public static float[] qFrame1;					// t(frame - 0.5)
+	public static float[] qdotFrame1;
+	public static float[] qddotFrame1;
+	public static float[] qFrame2;					// t(frame)
+	public static float[] qdotFrame2;
+	public static float[] qddotFrame2;
 
 	// Déclaration des pointeurs
 
@@ -33,6 +36,10 @@ public class DoSimulation
 	static IntPtr ptr_solX;
 
 	public static bool modeRT = false;
+
+	static float[] qd;
+	static float[] qdotd;
+	static float[] qddotd;
 
 	public static int GetSimulation(out float[,] qOut)
 	{
@@ -119,11 +126,11 @@ public class DoSimulation
 
 		#region Sim_Airborn
 
-		xT = new double[joints.lagrangianModel.nDDL * 2];
+		xTFrame0 = new double[joints.lagrangianModel.nDDL * 2];
 		for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
 		{
-			xT[i] = q0[i];
-			xT[joints.lagrangianModel.nDDL + i] = q0dot[i];
+			xTFrame0[i] = q0[i];
+			xTFrame0[joints.lagrangianModel.nDDL + i] = q0dot[i];
 		}
 
 		Options options = new Options();
@@ -132,7 +139,7 @@ public class DoSimulation
 		// Extraire les données obtenues du Runge-Kutta et conserver seulement les points interpolés aux frames désirés, selon la durée et le dt utilisé
 
 		DoSimulation.modeRT = false;
-		var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(xT), ShortDynamics, options);
+		var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(xTFrame0), ShortDynamics, options);
 		var points = sol.SolveFromToStep(0, joints.duration + joints.lagrangianModel.dt, joints.lagrangianModel.dt).ToArray();
 
 		double[,] q = new double[joints.lagrangianModel.nDDL, points.GetUpperBound(0) + 1];
@@ -163,16 +170,29 @@ public class DoSimulation
             for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.nDDL; j++)
                 qOut[j, i] = (float)q[j, i];
 
-        return points.GetUpperBound(0) + 1;
+		return points.GetUpperBound(0) + 1;
 	}
 
 	// =================================================================================================================================================================
 	/// <summary> Routine qui sera exécuter par le ODE (Ordinary Differential Equation). </summary>
 
+	public static Vector ShortDynamicsRT(Vector x, float[] qF, float[] qFdot, float[] qFddot)
+	{
+		int NDDL = MainParameters.c_nQ(MainParameters.Instance.ptr_model);			// Récupère le nombre de DDL du modèle BioRBD
+		qd = new float[NDDL];
+		qdotd = new float[NDDL];
+		qddotd = new float[NDDL];
+		qd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qF);
+		qdotd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qFdot);
+		qddotd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qFddot);
+
+		return ShortDynamics(0, x);
+	}
+
 	public static Vector ShortDynamics(double t, Vector x)
 	{
-		int NDDL = MainParameters.c_nQ(MainParameters.Instance.ptr_model);      // Récupère le nombre de DDL du modèle BioRBD
-		int NROOT = 6;                                                          // On admet que la racine possède 6 ddl
+		int NDDL = MainParameters.c_nQ(MainParameters.Instance.ptr_model);			// Récupère le nombre de DDL du modèle BioRBD
+		int NROOT = 6;																// On admet que la racine possède 6 ddl
 		int NDDLhumans = 12;
 		double[] xBiorbd = new double[NDDL * 2];
 
@@ -181,16 +201,12 @@ public class DoSimulation
 		double[] m_taud = new double[NDDL];
 		double[] massMatrix = new double[NDDL * NDDL];
 
-		float[] qd = new float[NDDL];
-		float[] qdotd = new float[NDDL];
-		float[] qddotd = new float[NDDL];
-
-		float[] qTdT = new float[NDDL];                                         // Tableau des DDL(positions) à l'instant t + dt
-		float[] qdotTdT = new float[NDDL];                                      // Tableau des DDL(vitesses) à l'instant t + dt
-		float[] qddotTdT = new float[NDDL];                                     // Tableau des DDL(accélérations) à l'instant t + dt
-		float[] qT = new float[NDDL];                                           // Tableau des DDL(positions) à l'instant t
-		float[] qdotT = new float[NDDL];                                        // Tableau des DDL(vitesses) à l'instant t
-		float[] qddotT = new float[NDDL];                                       // Tableau des DDL(accélérations) à l'instant t
+		float[] qFrame0 = new float[NDDL];                                           // Tableau des DDL(positions) à l'instant t(frame - 1)
+		float[] qdotFrame0 = new float[NDDL];                                        // Tableau des DDL(vitesses) à l'instant t(frame - 1)
+		float[] qddotFrame0 = new float[NDDL];                                       // Tableau des DDL(accélérations) à l'instant t(frame - 1)
+		float[] qFrame1 = new float[NDDL];                                           // Tableau des DDL(positions) à l'instant t(frame)
+		float[] qdotFrame1 = new float[NDDL];                                        // Tableau des DDL(vitesses) à l'instant t(frame)
+		float[] qddotFrame1 = new float[NDDL];                                       // Tableau des DDL(accélérations) à l'instant t(frame)
 
 		double[] qddot2 = new double[NDDL];
 		double[] qddot1integ = new double[NDDL * 2];
@@ -223,24 +239,19 @@ public class DoSimulation
 			Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, (float)t, MainParameters.Instance.joints.lagrangianModel.q2, out qdH, out qdotdH, out qddotdH);
 			trajectory.ToString();                  // Pour enlever un warning lors de la compilation
 
+			qd = new float[NDDL];
+			qdotd = new float[NDDL];
+			qddotd = new float[NDDL];
 			qd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qdH);
 			qdotd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qdotdH);
 			qddotd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qddotdH);
-		}
-		else										// Online
-		{
-			qT = ConvertHumansBioRBD.qValuesHumans2Biorbd(q2T);
-			qdotT = ConvertHumansBioRBD.qValuesHumans2Biorbd(q2dotT);
-			qddotT = ConvertHumansBioRBD.qValuesHumans2Biorbd(q2dotdotT);
-			qTdT = ConvertHumansBioRBD.qValuesHumans2Biorbd(q2TplusdT);
-			qdotTdT = ConvertHumansBioRBD.qValuesHumans2Biorbd(q2dotTplusdT);
-			qddotTdT = ConvertHumansBioRBD.qValuesHumans2Biorbd(q2dotdotTplusdT);
 
-			// Fonction qui remplace Trajectory, retourne la valeur de Q, QDot, QDotDot à l'instant t
-
-			Interpolate(t, qT, qTdT, out qd);
-			Interpolate(t, qdotT, qdotTdT, out qdotd);
-			Interpolate(t, qddotT, qddotTdT, out qddotd);
+			qFrame0.ToString();                  // Pour enlever des warnings lors de la compilation
+			qdotFrame0.ToString();
+			qddotFrame0.ToString();
+			qFrame1.ToString();
+			qdotFrame1.ToString();
+			qddotFrame1.ToString();
 		}
 
 		for (int i = 0; i < qddot2.Length; i++)
@@ -309,11 +320,11 @@ public class DoSimulation
 	// =================================================================================================================================================================
 	/// <summary> Fonction qui remplace Trajectory, retourne la valeur de q2, q2dot, q2dotdot à l'instant t. </summary>
 
-	public static void Interpolate(double interpolation, float[] vecteurFrom, float[] vecteurTo, out float[] vecteurInterpoler)
-	{
-		vecteurInterpoler = new float[vecteurFrom.Length];
-		float t = (float)interpolation / (MainParameters.Instance.joints.lagrangianModel.dt / 2);		// Valeur du pas = 0.02 donc on divise pour avoir un pourcentage
-		for (int i = 0; i < vecteurInterpoler.Length; i++)
-			vecteurInterpoler[i] = UnityEngine.Mathf.Lerp(vecteurFrom[i], vecteurTo[i], t);				// Retourne un vecteur intermédiaire, proportionnel aux deux vecteur, selon la valeur interpolée
-	}
+	//public static void Interpolate(double interpolation, float[] vecteurFrom, float[] vecteurTo, out float[] vecteurInterpoler)
+	//{
+	//	vecteurInterpoler = new float[vecteurFrom.Length];
+	//	for (int i = 0; i < vecteurInterpoler.Length; i++)
+	//		vecteurInterpoler[i] = UnityEngine.Mathf.Lerp(vecteurFrom[i], vecteurTo[i], (float)interpolation);      // Retourne un vecteur intermédiaire, proportionnel aux deux vecteur, selon la valeur interpolée
+	//		//vecteurInterpoler[i] = UnityEngine.Mathf.Lerp(vecteurFrom[i], vecteurTo[i], (float)interpolation / MainParameters.Instance.joints.lagrangianModel.dt);
+	//}
 }
