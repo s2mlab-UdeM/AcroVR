@@ -51,7 +51,6 @@ public class Tab5_OnClick : MonoBehaviour
 
     void Start()
     {
-
         //pOVAnchor2.transform.position = 
     }
 
@@ -220,18 +219,21 @@ public class Tab5_OnClick : MonoBehaviour
     public void LoadPlay_GameManager()
     {
         ToolBox.GetInstance().GetManager<GameManager>().MissionLoad();
+        ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.SingleFemale);
+
+        //        ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
 
         /// Fetching 3D avatar Spawnpoint Vector3
-        Vector3 avatarVector3 = ToolBox.GetInstance().GetManager<DrawManager>().avatarVector3;
-        /// Fetching 3D avatar reference
-        GameObject avatar3D = ToolBox.GetInstance().GetManager<DrawManager>().girl1;
+        /*        Vector3 avatarVector3 = ToolBox.GetInstance().GetManager<DrawManager>().avatarVector3;
+                /// Fetching 3D avatar reference
+                GameObject avatar3D = ToolBox.GetInstance().GetManager<DrawManager>().girl1;
 
-        /// Place 3D avatar to spawnpoint && Active 3D avatar
-        if (avatar3D != null && avatar3D.activeSelf == false)
-        {
-            avatar3D.transform.position = avatarVector3;
-            avatar3D.SetActive(true);
-        }
+                /// Place 3D avatar to spawnpoint && Active 3D avatar
+                if (avatar3D != null && avatar3D.activeSelf == false)
+                {
+                    avatar3D.transform.position = avatarVector3;
+                    avatar3D.SetActive(true);
+                }*/
 
     }
 

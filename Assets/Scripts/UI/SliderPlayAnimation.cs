@@ -12,6 +12,9 @@ public class SliderPlayAnimation : MonoBehaviour
 	public Slider slider;
 	public PlayController playController;
 
+	public GameObject result;
+	public GameObject worldCanvas;
+
 	void Awake()
 	{
 
@@ -30,6 +33,14 @@ public class SliderPlayAnimation : MonoBehaviour
 	void Update()
 	{
 		slider.value = drawManager.frameN;
+
+/*		if (slider.value > 100)
+		{
+//			worldCanvas.SetActive(false);
+			result.SetActive(true);
+			result.GetComponent<Animator>().Play("Panel In");
+			ToolBox.GetInstance().GetManager<DrawManager>().PlayEnd();
+		}*/
 	}
 
 

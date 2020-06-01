@@ -127,12 +127,12 @@ public class AniGraphManager : MonoBehaviour
         //        curve.preWrapMode = WrapMode.PingPong;
         //        curve.postWrapMode = WrapMode.PingPong;
 
-        resultCanvas = Instantiate(resultPrefab);
-        resultCanvas.SetActive(false);
+        //        resultCanvas = Instantiate(resultPrefab);
+        //        resultCanvas.SetActive(false);
 
-        takeoffCanvas = Instantiate(takeoffPrefab);
-        takeoffCanvas.SetActive(false);
-        graph = takeoffCanvas.GetComponentInChildren<GraphChart>();
+        //        takeoffCanvas = Instantiate(takeoffPrefab);
+        //        takeoffCanvas.SetActive(false);
+        //        graph = takeoffCanvas.GetComponentInChildren<GraphChart>();
 
         /*        MyListOfStuff = new List<GuiListItem>(); //Initialize our list of stuff
 
@@ -144,6 +144,7 @@ public class AniGraphManager : MonoBehaviour
                 LoadGif(1, "Assets/Art/2.gif");
                 LoadGif(2, "Assets/Art/3.gif");*/
     }
+
 
     /*    void LoadGif(int num, string fileName)
         {
@@ -185,9 +186,10 @@ public class AniGraphManager : MonoBehaviour
                                     graph.DataSource.EndBatch();*/
         }
 
-        if (graph && takeoffCanvas.activeSelf)
+//        if (graph && takeoffCanvas.activeSelf)
+        if (graph && transform.parent.GetComponentInChildren<UIManager>().GetCurrentTab() == 2)
         {
-            graph.MouseToClient(out mousePosX, out mousePosY);
+                graph.MouseToClient(out mousePosX, out mousePosY);
             if (mousePosX < graph.DataSource.HorizontalViewOrigin || mousePosX > graph.DataSource.HorizontalViewOrigin + graph.DataSource.HorizontalViewSize ||
                 mousePosY < graph.DataSource.VerticalViewOrigin || mousePosY > graph.DataSource.VerticalViewOrigin + graph.DataSource.VerticalViewSize)
             {
@@ -260,6 +262,7 @@ public class AniGraphManager : MonoBehaviour
     public void DisplayCurveAndNodes(int curve, int ddl, bool axisRange)
     {
         if (graph == null) return;
+
         graph.DataSource.StartBatch();
 
         graph.DataSource.ClearCategory(dataCategories[curve]);
@@ -553,8 +556,8 @@ public class AniGraphManager : MonoBehaviour
                                             DrawNodeCurve(new Vector3(MainParameters.Instance.joints.t0[i], MainParameters.Instance.joints.q0[0, i] * Mathf.Rad2Deg/50, 0)/3, new Vector3(MainParameters.Instance.joints.t0[i+1], MainParameters.Instance.joints.q0[0, i+1] * Mathf.Rad2Deg/50, 0)/3);
                                     }*/
 
-                        windowRect1 = GUI.Window(0, windowRect1, Graph1, "Graph1");
-                        windowRect2 = GUI.Window(1, windowRect2, Graph2, "Graph2");
+//                        windowRect1 = GUI.Window(0, windowRect1, Graph1, "Graph1");
+//                        windowRect2 = GUI.Window(1, windowRect2, Graph2, "Graph2");
             //            windowRect3 = GUI.Window(2, windowRect3, Graph3, "Graph3");
             //            windowRect4 = GUI.Window(3, windowRect4, Graph4, "Graph4");
 
@@ -571,24 +574,38 @@ public class AniGraphManager : MonoBehaviour
 
     public void TaskOffGraphOn()
     {
+        takeoffCanvas = Instantiate(takeoffPrefab);
+//        takeoffCanvas.SetActive(false);
+        graph = takeoffCanvas.GetComponentInChildren<GraphChart>();
+
         transform.parent.GetComponentInChildren<DrawManager>().PlayEnd();
-        takeoffCanvas.SetActive(true);
+//        takeoffCanvas.SetActive(true);
     }
 
     public void TaskOffGraphOff()
     {
-        takeoffCanvas.SetActive(false);
+        Destroy(takeoffCanvas);
+//        takeoffCanvas.SetActive(false);
+    }
+
+    public void GraphOn()
+    {
+        graph = GameObject.Find("TrainingMenu").transform.Find("Canvas/TabPanel/TabContainer/TabTwo/Content2/PanelGraph/GraphMultiple/").gameObject.GetComponent<GraphChart>();
     }
 
     public void ResultGraphOn()
     {
+        resultCanvas = Instantiate(resultPrefab);
+//        resultCanvas.SetActive(false);
+
         //        bDraw = true;
-        resultCanvas.SetActive(true);
+//        resultCanvas.SetActive(true);
     }
 
     public void ResultGraphOff()
     {
-        resultCanvas.SetActive(false);
+        Destroy(resultCanvas);
+        //        resultCanvas.SetActive(false);
     }
 
     void Graph1(int windowID)

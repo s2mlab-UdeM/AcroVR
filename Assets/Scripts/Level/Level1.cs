@@ -12,7 +12,7 @@ public class Level1 : MonoBehaviour
 
     void Start ()
     {
-        ToolBox.GetInstance().GetManager<StatManager>().ProfileLoad("Student1");
+//        ToolBox.GetInstance().GetManager<StatManager>().ProfileLoad("Student1");
         ToolBox.GetInstance().GetManager<DrawManager>().SetAnimationSpeed(3);  // 1(fast) ~ 5(slow)
     }
 
@@ -26,7 +26,7 @@ public class Level1 : MonoBehaviour
                     else if(difference < 1.0) transform.parent.GetComponentInChildren<StatManager>().info.Score = 80;
                     else transform.parent.GetComponentInChildren<StatManager>().info.Score = 50;*/
 
-//            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
+            //            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
             ToolBox.GetInstance().GetManager<GameManager>().MissionLoad();
 
             //        MainParameters.Instance.joints.duration = mission.goal.Duration;
@@ -38,6 +38,8 @@ public class Level1 : MonoBehaviour
 
         if (GUI.Button(new Rect(Screen.width - 200, 70, 100, 50), "Load 2"))
         {
+            result.text = "";
+
             ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
             ToolBox.GetInstance().GetManager<GameManager>().MissionLoad();
             ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.DoubleFemale);
@@ -45,7 +47,7 @@ public class Level1 : MonoBehaviour
         }
         if (GUI.Button(new Rect(Screen.width - 200, 130, 100, 50), "Result"))
         {
-            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
+//            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
             ToolBox.GetInstance().GetManager<AniGraphManager>().ResultGraphOn();
         }
         if (GUI.Button(new Rect(Screen.width - 200, 190, 100, 50), "Save"))
@@ -54,7 +56,10 @@ public class Level1 : MonoBehaviour
         }
         if (GUI.Button(new Rect(Screen.width - 200, 250, 100, 50), "Replay"))
         {
+            result.text = "";
+
             //            ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOff();
+            ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.SingleFemale);
             ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
         }
 
@@ -70,8 +75,6 @@ public class Level1 : MonoBehaviour
             {
                 isTakeOff = true;
                 ToolBox.GetInstance().GetManager<AniGraphManager>().TaskOffGraphOn();
-
-                result.text = ToolBox.GetInstance().GetManager<DrawManager>().DisplayMessage();
             }
             else
             {
@@ -84,10 +87,14 @@ public class Level1 : MonoBehaviour
 
         if (GUI.Button(new Rect(Screen.width - 95, 10, 100, 50), "Load(Man)"))
         {
+            result.text = "";
+
             ToolBox.GetInstance().GetManager<GameManager>().MissionLoad();
             ToolBox.GetInstance().GetManager<DrawManager>().LoadAvatar(DrawManager.AvatarMode.SingleMale);
             ToolBox.GetInstance().GetManager<DrawManager>().ShowAvatar();
         }
+
+        ToolBox.GetInstance().GetManager<DrawManager>().frameN = (int)GUI.HorizontalScrollbar(new Rect(Screen.width - 200, 430, 100, 30), ToolBox.GetInstance().GetManager<DrawManager>().frameN, 1.0F, 0.0F, ToolBox.GetInstance().GetManager<DrawManager>().numberFrames);
     }
 
     void Update () {
@@ -100,6 +107,8 @@ public class Level1 : MonoBehaviour
             Camera.main.transform.position = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.position;
             Camera.main.transform.rotation = ToolBox.GetInstance().GetManager<DrawManager>().GetFirstViewTransform().transform.rotation;
         }
+
+        result.text = ToolBox.GetInstance().GetManager<DrawManager>().DisplayMessage();
 
         //        transform.Rotate(new Vector3(0,0,1), 20.0f * Time.deltaTime);
 

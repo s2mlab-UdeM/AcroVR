@@ -43,7 +43,7 @@ public class DrawManager : MonoBehaviour
     private GameObject girl1LeftArm;
     private GameObject girl1RightArm;
     // Root
-    private GameObject girl1Hip;
+    public GameObject girl1Hip;
     /// </summary>
 
     /// <summary>
@@ -112,6 +112,9 @@ public class DrawManager : MonoBehaviour
 
     IntPtr ptr_model;
 
+    bool isSimulationMode = true;
+    public AvatarMode setAvatar = AvatarMode.SingleFemale;
+
     void Awake()
     {
 //        girl1Prefab = (GameObject)Resources.Load("girl1", typeof(GameObject));
@@ -141,25 +144,29 @@ public class DrawManager : MonoBehaviour
 //        girl1.SetActive(false);
         cntAvatar = 1;
 
-        avatarSpawnpoint = GameObject.FindGameObjectWithTag("AnchorAvatarToWorld");
-        avatarVector3 = avatarSpawnpoint.transform.position;
+        //        avatarSpawnpoint = GameObject.FindGameObjectWithTag("AnchorAvatarToWorld");
+        //        avatarVector3 = avatarSpawnpoint.transform.position;
+
+        //        Cursor.visible = false;
     }
 
     void Update()
     {
-        if (isPaused && pauseStart == 0) pauseStart = Time.time;
+/*        if (isPaused && pauseStart == 0) pauseStart = Time.time;
         if (!isPaused && pauseStart != 0)
         {
             pauseTime = Time.time - pauseStart;
             pauseStart = 0;
-        }
+        }*/
 
         if (!animateON) return;
 
         if (frameN <= 0) timeStarted = Time.time;
-        if (Time.time - (timeStarted + pauseTime) >= (timeFrame * frameN) * factorPlaySpeed)
+//        if (Time.time - (timeStarted + pauseTime) >= (timeFrame * frameN) * factorPlaySpeed)
+        if (Time.time - (timeStarted) >= (timeFrame * frameN) * factorPlaySpeed)
         {
-            timeElapsed = Time.time - (timeStarted + pauseTime);
+//                timeElapsed = Time.time - (timeStarted + pauseTime);
+            timeElapsed = Time.time - (timeStarted);
 
             if (frameN < numberFrames)
                 PlayOneFrame();
@@ -185,6 +192,8 @@ public class DrawManager : MonoBehaviour
 
     public void LoadAvatar(AvatarMode mode)
     {
+        isPaused = false;
+
         string namePrefab1 = "";
         string namePrefab2 = "";
         switch (mode)
@@ -203,24 +212,32 @@ public class DrawManager : MonoBehaviour
                 break;
         }
 
-        girl1Prefab = (GameObject)Resources.Load(namePrefab1, typeof(GameObject));
-        girl1 = Instantiate(girl1Prefab);
+        if (girl1 == null)
+        {
+            girl1Prefab = (GameObject)Resources.Load(namePrefab1, typeof(GameObject));
+            girl1 = Instantiate(girl1Prefab);
 
-        girl1LeftUp = girl1.transform.Find("Petra.002/hips/thigh.L").gameObject;
-        girl1RightUp = girl1.transform.Find("Petra.002/hips/thigh.R").gameObject;
-        // Knee
-        girl1LeftLeg = girl1.transform.Find("Petra.002/hips/thigh.L/shin.L").gameObject;
-        girl1RightLeg = girl1.transform.Find("Petra.002/hips/thigh.R/shin.R").gameObject;
-        // Shoulder
-        girl1RightArm = girl1.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.R/upper_arm.R").gameObject;
-        girl1LeftArm = girl1.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.L/upper_arm.L").gameObject;
-        // Root
-        girl1Hip = girl1.transform.Find("Petra.002/hips").gameObject;
-        ///////////////////////////
+            girl1LeftUp = girl1.transform.Find("Petra.002/hips/thigh.L").gameObject;
+            girl1RightUp = girl1.transform.Find("Petra.002/hips/thigh.R").gameObject;
+            // Knee
+            girl1LeftLeg = girl1.transform.Find("Petra.002/hips/thigh.L/shin.L").gameObject;
+            girl1RightLeg = girl1.transform.Find("Petra.002/hips/thigh.R/shin.R").gameObject;
+            // Shoulder
+            girl1RightArm = girl1.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.R/upper_arm.R").gameObject;
+            girl1LeftArm = girl1.transform.Find("Petra.002/hips/spine/chest/chest1/shoulder.L/upper_arm.L").gameObject;
+            // Root
+            girl1Hip = girl1.transform.Find("Petra.002/hips").gameObject;
+            ///////////////////////////
 
-        firstView = girl1.transform.Find("Petra.002/hips/FirstViewPoint").gameObject;
+            firstView = girl1.transform.Find("Petra.002/hips/FirstViewPoint").gameObject;
+        }
 
         q1 = MakeSimulation();
+
+        girl1.transform.position = Vector3.zero;
+        girl1LeftArm.transform.localRotation = Quaternion.identity;
+        girl1RightArm.transform.localRotation = Quaternion.identity;
+        girl1Hip.transform.localRotation = Quaternion.AngleAxis(90f, Vector3.right);
 
         if (cntAvatar > 1)
         {
@@ -255,7 +272,7 @@ public class DrawManager : MonoBehaviour
 
         // test0 = q1[12,51]
         // test1 = q1[12,54]
-        Play_s(q1, 0, q1.GetUpperBound(1) + 1);
+//        Play_s(q1, 0, q1.GetUpperBound(1) + 1);
     }
 
     public void SetAnimationSpeed(float speed)
@@ -275,11 +292,11 @@ public class DrawManager : MonoBehaviour
 
     public void PlayEnd()
     {
-        //        animateON = false;
-        // frameN = 0;
+        animateON = false;
+        frameN = 0;
 
-        DisplayNewMessage(false, false, string.Format(" {0} = {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgSimulationDuration, timeElapsed));
-        DisplayNewMessage(false, true, string.Format(" {0}", MainParameters.Instance.languages.Used.displayMsgEndSimulation));
+//        DisplayNewMessage(false, false, string.Format(" {0} = {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgSimulationDuration, timeElapsed));
+//        DisplayNewMessage(false, true, string.Format(" {0}", MainParameters.Instance.languages.Used.displayMsgEndSimulation));
 
 
         transform.parent.GetComponentInChildren<GameManager>().InterpolationDDL();
@@ -596,7 +613,7 @@ public class DrawManager : MonoBehaviour
         }
 
         float numSomersault = MathFunc.MatrixGetColumn(rotAbs, 0).Max() + MainParameters.Instance.joints.takeOffParam.rotation / 360;
-        DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgNumberSomersaults, numSomersault));
+        DisplayNewMessage(true, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgNumberSomersaults, numSomersault));
         DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgNumberTwists, MathFunc.MatrixGetColumn(rotAbs, 2).Max()));
         DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgFinalTwist, MainParameters.Instance.joints.rot[tIndex - 1, 2]));
         DisplayNewMessage(false, true, string.Format(" {0} = {1:0}°", MainParameters.Instance.languages.Used.displayMsgMaxTilt, MathFunc.MatrixGetColumn(rotAbs, 1).Max() * 360));
@@ -991,7 +1008,7 @@ public class DrawManager : MonoBehaviour
                                             Quaternion.AngleAxis((float)qf_girl2[10] * Mathf.Rad2Deg, Vector3.forward) *
                                             Quaternion.AngleAxis((float)qf_girl2[11] * Mathf.Rad2Deg, Vector3.up);
         girl2Hip.transform.position = new Vector3((float)qf_girl2[6], (float)qf_girl2[8], (float)qf_girl2[7]);
-        girl2Hip.transform.position += new Vector3(2f, 0, 0);
+//        girl2Hip.transform.position += new Vector3(2f, 0, 0);
 
         if (!isPaused) secondFrameN++;
     }
@@ -1076,14 +1093,17 @@ public class DrawManager : MonoBehaviour
         girl1RightArm.transform.localRotation = Quaternion.AngleAxis(-(float)qf[4] * Mathf.Rad2Deg, Vector3.up) *
                                             Quaternion.AngleAxis((float)qf[5] * Mathf.Rad2Deg - 90f, Vector3.forward);
 
-        // Root
-        girl1Hip.transform.position = new Vector3((float)qf[6], (float)qf[8], (float)qf[7]);
-//        girl1Hip.transform.position += new Vector3(avatarVector3.x, avatarVector3.y, avatarVector3.z);    ///Search reference: Avatar spawnpoint, Vector3 spawnpoint 
+        if (isSimulationMode)
+        {
+            // Root
+            girl1Hip.transform.position = new Vector3((float)qf[6], (float)qf[8], (float)qf[7]);
+            //        girl1Hip.transform.position += new Vector3(avatarVector3.x, avatarVector3.y, avatarVector3.z);    ///Search reference: Avatar spawnpoint, Vector3 spawnpoint 
 
-        // Bio Order
-        girl1Hip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
-                                            Quaternion.AngleAxis((float)qf[10] * Mathf.Rad2Deg, Vector3.forward) *
-                                            Quaternion.AngleAxis((float)qf[11] * Mathf.Rad2Deg, Vector3.up);
+            // Bio Order
+            girl1Hip.transform.localRotation = Quaternion.AngleAxis((float)qf[9] * Mathf.Rad2Deg + 90f, Vector3.right) *
+                                                Quaternion.AngleAxis((float)qf[10] * Mathf.Rad2Deg, Vector3.forward) *
+                                                Quaternion.AngleAxis((float)qf[11] * Mathf.Rad2Deg, Vector3.up);
+        }
 
         if (!isPaused) frameN++;
     }
@@ -1182,5 +1202,15 @@ public class DrawManager : MonoBehaviour
             factorTags2Screen = factorTags2ScreenY;
         else
             factorTags2Screen = animationMaxDimOnScreen / (tagZMax - tagZMin);
+    }
+
+    public void SimulationMode()
+    {
+        isSimulationMode = true;
+    }
+
+    public void GestureMode()
+    {
+        isSimulationMode = false;
     }
 }

@@ -33,13 +33,17 @@ public class TabButtonMenu : MonoBehaviour
 
 	private List<GameObject> listTab = new List<GameObject>();
 
+//	public GameObject verticalNumber;
+
 
 	// Start
 	void Start()
 	{
 		CreateTabList();
-		DeveloperTool();
-		ProfileCheckOnStart();
+		//		DeveloperTool();
+		//		ProfileCheckOnStart();
+
+		Tab2();
 
 	}
 
@@ -96,7 +100,6 @@ public class TabButtonMenu : MonoBehaviour
 	public void LaunchWithProfile()
 	{
 		Tab1();
-
 	}
 
 	///--- Activate/Disable children in List listTab (GameObject Tab)
@@ -158,6 +161,8 @@ public class TabButtonMenu : MonoBehaviour
 	///--- Movement Tab
 	public void Tab1()
 	{
+//		verticalNumber.SetActive(false);
+
 		SetActiveTab();
 
 		///--- Activate Element0 (parent)
@@ -171,6 +176,8 @@ public class TabButtonMenu : MonoBehaviour
 	///--- Take Off Tab
 	public void Tab2()
 	{
+//		verticalNumber.SetActive(true);
+
 		SetActiveTab();
 
 		///--- Activate Element0 (parent)
@@ -184,6 +191,8 @@ public class TabButtonMenu : MonoBehaviour
 	///--- Replay Tab
 	public void Tab3()
 	{
+//		verticalNumber.SetActive(false);
+
 		SetActiveTab();
 
 		///--- Activate Element0 (parent)
@@ -197,6 +206,8 @@ public class TabButtonMenu : MonoBehaviour
 	///--- Results Tab
 	public void Tab4()
 	{
+//		verticalNumber.SetActive(false);
+
 		SetActiveTab();
 
 		///--- Activate Element0 (parent)
@@ -210,6 +221,8 @@ public class TabButtonMenu : MonoBehaviour
 	///--- Settings Tab
 	public void Tab5()
 	{
+//		verticalNumber.SetActive(false);
+
 		SetActiveTab();
 
 		///--- Activate Element0 (parent)

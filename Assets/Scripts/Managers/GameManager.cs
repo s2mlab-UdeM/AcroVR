@@ -65,6 +65,7 @@ public class GameManager : MonoBehaviour
         ExtensionFilter[] extensions = new[]
         {
             new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileTxtFile, "json"),
+//            new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileTxtFile, "*"),
             new ExtensionFilter(MainParameters.Instance.languages.Used.movementLoadDataFileAllFiles, "*" ),
         };
 
@@ -74,8 +75,13 @@ public class GameManager : MonoBehaviour
         if (fileName.Length <= 0)
             return;
 
-//         ReadDataFiles_s(fileName);
-        ReadAniFromJSON(fileName);
+        string e = fileName.Substring(fileName.Length - 3);
+
+        if(e == "txt") ReadDataFiles_s(fileName);
+        else ReadAniFromJSON(fileName);
+
+        //         ReadDataFiles_s(fileName);
+//        ReadAniFromJSON(fileName);
     }
 
     private void ReadDataFromJSON(string fileName)
@@ -84,15 +90,17 @@ public class GameManager : MonoBehaviour
         mission = JsonUtility.FromJson<MissionInfo>(dataAsJson);
     }
 
-    private void InitAnimationInfo()
+    public void InitAnimationInfo(float num)
     {
         MainParameters.StrucJoints jointsTemp = new MainParameters.StrucJoints();
         jointsTemp.fileName = null;
         jointsTemp.nodes = null;
-        jointsTemp.duration = 0;
+//        jointsTemp.duration = 0;
+        jointsTemp.duration = 2;
         jointsTemp.condition = 0;
         jointsTemp.takeOffParam.verticalSpeed = 0;
-        jointsTemp.takeOffParam.anteroposteriorSpeed = 0;
+//        jointsTemp.takeOffParam.anteroposteriorSpeed = 0;
+        jointsTemp.takeOffParam.anteroposteriorSpeed = num;
         jointsTemp.takeOffParam.somersaultSpeed = 0;
         jointsTemp.takeOffParam.twistSpeed = 0;
         jointsTemp.takeOffParam.tilt = 0;
@@ -106,6 +114,7 @@ public class GameManager : MonoBehaviour
             jointsTemp.nodes[i].name = null;
             jointsTemp.nodes[i].interpolation = MainParameters.Instance.interpolationDefault;
             jointsTemp.nodes[i].T = new float[] { 0, 0.0001f};
+//            jointsTemp.nodes[i].T = new float[] { 0, 1.000000f };
             jointsTemp.nodes[i].Q = new float[] { 0, 0.0f};
             jointsTemp.nodes[i].ddlOppositeSide = -1;
         }

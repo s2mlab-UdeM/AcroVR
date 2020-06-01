@@ -214,10 +214,6 @@ public class StatManager : MonoBehaviour
                     circle.transform.position = hit.collider.gameObject.transform.position;
             }
         }
-
-        if(Input.GetKeyDown(KeyCode.A))
-        {
-        }
     }
 
     private IEnumerator RotateLerp(float _goal, float _speed)
