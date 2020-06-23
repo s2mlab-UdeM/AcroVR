@@ -1,4 +1,5 @@
-﻿using ChartAndGraph;
+#define Graph_And_Chart_PRO
+using ChartAndGraph;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace ChartAndGraph
 {
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))]
-    public class CylinderPathGenerator : SmoothPathGenerator
+    public partial class CylinderPathGenerator : SmoothPathGenerator
     {
         public int CircleVertices = 10;
         [Range(0.01f,10.0f)]

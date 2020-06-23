@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,7 @@ namespace ChartAndGraph
         protected Dictionary<string, List<BillboardText>> mTexts = new Dictionary<string, List<BillboardText>>();
         protected HashSet<BillboardText> mActiveTexts = new HashSet<BillboardText>();
         HashSet<string> mOccupiedCateogies = new HashSet<string>();
+        Vector3[] mDirections;
         public class RadarEventArgs
         {
             public RadarEventArgs(string category,string group,double value,Vector3 position, int index)
@@ -175,6 +177,7 @@ namespace ChartAndGraph
             }
         }
 
+        [Serializable]
         public class RadarEvent : UnityEvent<RadarEventArgs>
         {
 
@@ -352,6 +355,56 @@ namespace ChartAndGraph
             base.LateUpdate();       
         }
 
+        public bool ItemToWorldPosition(string group, double amount, out Vector3 worldposition)
+        {
+            worldposition = Vector3.zero;
+            if (mDirections == null || mDirections.Length == 0)
+                return false;
+            int index = Data.GetGroupIndex(group);
+            Vector3 dir = mDirections[index];
+            double max = Data.GetMaxValue();
+            worldposition = ((float)(amount / max) * Radius) * dir;
+            worldposition = transform.TransformPoint(worldposition);
+            return true;
+        }
+
+        public bool SnapWorldPointToPosition(Vector3 worldSpace,out string group,out double amount)
+        {
+            group = null;
+            amount = 0f;
+            if (mDirections == null || mDirections.Length == 0)
+                return false;
+            Vector3 pos = transform.InverseTransformPoint(worldSpace);
+            pos.z = 0;
+
+         //   Vector3 dir = mDirections[0];
+            group = Data.GetGroupName(0);
+            if (Math.Abs(pos.x) < 0.001f && Math.Abs(pos.y) < 0.001f)
+            {
+                //zero vector do nothing we are taking the first direction in the array
+            }
+            else
+            {
+                float dot = float.MinValue;
+                for (int i = 0; i < mDirections.Length; i++)
+                {
+                    float newDot = Vector3.Dot(mDirections[i], pos);
+                    if(newDot > dot)
+                    {
+                        dot = newDot;
+                //        dir = mDirections[i];
+                        group = Data.GetGroupName(i);
+                    }
+                }
+            }
+            
+            float mag = pos.magnitude;
+            double max = Data.GetMaxValue();
+            amount = ((mag/Radius) * max);
+            amount = Math.Max(0, Math.Min(max, amount));
+            return true;
+        }
+
         public override void InternalGenerateChart()
         {
             if (gameObject.activeInHierarchy == false)
@@ -371,14 +424,14 @@ namespace ChartAndGraph
             if (rowCount <3)
                 return;
 
-            Vector3[] directions = new Vector3[rowCount];
+            mDirections = new Vector3[rowCount];
             float[] angles = new float[rowCount];
 
             for (int i = 0; i < rowCount; i++)
             {
                 float angle = (float)((((float)i) / (float)rowCount) * Math.PI * 2f) + Angle * Mathf.Deg2Rad;
                 angles[i] = angle;
-                directions[i] = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+                mDirections[i] = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
             }
 
             Vector3[] path = new Vector3[rowCount];
@@ -388,13 +441,12 @@ namespace ChartAndGraph
             {
                 float rad = Radius * ((float)(i + 1) / (float)TotalAxisDevisions);
                 for (int j = 0; j < rowCount; j++)
-                    path[j] = (directions[j] * rad) + zAdd;
+                    path[j] = (mDirections[j] * rad) + zAdd;
               //  path[rowCount] = path[0];
                 zAdd.z += AxisAdd;
                 GameObject axisObject = CreateAxisObject(AxisThickness, path);
                 mAxisObjects.Add(axisObject);
                 axisObject.transform.SetParent(transform, false);
-
             }
 
             if (mGroupLabels != null && mGroupLabels.isActiveAndEnabled)
@@ -402,9 +454,9 @@ namespace ChartAndGraph
                 for (int i = 0; i < rowCount; i++)
                 {
                     string group = Data.GetGroupName(i);
-                    Vector3 basePosition = directions[i] * Radius;
-                    Vector3 breadthAxis = Vector3.Cross(directions[i], Vector3.forward);
-                    Vector3 position = basePosition + directions[i] * mGroupLabels.Seperation;
+                    Vector3 basePosition = mDirections[i] * Radius;
+                    Vector3 breadthAxis = Vector3.Cross(mDirections[i], Vector3.forward);
+                    Vector3 position = basePosition + mDirections[i] * mGroupLabels.Seperation;
                     position += breadthAxis * mGroupLabels.Location.Breadth;
                     position += new Vector3(0f , 0f, mGroupLabels.Location.Depth);
                     string toSet = mGroupLabels.TextFormat.Format(group, "", "");
@@ -424,7 +476,7 @@ namespace ChartAndGraph
                     for (int j = 0; j < rowCount; j++)
                     {
                         float rad = ((float)(data[j, i] / maxValue)) * Radius;
-                        path[j] = directions[j] * rad;
+                        path[j] = mDirections[j] * rad;
                     }
                   //  path[rowCount] = path[0];
                     GameObject category = CreateCategoryObject(path, i);
@@ -445,7 +497,7 @@ namespace ChartAndGraph
                         float factor = ((float)(i + 1) / (float)TotalAxisDevisions);
                         float rad = Radius * factor + mItemLabels.Seperation;
                         string value = ChartAdancedSettings.Instance.FormatFractionDigits(mItemLabels.FractionDigits,(float)(maxValue * factor));
-                        Vector3 position = Vector3.Lerp(directions[index] , directions[nextIndex] , blend) * rad;
+                        Vector3 position = Vector3.Lerp(mDirections[index] , mDirections[nextIndex] , blend) * rad;
                         position.z = mItemLabels.Location.Depth;
                         string toSet = mItemLabels.TextFormat.Format(value, "", "");
                         BillboardText billboard = ChartCommon.CreateBillboardText(null,mItemLabels.TextPrefab, transform, toSet, position.x, position.y, position.z,0f, transform,hideHierarchy, mItemLabels.FontSize, mItemLabels.FontSharpness);
@@ -467,9 +519,9 @@ namespace ChartAndGraph
                 PointClicked.Invoke(args);
         }
 
-        protected override void OnItemLeave(object userData)
+        protected override void OnItemLeave(object userData,string type)
         {
-            base.OnItemLeave(userData);
+            base.OnItemLeave(userData, type);
             RadarEventArgs args = userData as RadarEventArgs;
             foreach (BillboardText t in mActiveTexts)
             {
@@ -517,7 +569,7 @@ namespace ChartAndGraph
                 {
                     BillboardText b = catgoryTexts[args.Index];
                     mActiveTexts.Add(b);
-                    Text t = b.UIText;
+                    GameObject t = b.UIText;
                     if (t != null)
                     {
                         foreach (ChartItemEffect effect in t.GetComponents<ChartItemEffect>())

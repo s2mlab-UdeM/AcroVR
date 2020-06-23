@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,28 @@ namespace ChartAndGraph.Legened
     {
         [SerializeField]
         private int fontSize;
+
+
+        [Serializable]
+        public class ImageOverride
+        {
+            public Texture2D Image = null;
+            public String category = "";
+        }
+        [SerializeField]
+        public ImageOverride[] CategoryImages = null;
+
+        private Dictionary<string,Texture2D> CreateimageDictionary()
+        {
+            Dictionary<string, Texture2D> dic = new Dictionary<string, Texture2D>();
+            if (CategoryImages == null)
+                return dic;
+            foreach(ImageOverride ent in CategoryImages)
+            {
+                dic[ent.category] = ent.Image;
+            }
+            return dic;
+        }
 
         public int FontSize
         {
@@ -163,32 +186,48 @@ namespace ChartAndGraph.Legened
             LegenedData inf = ((IInternalUse)chart).InternalLegendInfo;
             if (inf == null)
                 return;
-            foreach(LegenedData.LegenedItem item in inf.Items)
+            var dic = CreateimageDictionary();
+            foreach (LegenedData.LegenedItem item in inf.Items)
             {
-                GameObject prefab =  (GameObject)GameObject.Instantiate(legendItemPrefab.gameObject);
+                GameObject prefab = (GameObject)GameObject.Instantiate(legendItemPrefab.gameObject);
                 prefab.transform.SetParent(transform, false);
-                ChartCommon.HideObject(prefab, true);
+                prefab.hideFlags = HideFlags.HideAndDontSave;
+                foreach (Transform child in prefab.transform)
+                    child.gameObject.hideFlags = HideFlags.HideAndDontSave;
+
                 CanvasLegendItem legendItemData = prefab.GetComponent<CanvasLegendItem>();
-                if (legendItemData.Image != null)
+                Texture2D overrideImage = null;
+
+                if (dic.TryGetValue(item.Name, out overrideImage) == false)
+                    overrideImage = null;
+
+                if(overrideImage != null)
                 {
-                    if (item.Material == null)
-                        legendItemData.Image.material = null;
-                    else
+                    legendItemData.Image.material = null;
+                    Texture2D tex = overrideImage;
+                    legendItemData.Image.sprite = CreateSpriteFromTexture(tex);
+                }
+                else
+                    if (legendItemData.Image != null)
                     {
-                        if (isGradientShader(item.Material))
-                        {
-                            legendItemData.Image.material = CreateCanvasGradient(item.Material);
-                        }
+                        if (item.Material == null)
+                            legendItemData.Image.material = null;
                         else
                         {
-                            legendItemData.Image.material = null;
-                            Texture2D tex = item.Material.mainTexture as Texture2D;
-                            if (tex != null)
-                                legendItemData.Image.sprite = CreateSpriteFromTexture(tex);
-                            legendItemData.Image.color = item.Material.color;
+                            if (isGradientShader(item.Material))
+                            {
+                                legendItemData.Image.material = CreateCanvasGradient(item.Material);
+                            }
+                            else
+                            {
+                                legendItemData.Image.material = null;
+                                Texture2D tex = item.Material.mainTexture as Texture2D;
+                                if (tex != null)
+                                    legendItemData.Image.sprite = CreateSpriteFromTexture(tex);
+                                legendItemData.Image.color = item.Material.color;
+                            }
                         }
                     }
-                }
                 if (legendItemData.Text != null)
                 {
                     legendItemData.Text.text = item.Name;

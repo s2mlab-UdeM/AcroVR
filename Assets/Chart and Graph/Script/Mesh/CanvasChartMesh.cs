@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,7 +44,7 @@ namespace ChartAndGraph
             mVHWrapAround = null;
             mListWrapAround = wrapAround;
         }
-        public override BillboardText AddText(AnyChart chart, Text prefab, Transform parentTransform, int fontSize,float fontScale, string text, float x, float y, float z,float angle, object userData)
+        public override BillboardText AddText(AnyChart chart, MonoBehaviour prefab, Transform parentTransform, int fontSize,float fontScale, string text, float x, float y, float z,float angle, object userData)
         {
             if(mTextOnly)
                return base.AddText(chart, prefab, parentTransform, fontSize,fontScale, text, x, y, z,angle, userData);

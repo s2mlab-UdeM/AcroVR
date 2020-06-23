@@ -1,4 +1,5 @@
-﻿using ChartAndGraph.DataSource;
+#define Graph_And_Chart_PRO
+using ChartAndGraph.DataSource;
 using ChartAndGraph.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -112,6 +113,19 @@ namespace ChartAndGraph
             if (ProperyUpdated != null)
                 ProperyUpdated();
         }
+        public bool HasCategory(string category)
+        {
+            try
+            {
+                var col = mDataSource.Columns[category];
+                if (col != null)
+                    return true;
+            }
+            catch
+            {
+            }
+            return false;
+        }
 
         /// <summary>
         /// rename a category. throws an exception on error
@@ -124,6 +138,33 @@ namespace ChartAndGraph
             RaisePropertyUpdated();
         }
 
+        public object StoreCategory(string category)
+        {
+            CategoryData data = (CategoryData)(mDataSource.Columns[category].UserData);
+            data.Materials = mDataSource.Columns[category].Material;
+            return data;
+        }
+        
+        public void RestoreCategory(string category, object data)
+        {
+            var toSet = (CategoryData)data;
+            CategoryData current = (CategoryData)(mDataSource.Columns[category].UserData);
+            current.DepthOffset = toSet.DepthOffset;
+            current.Materials = toSet.Materials;
+            current.RadiusScale = toSet.RadiusScale;
+            current.DepthScale = toSet.DepthScale;
+            mDataSource.Columns[category].Material = toSet.Materials;
+            RaisePropertyUpdated();
+        }
+
+        public void SetCateogryParams(string category, float radiusScale, float depthScale, float depthOffset)
+        {
+            var col = mDataSource.Columns[category];
+            CategoryData data = col.UserData as CategoryData;
+            data.RadiusScale = radiusScale;
+            data.DepthScale = depthScale;
+            data.DepthOffset = depthOffset;
+        }
         /// <summary>
         /// call this to suspend chart redrawing while updating the data of the chart
         /// </summary>
@@ -225,6 +266,7 @@ namespace ChartAndGraph
         public void SetMaterial(string category, Material material)
         {
             SetMaterial(category, new ChartDynamicMaterial(material));
+            
         }
 
         internal ChartDynamicMaterial GetMaterial(string category)
@@ -240,6 +282,7 @@ namespace ChartAndGraph
         public void SetMaterial(string category, ChartDynamicMaterial material)
         {
             mDataSource.Columns[category].Material = material;
+            RaisePropertyUpdated();
         }
 
         /// <summary>
@@ -269,6 +312,16 @@ namespace ChartAndGraph
             if (curve.length == 0)
                 return true;
             return time > curve.keys[curve.length - 1].time;
+        }
+
+
+        /// <summary>
+        /// used intenally , do not call
+        /// </summary>
+        /// <param name="cats"></param>
+        public object[] StoreAllCategoriesinOrder()
+        {
+            return mCategories.ToArray();
         }
 
         private void FixEaseFunction(AnimationCurve curve)

@@ -1,4 +1,5 @@
-﻿using ChartAndGraph.DataSource;
+#define Graph_And_Chart_PRO
+using ChartAndGraph.DataSource;
 using ChartAndGraph.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,38 @@ namespace ChartAndGraph
             Insert(mItems.Count, item); // call insert
         }
 
+        public void SwitchPositions(string first, string second)
+        {
+            int firstIndex, secondIndex;
+            if (TryGetIndexByName(first, out firstIndex) == false)
+                throw new ChartItemNotExistException(String.Format("A {0} by the name {1} does not exist in the collection", ItemTypeName, first));
+            if (TryGetIndexByName(second, out secondIndex) == false)
+                throw new ChartItemNotExistException(String.Format("A {0} by the name {1} does not exist in the collection", ItemTypeName, second));
+            SwitchPositions(firstIndex, secondIndex);
+        }
+
+        public void SwitchPositions(int first,int second)
+        {
+            T tmp = mItems[first];
+            mItems[first] = mItems[second];
+            mItems[second] = tmp;
+            if(ItemsReplaced != null)
+                ItemsReplaced(mItems[first].Name, first, mItems[second].Name, second);
+        }
+
+        public void Move(string name,int newPosition)
+        {
+            if (newPosition >= Count || newPosition<0)
+                throw new IndexOutOfRangeException();
+            int currentPosition;
+            if(TryGetIndexByName(name, out currentPosition) == false)
+                throw new ChartItemNotExistException(String.Format("A {0} by the name {1} does not exist in the collection", ItemTypeName, name));
+            int advance = Math.Sign(newPosition - currentPosition);
+            if (advance == 0) // same position
+                return;
+            for(int i=currentPosition; i!=newPosition; i+=advance)
+                SwitchPositions(i, i + advance);
+        }
         public bool TryGetIndexByName(string name,out int result)
         {
             for(int i=0; i<mItems.Count; ++i)
@@ -72,6 +105,8 @@ namespace ChartAndGraph
         public event Action<string, IDataItem> NameChanged;
         public event EventHandler OrderChanged;
         public event Action<T> ItemRemoved;
+        public event Action<string, int, string, int> ItemsReplaced;
+
 #pragma warning restore 0067
 
         public T this[int index]

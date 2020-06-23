@@ -9,6 +9,7 @@ using System.Collections.Generic;
 public class Main : MonoBehaviour
 {
 	public static Main Instance;
+
 	public GameObject textVersionFR;
 	public GameObject textVersionEN;
 	public Button buttonToolTips;
@@ -41,55 +42,75 @@ public class Main : MonoBehaviour
 
 	public bool toolTipsON;
 
+	public bool testXSensUsed;
+
 	// =================================================================================================================================================================
 	/// <summary> Initialisation du script. </summary>
 
 	void Start ()
 	{
 		Instance = this;
-		toolTipsON = true;
+		toolTipsON = !testXSensUsed;
+		MainParameters.Instance.testXSensUsed = testXSensUsed;
+
+		// S'assurer que le séparateur décimal est bien un point et non une virgule
+
+		System.Globalization.NumberFormatInfo nfi = new System.Globalization.NumberFormatInfo();
+		nfi.NumberDecimalSeparator = ".";
+		System.Globalization.CultureInfo ci = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
+		ci.NumberFormat = nfi;
+		System.Threading.Thread.CurrentThread.CurrentCulture = ci;
 
 		// Logiciel sera désactivé automatiquement après la date spécifiée ci - dessous
 		// Un fichier "bidon" est créé pour gérer les cas où l'utilisateur aurait modifié la date par la suite, alors le logiciel resterait désactivé quand même
 		// Une façon simple de réactiver le logiciel est d'effacer le fichier "bidon"
 
-//#if UNITY_STANDALONE_OSX
-//		string dirCheckFileName = string.Format("{0}/Documents/AcroVR/Lib", Environment.GetFolderPath(Environment.SpecialFolder.Personal));
-//		string checkFileName = string.Format("{0}/AcroVR.dll", dirCheckFileName);
-//#else
-//		string checkFileName = Application.persistentDataPath + @"/AcroVR.dll";
-//#endif
-//		DateTime endDate = new DateTime(2019, 12, 6);                                   // Date = 6 déc 2019
-//		if (DateTime.Today >= endDate)                                                  // Date spécifié passé
-//		{
-//			System.IO.File.WriteAllText(checkFileName, "$$&*&@@@!!");                   // On modifie le fichier pour indiquer que le logiciel est désactivé
-//			panelMovement.SetActive(false);                                             // Désactivé tous les panneaux
-//			panelTakeoffParameters.SetActive(false);
-//			panelMessages.SetActive(false);
-//			panelAnimator.SetActive(false);
-//			panelTopButtons.SetActive(false);
-//			panelOutOfDate.SetActive(true);                                             // Activé le panneau pour indiquer que le logiciel est désactivé
-//		}
-//		else if (!System.IO.File.Exists(checkFileName))
-//		{
-//#if UNITY_STANDALONE_OSX
-//			System.IO.Directory.CreateDirectory(dirCheckFileName);                      // Création du répertoire où sera le fichier, obligatoire pour Mac
-//#endif
-//			System.IO.File.WriteAllText(checkFileName, "$%&*&@@@!!");                   // Création du fichier à la première exécution
-//		}
-//		else
-//		{
-//			string fileContents = System.IO.File.ReadAllText(checkFileName);
-//			if (fileContents.IndexOf("$$") >= 0)                                        // Date modifié et fichier modifié, alors logiciel est désactivé
-//			{
-//				panelMovement.SetActive(false);                                         // Désactivé tous les panneaux
-//				panelTakeoffParameters.SetActive(false);
-//				panelMessages.SetActive(false);
-//				panelAnimator.SetActive(false);
-//				panelTopButtons.SetActive(false);
-//				panelOutOfDate.SetActive(true);                                         // Activé le panneau pour indiquer que le logiciel est désactivé
-//			}
-//		}
+		//#if UNITY_STANDALONE_OSX
+		//		string dirCheckFileName = string.Format("{0}/Documents/AcroVR/Lib", Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+		//		string checkFileName = string.Format("{0}/AcroVR.dll", dirCheckFileName);
+		//#else
+		//		string checkFileName = Application.persistentDataPath + @"/AcroVR.dll";
+		//#endif
+		//		DateTime endDate = new DateTime(2019, 12, 6);                                   // Date = 6 déc 2019
+		//		if (DateTime.Today >= endDate)                                                  // Date spécifié passé
+		//		{
+		//			System.IO.File.WriteAllText(checkFileName, "$$&*&@@@!!");                   // On modifie le fichier pour indiquer que le logiciel est désactivé
+		//			panelMovement.SetActive(false);                                             // Désactivé tous les panneaux
+		//			panelTakeoffParameters.SetActive(false);
+		//			panelMessages.SetActive(false);
+		//			panelAnimator.SetActive(false);
+		//			panelTopButtons.SetActive(false);
+		//			panelOutOfDate.SetActive(true);                                             // Activé le panneau pour indiquer que le logiciel est désactivé
+		//		}
+		//		else if (!System.IO.File.Exists(checkFileName))
+		//		{
+		//#if UNITY_STANDALONE_OSX
+		//			System.IO.Directory.CreateDirectory(dirCheckFileName);                      // Création du répertoire où sera le fichier, obligatoire pour Mac
+		//#endif
+		//			System.IO.File.WriteAllText(checkFileName, "$%&*&@@@!!");                   // Création du fichier à la première exécution
+		//		}
+		//		else
+		//		{
+		//			string fileContents = System.IO.File.ReadAllText(checkFileName);
+		//			if (fileContents.IndexOf("$$") >= 0)                                        // Date modifié et fichier modifié, alors logiciel est désactivé
+		//			{
+		//				panelMovement.SetActive(false);                                         // Désactivé tous les panneaux
+		//				panelTakeoffParameters.SetActive(false);
+		//				panelMessages.SetActive(false);
+		//				panelAnimator.SetActive(false);
+		//				panelTopButtons.SetActive(false);
+		//				panelOutOfDate.SetActive(true);                                         // Activé le panneau pour indiquer que le logiciel est désactivé
+		//			}
+		//		}
+	}
+
+	// =================================================================================================================================================================
+	// Quand le logiciel se termine, alors il faut supprimer les libraries DLL chargées en mémoire
+
+	void OnDestroy()
+	{
+		if (testXSensUsed)
+			MainParameters.Instance.FreeLib();
 	}
 
 	// =================================================================================================================================================================
@@ -188,6 +209,7 @@ public class Main : MonoBehaviour
 
 		// Section Animation
 
+		Debug.Log(AnimationF.Instance.lineStickFigure);
 		if (AnimationF.Instance.lineStickFigure != null)
 		{
 			AnimationF.Instance.textCurveName1.text = languagesUsed.leftSide;

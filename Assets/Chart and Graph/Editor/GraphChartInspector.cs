@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +9,9 @@ using UnityEngine;
 namespace ChartAndGraph
 {
     [CustomEditor(typeof(GraphChartBase), true)]
-    class GraphChartInspector :Editor
+    class GraphChartInspector : Editor
     {
+        string mEditedCategory = "";
         bool mCategories = false;
         string mCategoryError = null;
         string mNewCategoryName = "";
@@ -20,9 +22,8 @@ namespace ChartAndGraph
         List<int> mToRemove = new List<int>();
         List<int> mToUp = new List<int>();
         Dictionary<string, string> mOperations = new Dictionary<string, string>();
-        ChartDataEditor mWindow;
         Texture mSettings;
-
+        GraphDataEditor mWindow;
         RenameWindow mRenameWindow = null;
 
         public void OnEnable()
@@ -109,7 +110,10 @@ namespace ChartAndGraph
                 items.MoveArrayElement(cur, cur - 1);
             }
         }
+        private void DataEditor(SerializedProperty data, string type, string property, string caption)
+        {
 
+        }
         private void NamedItemEditor(SerializedProperty data, string type, string property, string caption, ref string errorMessage, ref bool foldout, ref string newName)
         {
             SerializedProperty items = data.FindPropertyRelative(property);
@@ -128,7 +132,7 @@ namespace ChartAndGraph
                     SerializedProperty entry = items.GetArrayElementAtIndex(i);
                     if (entry == null)
                         continue;
-                    
+
                     SerializedProperty nameProp = entry.FindPropertyRelative("Name");
                     string name = null;
                     if (nameProp == null)
@@ -162,24 +166,36 @@ namespace ChartAndGraph
                                 {
                                     if (entry.name != "Name" && entry.name != "data")
                                     {
-                                        if(target is GraphChart) // canvas graph chart
+                                        if (entry.name == "ViewOrder")
+                                            continue;
+                                        if (target is GraphChart) // canvas graph chart
                                         {
-                                            if((entry.name == "LinePrefab") || (entry.name == "FillPrefab") || (entry.name == "DotPrefab") || (entry.name == "Depth"))
+                                            if ((entry.name == "LinePrefab") || (entry.name == "FillPrefab") || (entry.name == "DotPrefab") || (entry.name == "Depth"))
                                             {
                                                 continue;
                                             }
                                         }
                                         else
                                         {
-                                            if ((entry.name == "LineHoverPrefab") ||  (entry.name == "PointHoverPrefab"))
+                                            if ((entry.name == "LineHoverPrefab") || (entry.name == "PointHoverPrefab"))
                                                 continue;
                                         }
                                         EditorGUILayout.PropertyField(entry, true);
                                     }
                                 }
                                 while (entry.Next(false) && SerializedProperty.EqualContents(entry, end) == false);
+                                GUILayout.BeginHorizontal();
+                                GUILayout.Space(EditorGUI.IndentedRect(EditorGUILayout.GetControlRect()).xMin);
+                                if (GUILayout.Button("Edit Values..."))
+                                {
+                                    mEditedCategory = name;
+                                    if (mWindow == null)
+                                        mWindow = GraphDataEditor.ShowForObject(serializedObject, mEditedCategory);
+                                }
+                                GUILayout.EndHorizontal();
                             }
                         }
+
                         EditorGUI.indentLevel--;
                     }
                 }
@@ -237,14 +253,14 @@ namespace ChartAndGraph
             KeyValuePair<string, string> pair = (KeyValuePair<string, string>)val;
             mOperations[pair.Key] = pair.Value;
         }
-        bool RenameCategory(string oldName,string newName)
+        bool RenameCategory(string oldName, string newName)
         {
-            GraphChart graph = (GraphChart)serializedObject.targetObject;
+            GraphChartBase graph = (GraphChartBase)serializedObject.targetObject;
             try
             {
                 graph.DataSource.RenameCategory(oldName, newName);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return false;
             }
@@ -277,7 +293,7 @@ namespace ChartAndGraph
         }
         void OnDisable()
         {
-            if(mRenameWindow != null)
+            if (mRenameWindow != null)
             {
                 mRenameWindow.Close();
                 mRenameWindow = null;
@@ -291,21 +307,23 @@ namespace ChartAndGraph
 
         public override void OnInspectorGUI()
         {
-            base.OnInspectorGUI();
+            //serializedObject.Update();
+            DrawDefaultInspector();
+
             SerializedProperty autoScrollHorizontally = serializedObject.FindProperty("autoScrollHorizontally");
             SerializedProperty horizontalScrolling = serializedObject.FindProperty("horizontalScrolling");
             SerializedProperty autoScrollVertically = serializedObject.FindProperty("autoScrollVertically");
             SerializedProperty verticalScrolling = serializedObject.FindProperty("verticalScrolling");
-            SerializedProperty scrollable = serializedObject.FindProperty("scrollable");
-            EditorGUILayout.PropertyField(scrollable);
-            if (scrollable.boolValue == true)
+            // SerializedProperty scrollable = serializedObject.FindProperty("scrollable");
+            // EditorGUILayout.PropertyField(scrollable);
+            //  if (scrollable.boolValue == true)
             {
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(autoScrollHorizontally);
-                if(autoScrollHorizontally.boolValue == false)
+                if (autoScrollHorizontally.boolValue == false)
                     EditorGUILayout.PropertyField(horizontalScrolling);
                 EditorGUILayout.PropertyField(autoScrollVertically);
-                if(autoScrollVertically.boolValue == false)
+                if (autoScrollVertically.boolValue == false)
                     EditorGUILayout.PropertyField(verticalScrolling);
                 EditorGUI.indentLevel--;
             }
@@ -316,6 +334,9 @@ namespace ChartAndGraph
             if (mBold == null)
                 mBold = new GUIStyle(EditorStyles.foldout);
             EditorGUILayout.LabelField("Data", EditorStyles.boldLabel);
+
+
+
             EditorGUI.indentLevel++;
             NamedItemEditor(graphData, "category", "mSerializedData", "Categories", ref mCategoryError, ref mCategories, ref mNewCategoryName);
             EditorGUI.indentLevel--;
@@ -331,17 +352,16 @@ namespace ChartAndGraph
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Horizontal View", EditorStyles.boldLabel);
             SerializedProperty automaticProp = graphData.FindPropertyRelative("automaticHorizontalView");
+            EditorGUILayout.PropertyField(automaticProp, new GUIContent("Auto"));
             bool automatic = automaticProp.boolValue;
-            automatic = GUILayout.Toggle(automatic, "Auto");
             GUILayout.FlexibleSpace();
-            automaticProp.boolValue = automatic;
             EditorGUILayout.EndHorizontal();
             if (automatic == false)
             {
                 EditorGUILayout.PropertyField(horizontalOrigin);
                 EditorGUILayout.PropertyField(horizontalSize);
-                if (horizontalSize.doubleValue < 0.0)
-                    horizontalSize.doubleValue = 0.0001;
+                //  if (horizontalSize.doubleValue < 0.0)
+                //      horizontalSize.doubleValue = 0.0001;
             }
             else
             {
@@ -351,26 +371,29 @@ namespace ChartAndGraph
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Vertical View", EditorStyles.boldLabel);
             automaticProp = graphData.FindPropertyRelative("automaticVerticallView");
+            EditorGUILayout.PropertyField(automaticProp, new GUIContent("Auto"));
             automatic = automaticProp.boolValue;
-            automatic = GUILayout.Toggle(automatic, "Auto");
             GUILayout.FlexibleSpace();
-            automaticProp.boolValue = automatic;
             EditorGUILayout.EndHorizontal();
             if (automatic == false)
             {
                 EditorGUILayout.PropertyField(verticalOrigin);
                 EditorGUILayout.PropertyField(verticalSize);
-                if (verticalSize.doubleValue < 0.0)
-                    verticalSize.doubleValue = 0.0001;
+                //       if (verticalSize.doubleValue < 0.0)
+                //           verticalSize.doubleValue = 0.0001;
             }
             else
             {
-                EditorGUILayout.PropertyField(automaticVerticalViewGap,new GUIContent("Vertical Gap"));
+                EditorGUILayout.PropertyField(automaticVerticalViewGap, new GUIContent("Vertical Gap"));
             }
             EditorGUILayout.EndVertical();
             serializedObject.ApplyModifiedProperties();
-            serializedObject.Update();
 
+            if (mWindow != null)
+            {
+                mWindow.SetEditedObject(serializedObject, mEditedCategory);
+                mWindow.Repaint();
+            }
         }
     }
 }

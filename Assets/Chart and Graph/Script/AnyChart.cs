@@ -1,4 +1,5 @@
-﻿using ChartAndGraph.Axis;
+#define Graph_And_Chart_PRO
+using ChartAndGraph.Axis;
 using ChartAndGraph.DataSource;
 using System;
 using System.Collections.Generic;
@@ -18,16 +19,35 @@ namespace ChartAndGraph
     {
         private Vector2 mLastSetSize = Vector2.zero;
         private bool mGenerating = false;
-        private Dictionary<int, string> mHorizontalValueToStringMap = new Dictionary<int, string>();
-        private Dictionary<int, string> mVerticalValueToStringMap = new Dictionary<int, string>();
+        private Dictionary<double, string> mHorizontalValueToStringMap = new Dictionary<double, string>(ChartCommon.DefaultDoubleComparer);
+        private Dictionary<double, string> mVerticalValueToStringMap = new Dictionary<double, string>(ChartCommon.DefaultDoubleComparer);
+        private Dictionary<DoubleVector3, KeyValuePair<string, string>> mVectorToValueMap = new Dictionary<DoubleVector3, KeyValuePair<string, string>>(ChartCommon.DefaultDoubleVector3Comparer);
         protected GameObject mFixPosition = null;
+        [SerializeField]
+        [HideInInspector]
+        protected GameObject mPreviewObject;
+        string customDateTimeFormat;
+        public string CustomDateTimeFormat
+        {
+            get { return customDateTimeFormat; }
+            set
+            {
+                customDateTimeFormat = value;
+                Invalidate();
+            }
+        }
 
-        public Dictionary<int, string> VerticalValueToStringMap
+        public Dictionary<DoubleVector3, KeyValuePair<string, string>> VectorValueToStringMap
+        {
+            get { return mVectorToValueMap; }
+        }
+
+        public Dictionary<double, string> VerticalValueToStringMap
         {
             get { return mVerticalValueToStringMap; }
         }
 
-        public Dictionary<int, string> HorizontalValueToStringMap
+        public Dictionary<double, string> HorizontalValueToStringMap
         {
             get { return mHorizontalValueToStringMap; }
         }
@@ -56,6 +76,17 @@ namespace ChartAndGraph
                 GenerateChart();
             }
         }
+        [SerializeField]
+        private bool paperEffectText = false;
+        public bool PaperEffectText
+        {
+            get { return paperEffectText; }
+            set
+            {
+                paperEffectText = value;
+                GenerateChart();
+            }
+        }
 
         [SerializeField]
         private bool vRSpaceText = false;
@@ -79,6 +110,19 @@ namespace ChartAndGraph
             set
             {
                 vRSpaceScale = value;
+                GenerateChart();
+            }
+        }
+
+        [SerializeField]
+        private bool maintainLabelSize = false;
+
+        public bool MaintainLabelSize
+        {
+            get { return maintainLabelSize; }
+            set
+            {
+                maintainLabelSize = value;
                 GenerateChart();
             }
         }
@@ -124,7 +168,7 @@ namespace ChartAndGraph
 
         protected virtual void OnLabelSettingChanged()
         {
-
+            Invalidate();
         }
 
         /// <summary>
@@ -251,8 +295,8 @@ namespace ChartAndGraph
             obj.transform.localScale = new Vector3(1f, 1f, 1f);
             obj.transform.localRotation = Quaternion.identity;
             obj.transform.localPosition = Vector3.zero;
-            TextController = obj.AddComponent<TextController>();
-            TextController.mParent = this;
+            mTextController = obj.AddComponent<TextController>();
+            mTextController.mParent = this;
         }
 
         /// <summary>
@@ -260,7 +304,7 @@ namespace ChartAndGraph
         /// </summary>
         protected void EnsureTextController()
         {
-            if (TextController != null)
+            if (mTextController != null)
                 return;
             CreateTextController();
         }
@@ -283,11 +327,16 @@ namespace ChartAndGraph
         /// <summary>
         /// call this to invalidate the chart and make the chart rebuild itself completly in the next update call
         /// </summary>
-        protected virtual void Invalidate()
+        public virtual void Invalidate()
         {
             if (mGenerating)
                 return;
             mGenerateOnNextUpdate = true;
+        }
+
+        public void Awake()
+        {
+            ClearChart();
         }
 
         protected virtual void Update()
@@ -297,8 +346,10 @@ namespace ChartAndGraph
 
             DoCanvas(false);
 
-            if (mGenerateOnNextUpdate == true)  // complete redraw preceeds realtime
+            if (mGenerateOnNextUpdate == true)
+            {// complete redraw preceeds realtime
                 GenerateChart();
+            }
             else if (mRealtimeOnNextUpdate)
             {
                 GenerateRealtime();
@@ -336,11 +387,24 @@ namespace ChartAndGraph
                 return;
             ValidateProperties();
             DoCanvas(true);
-          //  EnsureTextController();
+
+            //  EnsureTextController();
         }
 
 
-        protected TextController TextController { get; private set; }
+        private TextController mTextController;
+        protected TextController TextController
+        {
+            get
+            {
+                EnsureTextController();
+                return mTextController;
+            }
+            private set
+            {
+                mTextController = value;
+            }
+        }
 
         /// <summary>
         /// This method returns information used for legened creation
@@ -430,7 +494,6 @@ namespace ChartAndGraph
             mGenerating = true;
             InternalGenerateChart();    // call derivative class implementation
             Transform[] children = gameObject.GetComponentsInChildren<Transform>();
-
             // setup the layer for all child object so it matches the parent
             for(int i=0; i< children.Length; i++)
             {
@@ -445,7 +508,6 @@ namespace ChartAndGraph
                 FitCanvas();
             InvokeOnRedraw();
             mGenerating = false;
-
         }
         /// <summary>
         /// override this method in a derived class to generate a chart type.
@@ -463,6 +525,47 @@ namespace ChartAndGraph
         /// </summary>
         protected virtual void ClearChart()
         {
+            
+//#if UNITY_2018_3_OR_NEWER
+//#if UNITY_EDITOR
+
+//            //  if (Application.isEditor == true && Application.isPlaying == false)
+//            //  {
+//            var path = UnityEditor.PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
+//            if (!(path == null || path.Trim().Length == 0))
+//            {
+//                // Load the contents of the Prefab Asset.
+//                GameObject contentsRoot = UnityEditor.PrefabUtility.LoadPrefabContents(path);
+
+//                bool save = false;
+//                // Modify Prefab contents.
+//                foreach (var item in contentsRoot.GetComponentsInChildren<ChartItem>())
+//                {
+//                    if (item == null)
+//                        continue;
+//                    if (item.gameObject != null)
+//                    {
+//                        save = true;
+//                        DestroyImmediate(item.gameObject);
+//                    }
+//                }
+//                if (save)
+//                {
+//                    //  try
+//                    //  {
+//                    UnityEditor.PrefabUtility.SaveAsPrefabAsset(contentsRoot, path);
+//                    //  }
+//                    //  catch (Exception e)
+//                    //  {
+//                    //  }
+
+//                }
+
+//                UnityEditor.PrefabUtility.UnloadPrefabContents(contentsRoot);
+//            }
+//            // }
+//#endif
+//#endif
             mHovered.Clear();
 
             if (TextController != null) // destroy all child text object
@@ -470,7 +573,6 @@ namespace ChartAndGraph
                 TextController.DestroyAll();
                 TextController.transform.SetParent(transform, false); // the text controller my not be a direct child of this gameobject , make it so that it is.
             }
-
 
             // destroy all child ChartItem objects
             ChartItem[] children = GetComponentsInChildren<ChartItem>();
@@ -484,6 +586,10 @@ namespace ChartAndGraph
                         Debug.Log(mask.gameObject);
                     }
                     if (TextController != null && children[i].gameObject == TextController.gameObject)
+                        continue;
+                    if (children[i].gameObject.GetComponent<ChartItemNoDelete>() != null)
+                        continue;
+                    if (children[i].gameObject.GetComponentInParent<AnyChart>() != this)
                         continue;
                     if (children[i].gameObject != gameObject)
                         ChartCommon.SafeDestroy(children[i].gameObject);
@@ -509,33 +615,124 @@ namespace ChartAndGraph
         {
             get { return mFixPosition; }
         }
-        protected virtual Vector3 CanvasFitOffset { get { return new Vector3(0.5f, 0.5f,0f); } }
-        protected virtual bool FitAspectCanvas { get { return false; } }
 
+        protected virtual ChartMagin MarginLink { get { return new ChartMagin(0f, 0f, 0f, 0f); } }
+        protected virtual Vector3 CanvasFitOffset { get { return new Vector3(0.5f, 0.5f,0f); } }
+
+        public enum FitType
+        {
+            None,
+            Aspect,
+            Height,
+            Width
+        }
+
+        public enum FitAlign
+        {
+            StartXCenterY,
+            CenterXStartY,
+            CenterXCenterY,
+            StartXStartY,
+        }
+        protected virtual bool ShouldFitCanvas { get { return false; } }
+        protected virtual FitType FitAspectCanvas { get { return FitType.None; } }
+        protected virtual FitAlign FitAlignCanvas { get { return FitAlign.CenterXCenterY; } }
+
+        static List<GameObject> toMove = new List<GameObject>();
         void FitCanvas()
         {
             RectTransform trans = GetComponent<RectTransform>();
             mLastSetSize = trans.rect.size;
-            if (FitAspectCanvas == false)
+            if (ShouldFitCanvas == false)
                 return;
+            //   if (FitAspectCanvas ==  FitType.None)
+            //       return;
+            ChartMagin margin = MarginLink;
+            if (mFixPosition != null)
+                ChartCommon.SafeDestroy(mFixPosition);
             GameObject fixPosition = new GameObject();
+            var fixRect = fixPosition.AddComponent<RectTransform>();
             mFixPosition = fixPosition;
             ChartCommon.HideObject(fixPosition, hideHierarchy);
-            // fixPosition.AddComponent<ChartItem>();
-            // var fixPositionRect = fixPosition.GetComponent<RectTransform>();
-            //            fixPositionRect.anchorMin = new Vector2(1f, 1f);
-            //            fixPositionRect.anchorMax = new Vector2(1f, 1f);
-            fixPosition.transform.position = transform.position;
-            while (gameObject.transform.childCount > 0)
-                transform.GetChild(0).SetParent(fixPosition.transform, false);
-            fixPosition.transform.SetParent(transform, false);
+            fixPosition.AddComponent<ChartItem>();
+
+
+            float totalWidth = TotalWidthLink;// + margin.Left + margin.Right;
+            float totalHeight = TotalHeightLink;// + margin.Top + margin.Bottom;
+
+            fixRect.SetParent(transform, false);
+            fixRect.localPosition = Vector3.zero;
+
+            fixRect.anchorMin = new Vector2(0f, 0f);
+            fixRect.anchorMax = new Vector2(0f, 0f);
+            fixRect.pivot = new Vector2(0f, 0f);
+            fixRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalWidth);
+            fixRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalHeight);
+
+            float xAnchor = 0.5f;
+            float yAnchor = 0.5f;
+
+
+            if (FitAlignCanvas == FitAlign.StartXCenterY || FitAlignCanvas == FitAlign.StartXStartY)
+            {
+                xAnchor = 0f;
+            }
+
+            if (FitAlignCanvas == FitAlign.CenterXStartY || FitAlignCanvas == FitAlign.StartXStartY)
+                yAnchor = 0f;
+
+
             fixPosition.transform.localScale = new Vector3(1f, 1f, 1f);
-            float widthScale = trans.rect.size.x / TotalWidthLink;
-            float heightScale = trans.rect.size.y / TotalHeightLink;
+            fixPosition.transform.SetSiblingIndex(0);
+            toMove.Clear();
+
+            for(int i=0; i<gameObject.transform.childCount; i++)
+            {
+                var child = trans.GetChild(i).gameObject;
+                if (child == null)
+                    continue;
+                if (child == fixPosition)
+                    continue;
+                if (child.GetComponent<AnyChart>() != null)
+                    continue;
+                if (child.GetComponent<ChartItem>() == null)
+                    continue;
+                toMove.Add(child);
+
+            }
+            foreach(GameObject obj in toMove)
+            {
+                obj.transform.SetParent(fixPosition.transform, false);
+            }
+
+            toMove.Clear();
+
+            
+            fixRect.anchorMin = new Vector2(xAnchor, yAnchor);
+            fixRect.anchorMax = new Vector2(xAnchor, yAnchor);
+            fixRect.pivot = new Vector2(xAnchor, yAnchor);
+
+            if (totalWidth <= 0 || TotalHeight <= 0)
+                return;
+
+            float widthScale = (trans.rect.size.x - margin.Left - margin.Right) / totalWidth;
+            float heightScale = (trans.rect.size.y - margin.Top - margin.Bottom) / totalHeight;
             float uniformScale = Math.Min(widthScale, heightScale);
-            fixPosition.transform.localScale = new Vector3(uniformScale, uniformScale, uniformScale);
-            Vector3 offs = CanvasFitOffset;
-            fixPosition.transform.localPosition = new Vector3(-TotalWidthLink * uniformScale * offs.x, -TotalHeightLink * uniformScale * offs.y, 0f);
+            if (FitAspectCanvas == FitType.Height)
+                uniformScale = heightScale;
+            else if (FitAspectCanvas == FitType.Width)
+                uniformScale = widthScale;
+            else if (FitAspectCanvas == FitType.None)
+                uniformScale = 1f;
+
+            fixRect.localScale = new Vector3(uniformScale, uniformScale, 1f);
+            if(MaintainLabelSize)
+                TextController.SetInnerScale(1f / uniformScale);
+            else
+                TextController.SetInnerScale(1f);
+
+            
+            fixRect.anchoredPosition = new Vector3( Mathf.Lerp(margin.Left,-margin.Right,xAnchor), Mathf.Lerp(margin.Bottom,-margin.Top, yAnchor), 0f);
         }
 
         /// <summary>
@@ -543,14 +740,14 @@ namespace ChartAndGraph
         /// </summary>
         protected virtual void OnNonHoverted()
         {
-            
+
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="userData"></param>
-        protected virtual void OnItemLeave(object userData)
+        protected virtual void OnItemLeave(object userData,string type)
         {
             if (mHovered.Count == 0)
                 return;
@@ -577,13 +774,26 @@ namespace ChartAndGraph
                 ChartCommon.SafeDestroy(axisObject);
                 GameObject axis = null;
                 if (IsUnderCanvas)
+                {
                     axis = ChartCommon.CreateCanvasChartItem();
+                    axis.transform.SetParent(transform, false);
+                    var rect = axis.GetComponent<RectTransform>();
+                    rect.anchorMin = new Vector2(0f, 0f);
+                    rect.anchorMax = new Vector2(0f, 0f);
+                    rect.localScale = new Vector3(1f, 1f, 1f);
+                    rect.localRotation = Quaternion.identity;
+                    rect.anchoredPosition = new Vector3();
+                }
                 else
+                {
                     axis = ChartCommon.CreateChartItem();
-                axis.transform.SetParent(transform, false);
-                axis.transform.localScale = new Vector3(1f, 1f, 1f);
-                axis.transform.localRotation = Quaternion.identity;
-                axis.transform.localPosition = new Vector3();
+                    axis.transform.SetParent(transform, false);
+                    axis.transform.localScale = new Vector3(1f, 1f, 1f);
+                    axis.transform.localRotation = Quaternion.identity;
+                    axis.transform.localPosition = new Vector3();
+                }
+                axisBase.ClearFormats();
+
                 axis.layer = gameObject.layer; // put the axis on the same layer as the chart
                 ChartCommon.HideObject(axis, hideHierarchy);
                 axisObject = axis;
@@ -648,6 +858,12 @@ namespace ChartAndGraph
 
         private event Action ChartGenerated;
 
+        protected void RaiseChartGenerated()
+        {
+            if (ChartGenerated != null)
+                ChartGenerated();
+        }
+
         #region Internal Use
         event Action IInternalUse.Generated
         {
@@ -668,7 +884,7 @@ namespace ChartAndGraph
 
         void IInternalUse.InternalItemLeave(object userData)
         {
-            OnItemLeave(userData);
+            OnItemLeave(userData,"unknown");
         }
 
         void IInternalUse.InternalItemHovered(object userData)
@@ -836,11 +1052,20 @@ namespace ChartAndGraph
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
             DataLink.OnBeforeSerialize();
+            OnBeforeSerializeEvent();
         }
 
         void ISerializationCallbackReceiver.OnAfterDeserialize()
         {
             DataLink.OnAfterDeserialize();
+        }
+        protected virtual void OnBeforeSerializeEvent()
+        {
+
+        }
+        protected virtual void OnAfterDeserializeEvent()
+        {
+
         }
 
         float IInternalUse.InternalTotalDepth { get { return TotalDepthLink; } }

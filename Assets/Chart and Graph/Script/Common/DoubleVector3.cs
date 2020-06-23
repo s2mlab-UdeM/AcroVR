@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Internal;
@@ -184,7 +185,11 @@ namespace ChartAndGraph
             this.y = y;
             this.z = 0f;
         }
+        public DoubleVector3(Vector3 v)
+            :this(v.x,v.y,v.z)
+        {
 
+        }
 
         public static DoubleVector3 Lerp(DoubleVector3 a, DoubleVector3 b, double t)
         {

@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+#define Graph_And_Chart_PRO
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-class ChartDataEditor : UnityEditor.EditorWindow
+public class ChartDataEditor : UnityEditor.EditorWindow
 {
     SerializedObject mEditedObject;
     SerializedProperty mBarData;
@@ -26,6 +27,8 @@ class ChartDataEditor : UnityEditor.EditorWindow
         mGroups = mBarData.FindPropertyRelative("mGroups");
         mData = mBarData.FindPropertyRelative("mData");
         LoadData();
+        
+
     }
 
     void LoadData()
@@ -44,6 +47,7 @@ class ChartDataEditor : UnityEditor.EditorWindow
             mValues[keyName] = amount;
         }
     }
+
     string getKey(string column,string row)
     {
         return string.Format("{0}|{1}", column, row);

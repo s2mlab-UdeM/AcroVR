@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,8 +31,19 @@ namespace ChartAndGraph
         {
             return dateTime.ToString("d");
         }
-        public static string DateToDateTimeString(DateTime dateTime)
+        public static string DateToDateTimeString(DateTime dateTime,string customFormat)
         {
+            if(customFormat != null)
+            {
+                try
+                {
+                    return dateTime.ToString(customFormat);
+                }
+                catch
+                {
+
+                }
+            }
             return string.Format("{0}{1}{2}", dateTime.ToString("d"), Environment.NewLine, dateTime.ToString("t"));
         }
         public static DateTime ValueToDate(double value)

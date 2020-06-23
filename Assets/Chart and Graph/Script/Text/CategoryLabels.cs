@@ -1,4 +1,5 @@
-﻿using ChartAndGraph;
+#define Graph_And_Chart_PRO
+using ChartAndGraph;
 using System;
 using UnityEngine;
 

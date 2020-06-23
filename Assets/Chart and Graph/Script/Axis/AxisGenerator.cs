@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace ChartAndGraph.Axis
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))]
     [ExecuteInEditMode] 
-    class AxisGenerator : MonoBehaviour, IAxisGenerator
+    partial class AxisGenerator
     {
         MeshRenderer mRenderer;
         MeshFilter mFilter;
@@ -24,7 +25,7 @@ namespace ChartAndGraph.Axis
         float mTiling=1f;
         WorldSpaceChartMesh mMesh;
         Mesh mCreated;
-        double mScroll = 0f;
+        double mScroll = 0f; 
         AnyChart mParent = null;
         ChartOrientation mOrientation = ChartOrientation.Vertical;
         bool mIsSubDivision = false;
@@ -39,11 +40,12 @@ namespace ChartAndGraph.Axis
             ChartCommon.SafeDestroy(mDispose);
         }
 
+       
         /// <summary>
         /// fix the labels after the axis data is updated
         /// </summary>
         /// <param name="parent"></param>
-        public void FixLabels(AnyChart parent)
+        partial void InnerFixLabels(AnyChart parent)
         {
             if (mAxis == null)
                 return;
@@ -68,7 +70,7 @@ namespace ChartAndGraph.Axis
                     {
                         DateTime date = ChartDateUtility.ValueToDate(newVal);
                         if (mAxis.Format == AxisFormat.DateTime)
-                            toSet = ChartDateUtility.DateToDateTimeString(date);
+                            toSet = ChartDateUtility.DateToDateTimeString(date,mParent.CustomDateTimeFormat);
                         else
                         {
                             if (mAxis.Format == AxisFormat.Date)
@@ -79,7 +81,7 @@ namespace ChartAndGraph.Axis
 
                     }
                     toSet = data.info.TextPrefix + toSet + data.info.TextSuffix;
-                    text.UIText.text = toSet;
+                    ChartCommon.UpdateTextParams(text.UIText, toSet);
                 }
             }
         }
@@ -113,7 +115,7 @@ namespace ChartAndGraph.Axis
         /// <param name="axis"></param>
         /// <param name="axisOrientation"></param>
         /// <param name="isSubDivisions"></param>
-        public void SetAxis(double scrollOffset,AnyChart parent,AxisBase axis,ChartOrientation axisOrientation, bool isSubDivisions)
+        partial void InnerSetAxis(double scrollOffset, AnyChart parent, AxisBase axis, ChartOrientation axisOrientation, bool isSubDivisions)
         {
             mScroll = scrollOffset;
             mParent = parent;
@@ -129,10 +131,12 @@ namespace ChartAndGraph.Axis
             mMesh.Clear();
             mMesh.Orientation = axisOrientation;
             mAxis = axis;
+
             if (isSubDivisions)
                 axis.AddSubdivisionToChartMesh(scrollOffset,parent, transform, mMesh, axisOrientation);
             else
                 axis.AddMainDivisionToChartMesh(scrollOffset,parent, transform, mMesh, axisOrientation);
+
             if (mMesh.TextObjects != null)
             {
                 foreach (BillboardText text in mMesh.TextObjects)
@@ -188,14 +192,5 @@ namespace ChartAndGraph.Axis
             }
         }
 
-        public UnityEngine.Object This()
-        {
-            return this;
-        }
-
-        public GameObject GetGameObject()
-        {
-            return gameObject;
-        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace ChartAndGraph
     /// <summary>
     /// holds common operations of the charting library
     /// </summary>
-    public class ChartCommon
+    public partial class ChartCommon
     {
         class IntComparer : IEqualityComparer<int>
         {
@@ -26,12 +27,39 @@ namespace ChartAndGraph
                 return obj.GetHashCode();
             }
         }
+        class DoubleComparer : IEqualityComparer<double>
+        {
+            public bool Equals(double x, double y)
+            {
+                return x == y;
+            }
+
+            public int GetHashCode(double obj)
+            {
+                return obj.GetHashCode();
+            }
+        }
+
+        class DoubleVector3Comparer : IEqualityComparer<DoubleVector3>
+        {
+            public bool Equals(DoubleVector3 x, DoubleVector3 y)
+            {
+                return x == y;
+            }
+
+            public int GetHashCode(DoubleVector3 obj)
+            {
+                return obj.GetHashCode();
+            }
+        }
 
         private static Material mDefaultMaterial;
 
         static ChartCommon()
         {
             DefaultIntComparer = new IntComparer();
+            DefaultDoubleComparer = new DoubleComparer();
+            DefaultDoubleVector3Comparer = new DoubleVector3Comparer();
         }
 
         internal static float SmoothLerp(float from,float to,float factor)
@@ -105,11 +133,14 @@ namespace ChartAndGraph
             double y = rect.y + rect.height * point.y;
             return new DoubleVector4(x, y, point.z, 0.0);
         }
-
+        internal static void HideObjectEditor(GameObject obj, bool hideMode)
+        {
+            obj.hideFlags = HideFlags.DontSaveInEditor | HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+        }
         internal static void HideObject(GameObject obj,bool hideMode)
         {
-    //        return;
-            if (IsInEditMode == true)
+            // return;
+            if (IsInEditMode == true) 
             {
                 obj.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector | HideFlags.NotEditable | HideFlags.DontSaveInBuild;
                 return;
@@ -260,6 +291,30 @@ namespace ChartAndGraph
             }
         }
 
+//#if UNITY_2018_3_OR_NEWER
+//#if UNITY_EDITOR
+//        public static void SafeDestroy(GameObject obj)
+//        {
+//            if (obj == null)
+//                return;
+//            if (Application.isEditor && Application.isPlaying == false)
+//            {
+//                if (UnityEditor.PrefabUtility.GetPrefabAssetType(obj) != UnityEditor.PrefabAssetType.NotAPrefab)
+//                {
+//                    if (UnityEditor.PrefabUtility.IsPartOfPrefabInstance(obj))
+//                    {
+//                        var parent = UnityEditor.PrefabUtility.GetNearestPrefabInstanceRoot(obj);
+//                        UnityEditor.PrefabUtility.UnpackPrefabInstance(parent, UnityEditor.PrefabUnpackMode.Completely, UnityEditor.InteractionMode.AutomatedAction);
+//                    }
+//                }
+//                UnityEngine.Object.DestroyImmediate(obj);
+//            }
+//            else
+//                UnityEngine.Object.Destroy(obj);
+//        }
+//#endif
+//#endif
+
         public static void SafeDestroy(UnityEngine.Object obj)
         {
             if (obj == null)
@@ -294,10 +349,11 @@ namespace ChartAndGraph
         internal static void FixBillboardText(ItemLabelsBase labels,BillboardText text)
         {
             float sharpness = Mathf.Clamp(labels.FontSharpness, 1f, 3f);
+            ChartCommon.SetTextParams(text.UIText, null, labels.FontSize, sharpness);
             text.Scale = 1f / sharpness;
-            text.UIText.fontSize = (int)(labels.FontSize * sharpness);
             text.UIText.transform.localScale = new Vector3(text.Scale, text.Scale);
         }
+
         internal static T EnsureComponent<T>(GameObject obj) where T : Component
         {
             T comp = obj.GetComponent<T>();
@@ -340,35 +396,36 @@ namespace ChartAndGraph
          {
              return CreateBillboardText(prefab, parentTransform, text, x, y, z, angle, null, hideHirarechy, fontSize, sharpness);
          }*/
-        internal static BillboardText UpdateBillboardText(BillboardText billboardText, Transform parentTransform, string text, float x, float y, float z, float angle, Transform relativeFrom, bool hideHirarechy)
+
+        internal static BillboardText UpdateBillboardText(BillboardText billboardText, Transform parentTransform, string text, float x, float y, float z, float angle, Transform relativeFrom, bool hideHirarechy,bool yMirror)
         {
             GameObject UIText = billboardText.UIText.gameObject;
             GameObject billboard = billboardText.gameObject;
             ChartCommon.HideObject(billboard, hideHirarechy);
             TextDirection direction = UIText.GetComponent<TextDirection>();
-            Text TextObj = billboardText.UIText;
-
+            GameObject TextObj = billboardText.UIText;
+            billboardText.YMirror = yMirror;
             if (direction != null)
             {
-                TextObj = direction.Text;
+                TextObj = direction.Text.gameObject;
                 if (relativeFrom != null)
                     direction.SetRelativeTo(relativeFrom, billboard.transform);
-                else
+              //  else
                     direction.SetDirection(angle);
             }
-           // if (parentTransform != null && billboard.transform.parent != parentTransform)
-           // {
+            // if (parentTransform != null && billboard.transform.parent != parentTransform)
+            // {
             //    billboard.transform.SetParent(parentTransform, false);
-           // }
-            TextObj.text = text;
+            // }
+            UpdateTextParams(TextObj, text);
             billboard.transform.localPosition = new Vector3(x, y, z);
             return billboardText;
         }
 
-        internal static BillboardText CreateBillboardText(BillboardText item,Text prefab, Transform parentTransform, string text, float x, float y, float z, float angle,Transform relativeFrom,bool hideHirarechy,int fontSize,float sharpness)
+        internal static BillboardText CreateBillboardText(BillboardText item, MonoBehaviour prefab, Transform parentTransform, string text, float x, float y, float z, float angle,Transform relativeFrom,bool hideHirarechy,int fontSize,float sharpness)
         {
             if(item != null)
-                return UpdateBillboardText(item, parentTransform, text, x, y, z, angle, relativeFrom, hideHirarechy);
+                return UpdateBillboardText(item, parentTransform, text, x, y, z, angle, relativeFrom, hideHirarechy,prefab!=null && prefab.transform.localScale.y<0);
             if (prefab == null || prefab.gameObject == null)
             {
                 GameObject g = Resources.Load("Chart And Graph/DefaultText") as GameObject;
@@ -378,7 +435,9 @@ namespace ChartAndGraph
             GameObject UIText = (GameObject)GameObject.Instantiate(prefab.gameObject);
             GameObject billboard = new GameObject();
             ChartCommon.HideObject(billboard, hideHirarechy);
-
+            if(parentTransform.GetComponent<RectTransform>())
+                billboard.AddComponent<RectTransform>();
+            
             if (parentTransform != null)
             {
                 billboard.transform.SetParent(parentTransform, false);
@@ -388,33 +447,35 @@ namespace ChartAndGraph
             BillboardText billboardText = billboard.AddComponent<BillboardText>();
             billboard.AddComponent<ChartItem>();
             TextDirection direction = UIText.GetComponent<TextDirection>();
-            Text TextObj = UIText.GetComponent<Text>();
+
+            GameObject obj = null;
 
             if (direction != null)
             {
-                TextObj = direction.Text;
+                obj = direction.Text.gameObject;
                 if (relativeFrom != null)
                     direction.SetRelativeTo(relativeFrom, billboard.transform);
-                else
+              //  else
                     direction.SetDirection(angle);
             }
 
-            if (billboardText == null || TextObj == null)
+            if (obj == null)
+                obj = UIText;
+            sharpness = Mathf.Clamp(sharpness, 1f, 3f);
+            bool setParams = SetTextParams(obj, text, fontSize, sharpness);
+
+            if (billboardText == null || setParams == false)
             {
                 SafeDestroy(UIText);
                 SafeDestroy(billboard);
                 return null;
             }
 
-            sharpness = Mathf.Clamp(sharpness,1f, 3f);
-            TextObj.fontSize = (int)(fontSize * sharpness);
-            TextObj.horizontalOverflow = HorizontalWrapMode.Overflow;
-            TextObj.verticalOverflow = VerticalWrapMode.Overflow;
-            TextObj.resizeTextForBestFit = false;
-            billboardText.Scale = 1f/ sharpness;
-            
-            TextObj.text = text;
-            billboardText.UIText = TextObj;
+
+            if (prefab != null &&  prefab.transform.localScale.y < 0)
+                billboardText.YMirror = true;
+            billboardText.Scale =( 1f / sharpness);
+            billboardText.UIText = obj;
             billboardText.Direction = direction;
             if (direction != null)
                 billboardText.RectTransformOverride = direction.GetComponent<RectTransform>();
@@ -424,9 +485,67 @@ namespace ChartAndGraph
             return billboardText;
         }
 
+        static partial void DoTextSignInternal(MonoBehaviour Text, double sign);
+
+        internal static void DoTextSign(MonoBehaviour Text,double sign)
+        {
+            DoTextSignInternal(Text, sign);
+        }
+        static partial void GetTextInternal(GameObject obj, ref string text);
+        
+
+        internal static string GetText(GameObject obj)
+        {
+            var t = obj.GetComponent<Text>();
+            if (t != null)
+                return t.text;
+            string res = null;
+            GetTextInternal(obj, ref res);
+            return res;
+
+        }
+        static partial void UpdateTextParamsInternal(GameObject obj, string text);
+
+        internal static void UpdateTextParams(GameObject obj, string text)
+        {
+            var t = obj.GetComponent<Text>();
+            if (t != null)
+                t.text = text;
+            UpdateTextParamsInternal(obj, text);
+        }
+
+        internal static void MakeMaskable(GameObject obj,bool masksable)
+        {
+            foreach (MaskableGraphic g in obj.GetComponents<MaskableGraphic>())
+                g.maskable = masksable;
+        }
+        static partial void SetTextParamsInternal(GameObject obj, string text, int fontSize, float sharpness, ref bool res);
+
+        internal static bool SetTextParams(GameObject obj, string text, int fontSize, float sharpness)
+        {
+            var t = obj.GetComponent<Text>();
+            if(t != null)
+            {
+                t.fontSize = (int)(fontSize * sharpness);
+                t.horizontalOverflow = HorizontalWrapMode.Overflow;
+                t.verticalOverflow = VerticalWrapMode.Overflow;
+                t.resizeTextForBestFit = false;          
+                if(text != null)
+                    t.text = text;
+                return true;
+            }
+            bool res = false;
+            SetTextParamsInternal(obj, text, fontSize, sharpness, ref res);
+            
+            if(res == false)
+                Debug.LogError("Text prefab must be either UI.Text or TextMeshPro object. For text mesh pro , you need to import the support package first. worldSpace text meshpro can only be used with non canvas charts. Check out the following link for more info http://prosourcelabs.com/Tutorials/TextMeshPro/IntegratingTextMeshPro.html");
+            return res;
+        }
         /// <summary>
         /// 
         /// </summary>
         public static IEqualityComparer<int> DefaultIntComparer { get; private set; }
+        public static IEqualityComparer<double> DefaultDoubleComparer { get; private set; }
+        public static IEqualityComparer<DoubleVector3> DefaultDoubleVector3Comparer { get; private set; }
     }
 }

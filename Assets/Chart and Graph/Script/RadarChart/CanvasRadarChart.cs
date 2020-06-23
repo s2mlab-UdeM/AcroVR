@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -144,15 +145,20 @@ namespace ChartAndGraph
             return container;
         }
 
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            Invalidate();
+        }
+
         protected override void OnItemHoverted(object userData)
         {
             base.OnItemHoverted(userData);
-
         }
 
-        protected override void OnItemLeave(object userData)
+        protected override void OnItemLeave(object userData,string type)
         {
-            base.OnItemLeave(userData);
+            base.OnItemLeave(userData, type);
         }
         public override bool IsCanvas
         {
@@ -178,7 +184,7 @@ namespace ChartAndGraph
         private void Points_Leave(string category)
         {
             RadarEventArgs args = new RadarEventArgs(category, "",0.0,Vector3.zero,0);
-            OnItemLeave(args);
+            OnItemLeave(args,"none");
         }
 
         private void Points_Hover(string category, int index, Vector2 position)

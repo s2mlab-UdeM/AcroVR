@@ -1,4 +1,5 @@
-﻿using ChartAndGraph.DataSource;
+#define Graph_And_Chart_PRO
+using ChartAndGraph.DataSource;
 using ChartAndGraph.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using UnityEngine;
 namespace ChartAndGraph
 {
     [Serializable]
-    public class RadarChartData : AbstractChartData, IInternalRadarData, IChartData
+    public partial class RadarChartData : AbstractChartData, IInternalRadarData, IChartData
     {
         [Serializable]
         internal class CategoryData
@@ -158,7 +159,19 @@ namespace ChartAndGraph
         {
             return 0.0;
         }
-
+        public bool HasGroup(string groupName)
+        {
+            try
+            {
+                var row = mDataSource.Rows[groupName];
+                if (row != null)
+                    return true;
+            }
+            catch
+            {
+            }
+            return false;
+        }
         public double GetMaxValue()
         {
             double max = MaxValue;
@@ -186,12 +199,25 @@ namespace ChartAndGraph
         {
             return mDataSource.Columns[index].Name;
         }
-
+        public int GetGroupIndex(String name)
+        {
+            for (int i = 0; i < mGroups.Length; i++)
+                if (mGroups[i] == name)
+                    return i;
+            throw new Exception("group does not exist");
+        }
         public string GetGroupName(int index)
         {
             return mDataSource.Rows[index].Name;
         }
-
+        /// <summary>
+        /// used intenally , do not call
+        /// </summary>
+        /// <param name="cats"></param>
+        public object[] StoreAllCategoriesinOrder()
+        {
+            return mCategories.ToArray();
+        }
         public void OnBeforeSerialize()
         {
             int totalColumns = mDataSource.Columns.Count;
@@ -296,7 +322,7 @@ namespace ChartAndGraph
         /// Example: you can set the chart categories to be "Player 1","Player 2","Player 3" in order to compare player achivments
         public void AddCategory(string name, PathGenerator linePrefab, Material lineMaterial, float lineThickness, GameObject pointPrefab, Material pointMaterial, float pointSize, Material fillMaterial)
         {
-            Add3DCategory(name, null, lineMaterial, lineThickness, null, pointMaterial, pointSize, fillMaterial,5, 0f, 0f);
+            AddInnerCategory(name, null, lineMaterial, lineThickness, null, pointMaterial, pointSize, fillMaterial,5, 0f, 0f);
         }
 
         /// <summary>
@@ -304,7 +330,7 @@ namespace ChartAndGraph
         /// Note: you must also add groups to the radar data.
         /// Example: you can set the chart categories to be "Player 1","Player 2","Player 3" in order to compare player achivments
         /// </summary>
-        public void Add3DCategory(string name, PathGenerator linePrefab, Material lineMaterial, float lineThickness, GameObject pointPrefab, Material pointMaterial, float pointSize, Material fillMaterial,int fillSmoothing, float curve, float seperation)
+        protected void AddInnerCategory(string name, PathGenerator linePrefab, Material lineMaterial, float lineThickness, GameObject pointPrefab, Material pointMaterial, float pointSize, Material fillMaterial,int fillSmoothing, float curve, float seperation)
         {
             ChartDataColumn column = new ChartDataColumn(name);
             CategoryData data = new CategoryData();
@@ -341,24 +367,8 @@ namespace ChartAndGraph
                 Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
             }
         }
-
-        public void Set3DCategoryOrientation(string category, float seperation, float curve)
-        {
-            try
-            {
-                CategoryData data = mDataSource.Columns[category].UserData as CategoryData;
-                if (data == null)
-                    throw new Exception("category not set"); // should never happen
-                data.Seperation = seperation;
-                data.Curve = curve;
-                RaiseDataChanged();
-            }
-            catch
-            {
-                Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
-            }
-        }
-        public void Set3DCategoryFill(string category, Material fillMaterial,int fillSmoothing)
+ 
+        protected void SetInnerCategoryFill(string category, Material fillMaterial, int fillSmoothing)
         {
             try
             {
@@ -376,16 +386,8 @@ namespace ChartAndGraph
                 Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
             }
         }
-        public void SetCategoryFill(string category, Material fillMaterial)
-        {
-            Set3DCategoryFill(category, fillMaterial,5);
-        }
-        public void SetCategoryLine(string category, Material lineMaterial, float lineThickness)
-        {
-            Set3DCategoryLine(category, null, lineMaterial, lineThickness);
-        }
 
-        public void Set3DCategoryLine(string category, PathGenerator linePrefab, Material lineMaterial, float lineThickness)
+        protected void SetInnerCategoryLine(string category, PathGenerator linePrefab, Material lineMaterial, float lineThickness)
         {
             try
             {
@@ -403,7 +405,7 @@ namespace ChartAndGraph
             }
         }
 
-        public void Set3DCategoryPoint(string category, GameObject prefab, Material pointMaterial, float pointSize)
+        protected void SetInnerCategoryPoint(string category, GameObject prefab, Material pointMaterial, float pointSize)
         {
             try
             {
@@ -420,9 +422,17 @@ namespace ChartAndGraph
                 Debug.LogWarning("Invalid category name. Make sure the category is present in the graph");
             }
         }
+        public void SetCategoryFill(string category, Material fillMaterial)
+        {
+            SetInnerCategoryFill(category, fillMaterial,5);
+        }
+        public void SetCategoryLine(string category, Material lineMaterial, float lineThickness)
+        {
+            SetInnerCategoryLine(category, null, lineMaterial, lineThickness);
+        }
         public void SetCategoryPoint(string category, Material pointMaterial, float pointSize)
         {
-            Set3DCategoryPoint(category, null, pointMaterial, pointSize);
+            SetInnerCategoryPoint(category, null, pointMaterial, pointSize);
         }
         /// <summary>
         /// sets the material for the specified category
@@ -458,7 +468,24 @@ namespace ChartAndGraph
             RemoveSliderForCategory(name);
             mDataSource.Columns.Remove(column);
         }
-
+        public void RestoreCategory(string category, object data)
+        {
+            var toSet = (CategoryData)data;
+            CategoryData current = (CategoryData)(mDataSource.Columns[category].UserData);
+            current.Curve = toSet.Curve;
+            current.FillMaterial = toSet.FillMaterial;
+            current.FillSmoothing = toSet.FillSmoothing;
+            current.LineHover = toSet.LineHover;
+            current.LineMaterial = toSet.LineMaterial;
+            current.LinePrefab = toSet.LinePrefab;
+            current.LineThickness= toSet.LineThickness;
+            current.PointHover= toSet.PointHover;
+            current.PointMaterial = toSet.PointMaterial;
+            current.PointPrefab = toSet.PointPrefab;
+            current.PointSize = toSet.PointSize;
+            current.Seperation = toSet.Seperation;
+            RaisePropertyUpdated();
+        }
         /// <summary>
         /// removes a group from the radar chart
         /// </summary>

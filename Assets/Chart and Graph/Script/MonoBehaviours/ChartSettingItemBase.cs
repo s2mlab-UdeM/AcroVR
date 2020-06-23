@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -75,7 +76,7 @@ namespace ChartAndGraph
             SafeAssign(true);
         }
 
-        protected virtual void OnDestory()
+        protected virtual void OnDestroy()
         {
             SafeAssign(true);
         }

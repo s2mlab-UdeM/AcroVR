@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,7 +21,7 @@ namespace ChartAndGraph
 
         public CanvasLines Lines = null;
         public CanvasLines Point = null;
-        public Text Text = null;
+        public MonoBehaviour Text = null;
 
         private Transform relativeTo;
         private Transform relativeFrom;
@@ -34,6 +35,7 @@ namespace ChartAndGraph
         {
             controller = control;
         }
+
         public void SetRelativeTo(Transform from,Transform to)
         {
             relativeTo = to;
@@ -83,11 +85,27 @@ namespace ChartAndGraph
 
             Vector2 anchor = new Vector2( 0.5f , 0.5f);
             Vector2 pivot = new Vector2((sign > 0f) ? 0f : 1f, 0.5f);
-            Text.rectTransform.anchorMin = anchor;
-            Text.rectTransform.anchorMax = anchor;
-            Text.rectTransform.pivot = pivot;
-            Text.alignment = (sign > 0f) ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
-            Text.rectTransform.anchoredPosition = dir + dirAdd + gapAdd;
+
+            var rect = Text.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = anchor;
+                rect.anchorMax = anchor;
+                rect.pivot = pivot;
+                var t = Text.GetComponent<Text>();
+                if (t != null)
+                    t.alignment = (sign > 0f) ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
+                else
+                {
+                    ChartCommon.DoTextSign(Text, sign);
+
+                }
+                rect.anchoredPosition = dir + dirAdd + gapAdd;
+            }
+            else
+            {
+                Debug.LogWarning("Direction text must contain a rect transform");
+            }
         }
     }
 }

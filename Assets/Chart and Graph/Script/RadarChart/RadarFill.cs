@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -94,6 +95,11 @@ namespace ChartAndGraph
         protected override void OnPopulateMesh(VertexHelper vh)
         {
             base.OnPopulateMesh(vh);
+            if (mPath == null)
+            {
+                vh.Clear();
+                return;
+            }
             vh.Clear();
             foreach (UIVertex v in getVerices())
                 vh.AddVert(v);

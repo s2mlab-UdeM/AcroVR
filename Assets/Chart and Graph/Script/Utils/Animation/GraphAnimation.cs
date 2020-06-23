@@ -1,4 +1,5 @@
-﻿using ChartAndGraph;
+#define Graph_And_Chart_PRO
+using ChartAndGraph;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +15,11 @@ public class GraphAnimation : MonoBehaviour
 
     class InnerAnimation
     {
-        public float maxX, minX, maxY, minY;
+        public double maxX, minX, maxY, minY;
         public float totalTime = 3f;
         public float next = 0f;
         public string category;
-        public List<Vector2> points;
+        public List<DoubleVector2> points;
         public int index;
 
         public void Update(GraphChartBase graphChart)
@@ -27,13 +28,19 @@ public class GraphAnimation : MonoBehaviour
                 return;
             if (index >= points.Count)
                 return;
+            float leapTime = totalTime / (float)points.Count;
             next -= Time.deltaTime;
             if (next <= 0)
             {
-                next = totalTime / (float)points.Count;
-                Vector2 point = points[index];
-                graphChart.DataSource.AddPointToCategoryRealtime(category, point.x, point.y, next);
-                ++index;
+                int totalLeaps = (int)(Time.deltaTime / (leapTime));
+
+                for (int i = 0; i < totalLeaps && index<points.Count; i++)
+                {
+                    DoubleVector2 point = points[index];
+                    graphChart.DataSource.AddPointToCategoryRealtime(category, point.x, point.y, leapTime);
+                    ++index;
+                }
+                next = leapTime;
             }
         }
     }
@@ -44,17 +51,18 @@ public class GraphAnimation : MonoBehaviour
         graphChart = GetComponent<GraphChartBase>();
     }
 
-    bool IsValidFloat(float val)
+    bool IsValidDouble(double val)
     {
-        if (float.IsNaN(val))
+        if (double.IsNaN(val))
             return false;
-        if (float.IsInfinity(val))
+        if (double.IsInfinity(val))
             return false;
         return true;
     }
 
-    public void Animate(string category, List<Vector2> points,float totalTime)
+    public void Animate(string category, List<DoubleVector2> points,float totalTime)
     {
+        graphChart = GetComponent<GraphChartBase>();
         if (graphChart == null)
             return;
         if (points == null)
@@ -69,24 +77,24 @@ public class GraphAnimation : MonoBehaviour
 
         for (int i = 0; i < points.Count; ++i)
         {
-            anim.maxX = Mathf.Max(points[i].x, anim.maxX);
-            anim.maxY = Mathf.Max(points[i].y, anim.maxY);
-            anim.minX = Mathf.Min(points[i].x, anim.minX);
-            anim.minY = Mathf.Min(points[i].y, anim.minY);
+            anim.maxX = Math.Max(points[i].x, anim.maxX);
+            anim.maxY = Math.Max(points[i].y, anim.maxY);
+            anim.minX = Math.Min(points[i].x, anim.minX);
+            anim.minY = Math.Min(points[i].y, anim.minY);
         }
 
         if (ModifyRange)
         {
-            float maxX = anim.maxX;
-            float maxY = anim.maxY;
-            float minX = anim.minX;
-            float minY = anim.minY;
+            double maxX = anim.maxX;
+            double maxY = anim.maxY;
+            double minX = anim.minX;
+            double minY = anim.minY;
             foreach (InnerAnimation a in mAnimations.Values)
             {
-                maxX = Mathf.Max(maxX, a.maxX);
-                maxY = Mathf.Max(maxY, a.maxY);
-                minX = Mathf.Min(minX, a.minX);
-                minY = Mathf.Min(minY, a.minY);
+                maxX = Math.Max(maxX, a.maxX);
+                maxY = Math.Max(maxY, a.maxY);
+                minX = Math.Min(minX, a.minX);
+                minY = Math.Min(minY, a.minY);
             }
             IInternalGraphData g = graphChart.DataSource;
             maxX = (float)Math.Max(g.GetMaxValue(0, true),maxX);
@@ -94,7 +102,7 @@ public class GraphAnimation : MonoBehaviour
             maxY = (float)Math.Max(g.GetMaxValue(1, true), maxY);
             minY = (float)Math.Min(g.GetMinValue(1, true), minY);
 
-            if (IsValidFloat(maxX) && IsValidFloat(maxY) && IsValidFloat(minX) && IsValidFloat(minY))
+            if (IsValidDouble(maxX) && IsValidDouble(maxY) && IsValidDouble(minX) && IsValidDouble(minY))
             {
                 graphChart.DataSource.StartBatch();
                 graphChart.DataSource.AutomaticHorizontalView = false;
@@ -119,6 +127,7 @@ public class GraphAnimation : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        graphChart = GetComponent<GraphChartBase>();
         if (graphChart == null)
             return;
         foreach(InnerAnimation anim in mAnimations.Values)

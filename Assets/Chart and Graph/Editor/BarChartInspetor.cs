@@ -1,4 +1,5 @@
-﻿
+#define Graph_And_Chart_PRO
+
 using ChartAndGraph;
 using System;
 using System.Collections.Generic;
@@ -290,6 +291,7 @@ class BarChartInspetor : Editor
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
+        serializedObject.Update();
         SerializedProperty barData = serializedObject.FindProperty("Data");
         EditorGUILayout.BeginVertical();
         Splitter();
@@ -347,7 +349,7 @@ class BarChartInspetor : Editor
         EditorGUI.indentLevel--;
         EditorGUILayout.EndVertical();
         serializedObject.ApplyModifiedProperties();
-        serializedObject.Update();
+        
         if (mUpdateWindow == true)
         {
             mUpdateWindow = false;

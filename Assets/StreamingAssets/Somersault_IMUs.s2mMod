@@ -1,0 +1,314 @@
+version	3
+
+// General informations
+root_actuated 1
+external_forces 0
+
+
+//RTinMatrix false by default
+//RTinMatrix if false RT Rx Ry Rz xyz Tx Ty Tz
+//RTinMatrix if true RT 4x4.
+
+
+	segment	Pelvis 
+	//m_6:= 8.766: G_6:=[0,0, 0.09191]:I_6:=[.04517,.08042,.07487]:#Pelvis
+		translations xyz
+		rotations	xyz
+		mass	8.766
+		inertia
+			.04517	0.00000	0.00000
+			0.00000	.08042	0.00000
+			0.00000	0.00000	.07487
+		com		0.0 0.0 0.09191
+	endsegment
+	
+	marker Pelvis // numero 0
+		parent Pelvis
+		position 0 0 0.09191
+	endmarker
+
+//	imu Pelvis_IMU
+//		parent Pelvis
+//	endimu
+
+	segment	ThoraxChest
+	//m_19:=20.925: G_19:=[0,0, 0.17521]:I_19:=[.25642,.35804,.24629]:#ThoraxChest
+	//LONG[ 2]:=     0.185:#length hip/rib cage
+		parent	Pelvis
+		RT 0 0 0 xyz 0 0 0.185
+		mass	20.925
+		inertia
+			.25642	0.00000	0.00000
+			0.00000	.35804	0.00000
+			0.00000	0.00000	.24629
+		com		0		0		0.17521
+	endsegment
+	
+//	marker ThoraxChest 
+//		parent ThoraxChest
+//		position 0 0 0 
+//	endmarker
+
+
+	segment	Head
+	//m_32:= 6.368: G_32:=[0,0, 0.17046]:I_32:=[.05703,.05704,.01920]:#Head
+	//LONG[ 7]:=     0.294:#length rib cage/shoulder
+		parent	ThoraxChest
+		RT	0 0 0 xyz 0 0 0.294
+		rotations xyz
+		mass	6.368
+		inertia
+			.05703	0.00000	0.00000
+			0.00000	.05704	0.00000
+			0.00000	0.00000	.01920
+		com			0		0	0.17046
+	endsegment
+	
+	marker Head // numero 1
+		parent Head
+		position 0 0 0.17046
+	endmarker
+
+	segment	RightThigh
+	// m_9:= 9.401: G_9:=[0,0,-0.19117]:I_9:=[.14730,.14732,.03247]:#RightThigh
+	//LONG[ 4]:=     0.160:#1/2 width hip
+		parent	Pelvis
+		rotations	x
+		RT 0 0 0 xyz -0.160 0.0 0.0
+		mass	9.401
+		inertia
+			.14730	0.00000	0.00000
+			0.00000	.14732	0.00000
+			0.00000	0.00000	.03247
+		com			0.0 0.0		-0.19117
+	endsegment
+	
+	marker RightThigh // numero 2
+		parent RightThigh
+		position 0 0 -0.19117
+	endmarker
+	
+//	imu RightUpperLeg_IMU
+//		parent RightThigh
+//	endimu
+
+	segment	RightLeg
+	// m_10:= 4.621: G_10:=[0,0,-0.19360]:I_10:=[.07282,.07282,.00739]:#RightLeg
+	//LONG[21]:=     0.428:#length tigh
+		parent	RightThigh
+		rotations	x
+		RT 0 0 0 xyz 0.0 0.0 -0.428
+		mass	4.621
+		inertia
+			.07282	0.00000	0.00000
+			0.00000	.07282	0.00000
+			0.00000	0.00000	.00739
+		com				0.0 0.0	-0.19360
+	endsegment
+	
+	marker RightLeg // numero 3
+		parent RightLeg
+		position 0 0 -0.19360
+	endmarker
+	
+//		imu RightLowerLeg_IMU
+//		parent RightLeg
+//	endimu	
+
+	segment	RightFoot
+	// m_11:= 0.969: G_11:=[0,0,-0.07783]:I_11:=[.00322,.00309,.00089]:#RightFoot
+	//LONG[24]:=     0.440:#leg length
+		parent	RightLeg
+		RT pi/3 0 0 xyz 0.0 0.0 -.44
+		mass	0.969
+		inertia
+			.00322	0.00000	0.00000
+			0.00000	.00309	0.00000
+			0.00000	0.00000	.00089
+		com				0.0 0.0	-0.07783
+	endsegment
+	
+//	marker RightFoot 
+//		parent RightFoot
+//		position 0 0 0 
+//	endmarker
+
+	
+	
+	
+	segment	LeftThigh
+	// m_14:= 9.622: G_14:=[0,0,-0.19033]:I_14:=[.14415,.14418,.03447]:#LeftThigh
+	//LONG[ 4]:=     0.160:#1/2 width hip
+		parent	Pelvis
+		RT 0 0 0 xyz 0.160 0.0 0.0
+		mass	9.622
+		inertia
+			.14415	0.00000	0.00000
+			0.00000	.14418	0.00000
+			0.00000	0.00000	.03447
+		com				0.0 0.0		-0.19033
+	endsegment
+	
+//	marker LeftThigh 
+//		parent LeftThigh
+//		position 0 0 -0.19033
+//	endmarker
+	
+	segment	LeftLeg
+	// m_15:= 4.450: G_15:=[0,0,-0.19246]:I_15:=[.06788,.06788,.00691]:#LeftLeg
+	//LONG[21]:=     0.428:#length tigh
+		parent	LeftThigh
+		RT 0 0 0 xyz 0.0 0.0 -0.428
+		mass	4.450
+		inertia
+			.06788	0.00000	0.00000
+			0.00000	.06788	0.00000
+			0.00000	0.00000	.00691
+		com				0.0 0.0		-0.19246
+	endsegment
+	
+//	marker LeftLeg 
+//		parent LeftLeg
+//		position 0 0 0 
+//	endmarker
+	
+	segment	LeftFoot
+	//m_16:= 0.962: G_16:=[0,0,-0.07458]:I_16:=[.00304,.00293,.00090]:#LeftFoot
+	//LONG[24]:=     0.440:#leg length
+		parent	LeftLeg
+		RT pi/3 0 0 xyz 0.0 0.0 -.44
+		mass	0.962
+		inertia
+			.00304	0.00000	0.00000
+			0.00000	.00293	0.00000
+			0.00000	0.00000	.00090
+		com				0.0 0.0	-0.07458
+	endsegment
+	
+//	marker LeftFoot 
+//		parent LeftFoot
+//		position 0 0 0 
+//	endmarker
+	
+
+	segment	RightArm
+	//m_22:= 2.395: G_22:=[0,0,-0.10525]:I_22:=[.01371,.01371,.00367]:#RightArm
+	//LONG[ 6]:=     0.185:#1/2 width shoulder
+	//LONG[ 7]:=     0.294:#length rib cage/shoulder
+		parent	ThoraxChest
+		rotations	xy
+		RT 0 0 0 xyz -0.185 0 0.294
+		mass	2.395
+		inertia
+			.01371	0.00000	0.00000
+			0.00000	.01371	0.00000
+			0.00000	0.00000	.00367
+		com				0.0 0.0	-0.10525
+	endsegment	
+	
+	marker RightArm // numero 4
+		parent RightArm
+		position 0 0 -0.10525
+	endmarker
+	
+//	imu RightUpperArm_IMU
+//		parent RightArm
+//	endimu
+	
+	segment	RightF_Arm
+	//m_24:= 1.540: G_24:=[0,0,-0.12537]:I_24:=[.00955,.00960,.00125]:#RightF_Arm
+	//LONG[13]:=     0.281:#length arm
+		parent	RightArm
+		RT 0 0 0 xyz 0 0 -0.281
+		mass	1.540
+		inertia
+			.00955	0.00000	0.00000
+			0.00000	.00960	0.00000
+			0.00000	0.00000	.00125
+		com				0.0 0.0	-0.12537
+	endsegment	
+	
+//	marker RightF_Arm 
+//		parent RightF_Arm
+//		position 0 0 0 
+//	endmarker
+	
+	segment	RightHand
+	//m_25:= 0.580: G_25:=[0,0,-0.07986]:I_25:=[.00167,.00154,.00031]:#RightHand
+	//LONG[15]:=     0.217:#length forearm
+		parent	RightF_Arm
+		RT 0 0 0 xyz 0 0 -0.217
+		mass	0.580
+		inertia
+			.00167	0.00000	0.00000
+			0.00000	.00154	0.00000
+			0.00000	0.00000	.00031
+		com				0.0 0.0	-0.07986
+	endsegment	
+	
+//	marker RightHand 
+//		parent RightHand
+//		position 0 0 0 
+//	endmarker
+	
+
+
+	segment	LeftArm
+	//m_28:= 2.607: G_28:=[0,0,-0.12578]:I_28:=[.01858,.01859,.00372]:#LeftArm
+	//LONG[ 6]:=     0.185:#1/2 width shoulder
+	//LONG[ 7]:=     0.294:#length rib cage/shoulder
+		parent	ThoraxChest
+		rotations	xy
+		RT 0 0 0 xyz 0.185 0 0.294
+		mass	2.607
+		inertia
+			.01858	0.00000	0.00000
+			0.00000	.01859	0.00000
+			0.00000	0.00000	.00372
+		com				0.0 0.0	-0.12578
+	endsegment	
+	
+	marker LeftArm // numero 5
+		parent LeftArm
+		position 0 0 -0.12578
+	endmarker
+	
+//		imu LeftUpperArm_IMU
+//		parent LeftArm
+//		endimu 
+	
+	segment	LeftF_Arm
+	//m_30:= 1.555: G_30:=[0,0,-0.11190]:I_30:=[.00827,.00834,.00141]:#LeftF_Arm
+	//LONG[13]:=     0.281:#length arm
+		parent	LeftArm
+		RT 0 0 0 xyz 0 0 -0.281
+		mass	1.555
+		inertia
+			.00827	0.00000	0.00000
+			0.00000	.00834	0.00000
+			0.00000	0.00000	.00141
+		com				0.0 0.0	-0.11190
+	endsegment	
+	
+//	marker LeftF_Arm 
+//		parent LeftF_Arm
+//		position 0 0 0 
+//	endmarker
+	
+	segment	LeftHand
+	//m_31:= 0.555: G_31:=[0,0,-0.07788]:I_31:=[.00154,.00130,.00035]:#Lefthand
+	//LONG[15]:=     0.217:#length forearm
+		parent	LeftF_Arm
+		RT 0 0 0 xyz 0 0 -0.217
+		mass	0.555
+		inertia
+			.00154	0.00000	0.00000
+			0.00000	.00130	0.00000
+			0.00000	0.00000	.00035
+		com				0.0 0.0	-0.07788
+	endsegment	
+	
+//	marker LeftHand 
+//		parent LeftHand
+//		position 0 0 0 
+//	endmarker

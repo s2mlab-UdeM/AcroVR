@@ -8,9 +8,9 @@ public class ToolTip : MonoBehaviour
 	public static ToolTip Instance;
 	public GameObject panelToolTip;
 	[SerializeField]
-	Camera uiCamera;
+	Camera uiCamera = default;
 	[SerializeField]
-	RectTransform rectTransformCanvas;
+	RectTransform rectTransformCanvas = default;
 
 	int displayToolTipNum;
 	Text textToolTip;

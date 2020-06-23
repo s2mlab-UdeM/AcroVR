@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +15,7 @@ namespace ChartAndGraph
         /// <summary>
         /// gets the item label for this bar, or null if no item label is assigned to it
         /// </summary>
-        public Text ItemLabel
+        public GameObject ItemLabel
         {
             get
             {
@@ -26,7 +27,7 @@ namespace ChartAndGraph
             }
         }
 
-        public Text CategoryLabel
+        public GameObject CategoryLabel
         {
             get
             {

@@ -63,7 +63,8 @@ public class MovementF : MonoBehaviour
 
 		calledFromScript = false;
 		enableSymetricLeftRight = false;
-		Main.Instance.EnableDisableControls(false, false);
+		if (!MainParameters.Instance.testXSensUsed)
+			Main.Instance.EnableDisableControls(false, false);
 	}
 
 	// =================================================================================================================================================================
@@ -137,8 +138,6 @@ public class MovementF : MonoBehaviour
 
 	public void ButtonLoad()
 	{
-		//		System.IO.File.AppendAllText(@"C:\Devel\AcroVR_Debug.txt", string.Format("ButtonLoad #0{0}", System.Environment.NewLine));
-
 		// Sélection d'un fichier de données dans le répertoire des fichiers de simulation, par défaut
 
 		ExtensionFilter[] extensions = new[]
@@ -153,8 +152,29 @@ public class MovementF : MonoBehaviour
 			dirSimulationFiles = string.Format("{0}/SimulationFiles", Application.dataPath.Substring(0, n));
 		else
 			dirSimulationFiles = string.Format("{0}/Documents", Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+		Debug.Log(string.Format("Mac: dirSimulationFiles = {0}", dirSimulationFiles));
+#elif UNITY_EDITOR
+		string dirSimulationFiles = string.Format(@"{0}/../Installer/SimulationFiles", UnityEngine.Application.dataPath);
+		if (!System.IO.Directory.Exists(dirSimulationFiles))
+		{
+			dirSimulationFiles = string.Format(@"{0}\Tekphy\AcroVR\SimulationFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
+			if (!System.IO.Directory.Exists(dirSimulationFiles))
+			{
+				dirSimulationFiles = string.Format(@"{0}\Tekphy\AcroVR\SimulationFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86));
+				if (!System.IO.Directory.Exists(dirSimulationFiles))
+					dirSimulationFiles = "";
+			}
+
+		}
 #else
-		string dirSimulationFiles = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Tekphy\AcroVR\SimulationFiles");
+		string dirSimulationFiles = string.Format(@"{0}\Tekphy\AcroVR\SimulationFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
+		if (!System.IO.Directory.Exists(dirSimulationFiles))
+		{
+			dirSimulationFiles = string.Format(@"{0}\Tekphy\AcroVR\SimulationFiles", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86));
+			if (!System.IO.Directory.Exists(dirSimulationFiles))
+				dirSimulationFiles = "";
+		}
+
 #endif
 		string fileName = FileBrowser.OpenSingleFile(MainParameters.Instance.languages.Used.movementLoadDataFileTitle, dirSimulationFiles, extensions);
 		if (fileName.Length <= 0)
@@ -262,6 +282,7 @@ public class MovementF : MonoBehaviour
 		// Interpolation et affichage des positions des angles pour l'articulation sélectionnée. Afficher aussi la silhouette au temps du noeud sélectionné.
 
 		InterpolationAndDisplayDDL(-1, 0, 0, true);
+		Main.Instance.EnableDisableControls(true, true);
 
 		// Initialisation de la liste des items que contiendra la liste déroulante Nom de l'articulation
 
@@ -288,12 +309,10 @@ public class MovementF : MonoBehaviour
 		{
 			try
 			{
-				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("OK #1{0}", System.Environment.NewLine));
 				System.IO.Directory.CreateDirectory(dirSimulationFiles);
 			}
 			catch
 			{
-				System.IO.File.AppendAllText(@"AcroVR_Debug.txt", string.Format("OK #2{0}", System.Environment.NewLine));
 				dirSimulationFiles = "";
 			}
 		}
@@ -563,13 +582,14 @@ public class MovementF : MonoBehaviour
 
 		AnimationF.Instance.PlayReset();
 		if (frame > MainParameters.Instance.joints.q0.GetUpperBound(1)) frame = MainParameters.Instance.joints.q0.GetUpperBound(1);
-		AnimationF.Instance.Play(MainParameters.Instance.joints.q0, frame, 1);
-	}
+        GraphManager.Instance.mouseTracking = true;
+        //AnimationF.Instance.Play(frame, 1);
+    }
 
-	// =================================================================================================================================================================
-	/// <summary> Afficher la courbe des positions des angles pour l'articulation sélectionné, ainsi que les noeuds. </summary>
+    // =================================================================================================================================================================
+    /// <summary> Afficher la courbe des positions des angles pour l'articulation sélectionné, ainsi que les noeuds. </summary>
 
-	public void DisplayDDL(int ddl, bool axisRange)
+    public void DisplayDDL(int ddl, bool axisRange)
 	{
 		if (ddl >= 0)
 		{

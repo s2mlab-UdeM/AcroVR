@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -90,10 +91,10 @@ namespace ChartAndGraph
         /// </summary>
         public ChartOrientedSize axisSeperation
         {
-            get { return axisSeperation; }
+            get { return AxisSeperation; }
             set
             {
-                axisSeperation = value;
+                AxisSeperation = value;
                 OnPropertyUpdated();
             }
         }

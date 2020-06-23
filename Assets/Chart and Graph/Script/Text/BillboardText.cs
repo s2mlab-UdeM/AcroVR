@@ -1,4 +1,5 @@
-﻿using ChartAndGraph;
+#define Graph_And_Chart_PRO
+using ChartAndGraph;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +10,7 @@ using UnityEngine.UI;
 public class BillboardText : MonoBehaviour
 {
     private RectTransform mRect;
-    public Text UIText { get; set; }
+    public GameObject UIText { get; set; }
     internal TextDirection Direction;
     public RectTransform RectTransformOverride;
     public object UserData { get; set; }
@@ -18,6 +19,7 @@ public class BillboardText : MonoBehaviour
     public bool parentSet = false;
     public RectTransform parent = null;
     public bool Recycled = false;
+    public bool YMirror = false;
     CanvasRenderer[] mRenderers;
     public void SetVisible(bool visible)
     {

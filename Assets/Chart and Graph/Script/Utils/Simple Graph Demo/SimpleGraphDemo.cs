@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+#define Graph_And_Chart_PRO
+using UnityEngine;
 using System.Collections;
 using ChartAndGraph;
 using System;

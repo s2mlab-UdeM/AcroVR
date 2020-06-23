@@ -1,4 +1,5 @@
-﻿using System;
+#define Graph_And_Chart_PRO
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace ChartAndGraph
 {
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))]
-    public class BoxPathGenerator : SmoothPathGenerator
+    public partial class BoxPathGenerator : SmoothPathGenerator
     {
         [Range(0f, 10f)]
         public float HeightRatio = 1f;

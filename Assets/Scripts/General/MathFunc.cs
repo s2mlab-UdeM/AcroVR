@@ -68,6 +68,22 @@ public class MathFunc
 	}
 
 	// =================================================================================================================================================================
+	/// <summary> Interpolation linéaire sur des données d'une dimension et t = 3 valeurs seulement (similaire à la fonction MatLab Interp1(x, v, xq, 'linear')). </summary>
+
+	public static double[] Interp1(float ti, float[] t, float[,] x)
+	{
+		double[] y = new double[x.GetUpperBound(0) + 1];
+		for (int i = 0; i < y.Length; i++)
+		{
+			if (ti <= t[1])
+				y[i] = x[i, 0] + (ti - t[0]) * (x[i, 1] - x[i, 0]) / (t[1] - t[0]);
+			else
+				y[i] = x[i, 1] + (ti - t[1]) * (x[i, 2] - x[i, 1]) / (t[2] - t[1]);
+		}
+		return y;
+	}
+
+	// =================================================================================================================================================================
 	/// <summary>
 	/// <para> Vérification du signe d'un vecteur. </para>
 	/// Retourne: -1 si vect inférieur à 0, 0 si vect égal 0, 1 si vect supérieur à 0
@@ -84,7 +100,6 @@ public class MathFunc
 		}
 		return vectS;
 	}
-
 
 	// =================================================================================================================================================================
 	/// <summary> Copié le contenu d'une matrice dans une nouvelle matrice. </summary>
@@ -120,6 +135,22 @@ public class MathFunc
 		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
 			for (int j = 0; j <= matrix.GetUpperBound(1); j++)
 				newMatrix[i, j] = (float)matrix[i, j];
+		return newMatrix;
+	}
+
+	public static float[,] MatrixCopyRow(float[,] matrix, float[] vector, int row)
+	{
+		float[,] newMatrix = new float[matrix.GetUpperBound(0) + 1, matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(1); i++)
+			newMatrix[row, i] = vector[i];
+		return newMatrix;
+	}
+
+	public static float[,] MatrixCopyColumn(float[,] matrix, float[] vector, int column)
+	{
+		float[,] newMatrix = new float[matrix.GetUpperBound(0) + 1, matrix.GetUpperBound(1) + 1];
+		for (int i = 0; i <= matrix.GetUpperBound(0); i++)
+			newMatrix[i, column] = vector[i];
 		return newMatrix;
 	}
 
@@ -257,5 +288,42 @@ public class MathFunc
 			pp[j] = p[j] + cumsum[j - 1];
 
 		return pp;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Rétrécir une matrice carré en une nouvelle matrice carré de dimension réduite (Nouvelle dimension doit être égale ou inférieure à la dimension de la matrice originale). </summary>
+
+	public static double[,] ShrinkSquareMatrix(double[,] matrice, int nouvelleTaille)
+	{
+		double[,] nouvelleMatrice = new double[nouvelleTaille, nouvelleTaille];
+		for (int i = 0; i < nouvelleTaille; i++)
+			for (int j = 0; j < nouvelleTaille; j++)
+				nouvelleMatrice[i, j] = matrice[i, j];
+		return nouvelleMatrice;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Convertir un vecteur en une matrice carré. </summary>
+
+	public static double[,] ConvertVectorInSquareMatrix(double[] vector)
+	{
+		int dim = (int)System.Math.Sqrt(vector.Length);
+		double[,] newMatrix = new double[dim, dim];
+		for (int i = 0; i < newMatrix.GetLength(0); i++)
+			for (int j = 0; j < newMatrix.GetLength(1); j++)
+				newMatrix[j, i] = vector[j + newMatrix.GetLength(0) * i];
+		return newMatrix;
+	}
+
+	// =================================================================================================================================================================
+	/// <summary> Convertir une matrice carré en un vecteur. </summary>
+
+	public static double[] ConvertSquareMatrixInVector(double[,] matrix)
+	{
+		double[] newVector = new double[matrix.GetLength(0) * matrix.GetLength(1)];
+		for (int i = 0; i < matrix.GetLength(0); i++)
+			for (int j = 0; j < matrix.GetLength(1); j++)
+				newVector[j + i * matrix.GetLength(0)] = matrix[j, i];
+		return newVector;
 	}
 }

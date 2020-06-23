@@ -1,4 +1,5 @@
-﻿using ChartAndGraph.Common;
+#define Graph_And_Chart_PRO
+using ChartAndGraph.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,12 +28,19 @@ namespace ChartAndGraph.DataSource
         }
 
         public event EventHandler DataStructureChanged;
+        public event Action<string,int,string,int> ItemsReplaced;
         public event EventHandler<DataValueChangedEventArgs> DataValueChanged;
 
         protected void OnDataStructureChanged()
         {
             if (DataStructureChanged != null)
                 DataStructureChanged(this, EventArgs.Empty);
+        }
+
+        protected void OnItemsReplaced(string first, int firstIndex, string second, int secondIndex)
+        {
+            if (ItemsReplaced != null)
+                ItemsReplaced(first, firstIndex, second, secondIndex);
         }
 
         protected void OnDataValueChanged(DataValueChangedEventArgs data)

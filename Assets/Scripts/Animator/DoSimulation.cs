@@ -1,13 +1,30 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Research.Oslo;
+using System.Runtime.InteropServices;
 
 // =================================================================================================================================================================
 /// <summary> Exécution des calculs de simulation. </summary>
 
 public class DoSimulation
 {
-	public DoSimulation(out float[,] qOut)
+	// Déclaration des pointeurs
+
+	static IntPtr ptr_massMatrix;
+	static IntPtr ptr_tau;
+	static IntPtr ptr_Q;
+	static IntPtr ptr_V;
+	static IntPtr ptr_qddot2;
+	static IntPtr ptr_matA;
+	static IntPtr ptr_solX;
+
+	public static bool modeRT = false;
+
+	static float[] qd;
+	static float[] qdotd;
+	static float[] qddotd;
+
+	public static int GetSimulation(out float[,] qOut)
 	{
 		// Affichage d'un message dans la boîte des messages
 
@@ -42,7 +59,7 @@ public class DoSimulation
 			tilt = 90.001f;
 		else if (tilt == -90)
 			tilt = -90.01f;
-		q0[Math.Abs(joints.lagrangianModel.root_tilt) - 1] = tilt * (float)Math.PI / 180;											// en radians
+		q0[Math.Abs(joints.lagrangianModel.root_tilt) - 1] = tilt * (float)Math.PI / 180;                                           // en radians
 		q0[Math.Abs(joints.lagrangianModel.root_somersault) - 1] = rotRadians;                                                      // en radians
 		q0dot[Math.Abs(joints.lagrangianModel.root_foreward) - 1] = joints.takeOffParam.anteroposteriorSpeed;                       // en m/s
 		q0dot[Math.Abs(joints.lagrangianModel.root_upward) - 1] = joints.takeOffParam.verticalSpeed;                                // en m/s
@@ -92,11 +109,11 @@ public class DoSimulation
 
 		#region Sim_Airborn
 
-		double[] x0 = new double[joints.lagrangianModel.nDDL * 2];
+		AnimationF.xTFrame0 = new double[joints.lagrangianModel.nDDL * 2];
 		for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
 		{
-			x0[i] = q0[i];
-			x0[joints.lagrangianModel.nDDL + i] = q0dot[i];
+			AnimationF.xTFrame0[i] = q0[i];
+			AnimationF.xTFrame0[joints.lagrangianModel.nDDL + i] = q0dot[i];
 		}
 
 		Options options = new Options();
@@ -104,160 +121,100 @@ public class DoSimulation
 
 		// Extraire les données obtenues du Runge-Kutta et conserver seulement les points interpolés aux frames désirés, selon la durée et le dt utilisé
 
-		var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(x0), ShortDynamics, options);
+		DoSimulation.modeRT = false;
+		var sol = Ode.RK547M(0, joints.duration + joints.lagrangianModel.dt, new Vector(AnimationF.xTFrame0), ShortDynamics, options);
 		var points = sol.SolveFromToStep(0, joints.duration + joints.lagrangianModel.dt, joints.lagrangianModel.dt).ToArray();
 
-		double[] t = new double[points.GetUpperBound(0) + 1];
 		double[,] q = new double[joints.lagrangianModel.nDDL, points.GetUpperBound(0) + 1];
-		double[,] qdot = new double[joints.lagrangianModel.nDDL, points.GetUpperBound(0) + 1];
-		for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
-		{
+        for (int i = 0; i < joints.lagrangianModel.nDDL; i++)
 			for (int j = 0; j <= points.GetUpperBound(0); j++)
-			{
-				if (i <= 0)
-					t[j] = points[j].T;
-
 				q[i,j] = points[j].X[i];
-				qdot[i,j] = points[j].X[joints.lagrangianModel.nDDL + i];
-			}
-		}
 		#endregion
 
-		int tIndex = 0;
-		MainParameters.Instance.joints.tc = 0;
+		// Vérifier s'il y a un contact avec le sol
+
+		int index = 0;
 		for (int i = 0; i <= q.GetUpperBound(1); i++)
 		{
-			tIndex++;
+			index++;
 			double[] qq = new double[joints.lagrangianModel.nDDL];
 			for (int j = 0; j < joints.lagrangianModel.nDDL; j++)
 				qq[j] = q[j, i];
 			AnimationF.Instance.EvaluateTags(qq, out tagX, out tagY, out tagZ);
-			if (joints.condition > 0 && tagZ.Min() < -0.05f)
-			{
-				MainParameters.Instance.joints.tc = (float)t[i];
-				AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} {1:0.00} s", MainParameters.Instance.languages.Used.displayMsgContactGround, MainParameters.Instance.joints.tc));
+			if (joints.condition > 0 && tagZ.Min() < -0.05f && AnimationF.Instance.playMode != MainParameters.Instance.languages.Used.animatorPlayModeGesticulation)
 				break;
-			}
 		}
 
-		MainParameters.Instance.joints.t = new float[tIndex];
-		qOut = new float[joints.lagrangianModel.nDDL, tIndex];
-		float[,] qdot1 = new float[joints.lagrangianModel.nDDL, tIndex];
-		for (int i = 0; i < tIndex; i++)
-		{
-			MainParameters.Instance.joints.t[i] = (float)t[i];
-			for (int j = 0; j < joints.lagrangianModel.nDDL; j++)
-			{
-				qOut[j, i] = (float)q[j, i];
-				qdot1[j, i] = (float)qdot[j, i];
-			}
-		}
+		// Copier les q dans une autre matrice qOut, mais contient seulement les données jusqu'au contact avec le sol
+		// Utiliser seulement pour calculer la dimension du volume utilisé pour l'animation
 
-		MainParameters.Instance.joints.rot = new float[tIndex, rotation.Length];
-		MainParameters.Instance.joints.rotdot = new float[tIndex, rotation.Length];
-		float[,] rotAbs = new float[tIndex, rotation.Length];
-		for (int i = 0; i < rotation.Length; i++)
-		{
-			float[] rotCol = new float[tIndex];
-			float[] rotdotCol = new float[tIndex];
-			rotCol = MathFunc.unwrap(MathFunc.MatrixGetRow(qOut, rotation[i] - 1));
-			rotdotCol = MathFunc.unwrap(MathFunc.MatrixGetRow(qdot1, rotation[i] - 1));
-			for (int j = 0; j < tIndex; j++)
-			{
-				MainParameters.Instance.joints.rot[j, i] = rotCol[j] / (2 * (float)Math.PI);
-				MainParameters.Instance.joints.rotdot[j, i] = rotdotCol[j] / (2 * (float)Math.PI);
-				rotAbs[j, i] = Math.Abs(MainParameters.Instance.joints.rot[j, i]);
-			}
-		}
+		qOut = new float[MainParameters.Instance.joints.lagrangianModel.nDDL, index];
+        for (int i = 0; i < index; i++)
+            for (int j = 0; j < MainParameters.Instance.joints.lagrangianModel.nDDL; j++)
+                qOut[j, i] = (float)q[j, i];
 
-		float numSomersault = MathFunc.MatrixGetColumn(rotAbs, 0).Max() + MainParameters.Instance.joints.takeOffParam.rotation / 360;
-		AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgNumberSomersaults, numSomersault));
-		AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgNumberTwists, MathFunc.MatrixGetColumn(rotAbs, 2).Max()));
-		AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} = {1:0.00}", MainParameters.Instance.languages.Used.displayMsgFinalTwist, MainParameters.Instance.joints.rot[tIndex - 1, 2]));
-		AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} = {1:0}°", MainParameters.Instance.languages.Used.displayMsgMaxTilt, MathFunc.MatrixGetColumn(rotAbs, 1).Max() * 360));
-		AnimationF.Instance.DisplayNewMessage(false, true, string.Format(" {0} = {1:0}°", MainParameters.Instance.languages.Used.displayMsgFinalTilt, MainParameters.Instance.joints.rot[tIndex - 1, 1] * 360));
+		return points.GetUpperBound(0) + 1;
 	}
 
 	// =================================================================================================================================================================
 	/// <summary> Routine qui sera exécuter par le ODE (Ordinary Differential Equation). </summary>
 
-	Vector ShortDynamics(double t, Vector x)
+	public static double[] ShortDynamics_int(float ti, double[] x, float[] t, float[,] qdaa, float[,] qdotdaa, float[,] qddotdaa)
 	{
-		//		q1 = ws.q1;% simulation
-		//q2 = ws.q2;% driven
-		int nDDL = MainParameters.Instance.joints.lagrangianModel.nDDL;
-
-		double[] q = new double[nDDL];
-		double[] qdot = new double[nDDL];
-		for (int i = 0; i < nDDL; i++)
+		double[] q = new double[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		double[] qdot = new double[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		double[] qddot = new double[MainParameters.Instance.joints.lagrangianModel.nDDL];
+		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
 		{
 			q[i] = x[i];
-			qdot[i] = x[nDDL + i];
+			qdot[i] = x[MainParameters.Instance.joints.lagrangianModel.nDDL + i];
 		}
 
-		double[,] m12;
-		double[] n1;
-		Inertia11Simple inertia11Simple = new Inertia11Simple();
-		double[,] m11 = inertia11Simple.Inertia11(q);
-		if (MainParameters.Instance.joints.lagrangianModelName == MainParameters.LagrangianModelNames.Sasha23ddl)
+		double[] qda = MathFunc.Interp1(ti, t, qdaa);
+		double[] qdotda = MathFunc.Interp1(ti, t, qdotdaa);
+		double[] qddotda = MathFunc.Interp1(ti, t, qddotdaa);
+
+		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q2.Length; i++)
 		{
-			n1 = new double[12];
-			m12 = new double[6,6];
-		}
-		else
-		{
-			Inertia12Simple inertia12Simple = new Inertia12Simple();
-			m12 = inertia12Simple.Inertia12(q);
-			NLEffects1Simple nlEffects1Simple = new NLEffects1Simple();
-			n1 = nlEffects1Simple.NLEffects1(q, qdot);
-			if (MainParameters.Instance.joints.condition <= 0)
-			{
-				double[] n1zero;
-				n1zero = nlEffects1Simple.NLEffects1(q, new double[12] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-				for (int i = 0; i < 6; i++)
-					n1[i] = n1[i] - n1zero[i];
-			}
+			int ii = MainParameters.Instance.joints.lagrangianModel.q2[i] - 1;
+			q[ii] = qda[ii];
+			qdot[ii] = qdotda[ii];
 		}
 
-		float kp = 10;
-		float kv = 3;
-		float[] qd = new float[nDDL];
-		float[] qdotd = new float[nDDL];
-		float[] qddotd = new float[nDDL];
-		Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, (float)t, MainParameters.Instance.joints.lagrangianModel.q2, out qd, out qdotd, out qddotd);
-		trajectory.ToString();                  // Pour enlever un warning lors de la compilation
+		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
+			qddot[i] = qddotda[i];
 
-		float[] qddot = new float[nDDL];
-		for (int i = 0; i < nDDL; i++)
-			qddot[i] = qddotd[i] + kp * (qd[i] - (float)q[i]) + kv * (qdotd[i] - (float)qdot[i]);
+		double[,] M11;
+		double[,] M12;
+		double[] N1;
+		Inertia11Simple inertial1Simple = new Inertia11Simple();
+		M11 = inertial1Simple.Inertia11(q);
 
-		if (MainParameters.Instance.joints.lagrangianModelName == MainParameters.LagrangianModelNames.Sasha23ddl)
-		{
-			//M12qddotN1 = ForceVector(q, qdot, qddot);
-			//qddot(q1) = -M11 \ M12qddotN1; 
-		}
-		else
-		{
-			// Calcul "Matrix Left division" suivante: qddot(q1) = M11\(-N1-M12*qddot(q2));
-			// On peut faire ce calcul en utilisant le calcul "Matrix inverse": qddot(q1) = inv(M11)*(-N1-M12*qddot(q2));
+		Inertia12Simple inertial2Simple = new Inertia12Simple();
+		M12 = inertial2Simple.Inertia12(q);
 
-			double[,] mA = MatrixInverse.MtrxInverse(m11);
+		NLEffects1Simple nlEffect1Simple = new NLEffects1Simple();
+		N1 = nlEffect1Simple.NLEffects1(q, qdot);
 
-			double[] q2qddot = new double[MainParameters.Instance.joints.lagrangianModel.q2.Length];
-			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q2.Length; i++)
-				q2qddot[i] = qddot[MainParameters.Instance.joints.lagrangianModel.q2[i] - 1];
-			double[,] mB = MatrixInverse.MtrxProduct(m12, q2qddot);
+		// Calcul "Matrix Left division" suivante: qddot(q1) = M11\(-N1-M12*qddot(q2));
+		// On peut faire ce calcul en utilisant le calcul "Matrix inverse": qddot(q1) = inv(M11)*(-N1-M12*qddot(q2));
 
-			double[,] n1mB = new double[mB.GetUpperBound(0) + 1, mB.GetUpperBound(1) + 1];
-			for (int i = 0; i <= mB.GetUpperBound(0); i++)			// Rangée
-				for (int j = 0; j <= mB.GetUpperBound(1); j++)      // Colonne
-					n1mB[i, j] = -n1[i] - mB[i, j];
+		double[,] mA = MatrixInverse.MtrxInverse(M11);
 
-			double[,] mC = MatrixInverse.MtrxProduct(mA, n1mB);
+		double[] qddotb = new double[MainParameters.Instance.joints.lagrangianModel.q2.Length];
+		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q2.Length; i++)
+			qddotb[i] = qddot[MainParameters.Instance.joints.lagrangianModel.q2[i] - 1];
+		double[,] mB = MatrixInverse.MtrxProduct(M12, qddotb);
 
-			for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
-				qddot[MainParameters.Instance.joints.lagrangianModel.q1[i] -1] = (float)mC[i,0];
-		}
+		double[,] n1mB = new double[mB.GetUpperBound(0) + 1, mB.GetUpperBound(1) + 1];
+		for (int i = 0; i <= mB.GetUpperBound(0); i++)
+			for (int j = 0; j <= mB.GetUpperBound(1); j++)
+				n1mB[i, j] = -N1[i] - mB[i, j];
+
+		double[,] mC = MatrixInverse.MtrxProduct(mA, n1mB);
+
+		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.q1.Length; i++)
+			qddot[MainParameters.Instance.joints.lagrangianModel.q1[i] - 1] = (float)mC[i, 0];
 
 		double[] xdot = new double[MainParameters.Instance.joints.lagrangianModel.nDDL * 2];
 		for (int i = 0; i < MainParameters.Instance.joints.lagrangianModel.nDDL; i++)
@@ -266,6 +223,118 @@ public class DoSimulation
 			xdot[MainParameters.Instance.joints.lagrangianModel.nDDL + i] = qddot[i];
 		}
 
-		return new Vector(xdot);
+		return xdot;
+	}
+
+	public static Vector ShortDynamics(double t, Vector x)
+	{
+		int NDDL = MainParameters.c_nQ(MainParameters.Instance.ptr_model);			// Récupère le nombre de DDL du modèle BioRBD
+		int NROOT = 6;																// On admet que la racine possède 6 ddl
+		int NDDLhumans = 12;
+		double[] xBiorbd = new double[NDDL * 2];
+
+		double[] Qintegrateur = new double[NDDL];
+		double[] Vintegrateur = new double[NDDL];
+		double[] m_taud = new double[NDDL];
+		double[] massMatrix = new double[NDDL * NDDL];
+
+		double[] qddot2 = new double[NDDL];
+		double[] qddot1integ = new double[NDDL * 2];
+		double[] qddot1integHumans = new double[NDDLhumans];
+
+		//Allocations des pointeurs, sinon génère erreurs de segmentation
+
+		ptr_Q = Marshal.AllocCoTaskMem(sizeof(double) * Qintegrateur.Length);
+		ptr_V = Marshal.AllocCoTaskMem(sizeof(double) * Vintegrateur.Length);
+		ptr_qddot2 = Marshal.AllocCoTaskMem(sizeof(double) * qddot2.Length);
+		ptr_massMatrix = Marshal.AllocCoTaskMem(sizeof(double) * massMatrix.Length);
+		ptr_tau = Marshal.AllocCoTaskMem(sizeof(double) * m_taud.Length);
+
+		// On convertit les DDL du modèle Humans pour le modèle BioRBD
+
+		xBiorbd = ConvertHumansBioRBD.Humans2Biorbd(x);
+
+		for (int i = 0; i < NDDL; i++)
+		{
+			Qintegrateur[i] = xBiorbd[i];
+			Vintegrateur[i] = xBiorbd[i + NDDL];
+		}
+
+		if (!modeRT)								// Offline
+		{
+			float[] qdH = new float[NDDLhumans];
+			float[] qdotdH = new float[NDDLhumans];
+			float[] qddotdH = new float[NDDLhumans];
+
+			Trajectory trajectory = new Trajectory(MainParameters.Instance.joints.lagrangianModel, (float)t, MainParameters.Instance.joints.lagrangianModel.q2, out qdH, out qdotdH, out qddotdH);
+
+			qd = new float[NDDL];
+			qdotd = new float[NDDL];
+			qddotd = new float[NDDL];
+			qd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qdH);
+			qdotd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qdotdH);
+			qddotd = ConvertHumansBioRBD.qValuesHumans2Biorbd(qddotdH);
+		}
+
+		for (int i = 0; i < qddot2.Length; i++)
+			qddot2[i] = qddotd[i] + 10 * (qd[i] - Qintegrateur[i]) + 3 * (qdotd[i] - Vintegrateur[i]);
+		for (int i = 0; i < NROOT; i++)
+			qddot2[i] = 0;
+
+		Marshal.Copy(Qintegrateur, 0, ptr_Q, Qintegrateur.Length);
+		Marshal.Copy(Vintegrateur, 0, ptr_V, Vintegrateur.Length);
+		Marshal.Copy(qddot2, 0, ptr_qddot2, qddot2.Length);
+
+		// Génère la matrice de masse
+
+		MainParameters.c_massMatrix(MainParameters.Instance.ptr_model, ptr_Q, ptr_massMatrix);
+
+		Marshal.Copy(ptr_massMatrix, massMatrix, 0, massMatrix.Length);
+
+		MainParameters.c_inverseDynamics(MainParameters.Instance.ptr_model, ptr_Q, ptr_V, ptr_qddot2, ptr_tau);
+
+		Marshal.Copy(ptr_tau, m_taud, 0, m_taud.Length);
+
+		double[,] squareMassMatrix = new double[NDDL, NDDL];
+		squareMassMatrix = MathFunc.ConvertVectorInSquareMatrix(massMatrix);            // La matrice de masse générée est sous forme d'un vecteur de taille NDDL*NDDL
+
+		double[,] matriceA = new double[NROOT, NROOT];
+		matriceA = MathFunc.ShrinkSquareMatrix(squareMassMatrix, NROOT);                // On réduit la matrice de masse
+
+		double[] matAGrandVecteur = new double[NROOT * NROOT];
+		matAGrandVecteur = MathFunc.ConvertSquareMatrixInVector(matriceA);              // La nouvelle matrice doit être convertie en vecteur pour qu'elle puisse être utilisée dans BioRBD
+
+		ptr_matA = Marshal.AllocCoTaskMem(sizeof(double) * matAGrandVecteur.Length);
+		ptr_solX = Marshal.AllocCoTaskMem(sizeof(double) * NROOT);
+
+		Marshal.Copy(matAGrandVecteur, 0, ptr_matA, matAGrandVecteur.Length);
+
+		MainParameters.c_solveLinearSystem(ptr_matA, NROOT, NROOT, ptr_tau, ptr_solX);  // Résouds l'équation Ax=b
+
+		double[] solutionX = new double[NROOT];
+		Marshal.Copy(ptr_solX, solutionX, 0, solutionX.Length);
+
+		for (int i = 0; i < NROOT; i++)
+			qddot2[i] = -solutionX[i];
+
+		for (int i = 0; i < NDDL; i++)
+		{
+			qddot1integ[i] = Vintegrateur[i];
+			qddot1integ[i + NDDL] = qddot2[i];
+		}
+
+		qddot1integHumans = ConvertHumansBioRBD.Biorbd2Humans(qddot1integ);             // Convertir les DDL du modèle BioRBD vers le modèle Humans
+
+		// Désallocation des pointeurs
+
+		Marshal.FreeCoTaskMem(ptr_Q);
+		Marshal.FreeCoTaskMem(ptr_V);
+		Marshal.FreeCoTaskMem(ptr_qddot2);
+		Marshal.FreeCoTaskMem(ptr_massMatrix);
+		Marshal.FreeCoTaskMem(ptr_tau);
+		Marshal.FreeCoTaskMem(ptr_matA);
+		Marshal.FreeCoTaskMem(ptr_solX);
+
+		return new Vector(qddot1integHumans);
 	}
 }

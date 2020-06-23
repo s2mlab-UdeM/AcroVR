@@ -1,4 +1,5 @@
-﻿using ChartAndGraph;
+#define Graph_And_Chart_PRO
+using ChartAndGraph;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,12 +12,12 @@ public abstract class ItemLabelsBase : ChartSettingItemBase,ISerializationCallba
     /// </summary>
     [SerializeField]
     [Tooltip("This prefab will be used to create all the text associated with the chart. If the prefab is null no labels will be shown")]
-    private Text textPrefab;
+    private MonoBehaviour textPrefab;
 
     /// <summary>
     /// This prefab will be used to create all the text associated with the chart. If the prefab is null no labels will be shown
     /// </summary>
-    public Text TextPrefab
+    public MonoBehaviour TextPrefab
     {
         get { return textPrefab; }
         set { textPrefab = value; RaiseOnChanged(); }
